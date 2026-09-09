@@ -1,0 +1,31 @@
+# Ferramental de agentes (local, nao versionado)
+.agents/
+.claude/
+skills-lock.json
+CLAUDE.md
+docs/agents/
+
+# Dependencias
+node_modules/
+
+# Builds
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Ambiente
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editores e SO
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
