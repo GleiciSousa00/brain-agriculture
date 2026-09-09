@@ -3,9 +3,9 @@
 O CPF ou CNPJ de um Produtor é dado pessoal e não é armazenado em claro. A
 persistência guarda duas colunas derivadas dele: o valor cifrado em AES-256-GCM,
 usado apenas para exibição, e um HMAC-SHA-256 com segredo da aplicação, usado para a
-restrição de unicidade e para busca por valor exato. A API devolve o documento
-mascarado por padrão, e o logger tem regra de redação que impede o valor de aparecer
-em qualquer linha de log.
+restrição de unicidade e para busca por valor exato. A API devolve o documento sempre
+mascarado, sem endpoint que exponha o valor completo, e o logger tem regra de redação
+que impede o valor de aparecer em qualquer linha de log.
 
 Duas colunas são necessárias porque o AES-GCM usa nonce aleatório: o mesmo documento
 cifrado duas vezes gera bytes diferentes, o que impossibilita uma restrição de

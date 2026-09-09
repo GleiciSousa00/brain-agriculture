@@ -18,8 +18,9 @@ _Avoid_: Fazendeiro, Agricultor, Cliente, Producer
 
 **Documento**:
 O CPF ou o CNPJ que identifica um Produtor de forma única. Um Produtor tem
-exatamente um.
-_Avoid_: CPF, CNPJ, Identificador Fiscal, Documento Fiscal
+exatamente um. Desde julho de 2026 um CNPJ pode conter letras maiúsculas nas doze
+primeiras posições, então Documento não é sinônimo de número.
+_Avoid_: CPF, CNPJ, Identificador Fiscal, Documento Fiscal, Número do Documento
 
 ### Onde se produz
 
