@@ -4,7 +4,10 @@ import { DocumentoCrypto } from './documento-crypto';
 const DOCUMENTO = '52998224725';
 
 function crypto(): DocumentoCrypto {
-  return new DocumentoCrypto(randomBytes(32), randomBytes(32));
+  return new DocumentoCrypto({
+    chaveDeCifra: randomBytes(32),
+    segredoDaImpressao: randomBytes(32),
+  });
 }
 
 describe('DocumentoCrypto', () => {
@@ -51,13 +54,22 @@ describe('DocumentoCrypto', () => {
   it('devolve impressões diferentes quando o segredo muda', () => {
     const chave = randomBytes(32);
 
-    const comUmSegredo = new DocumentoCrypto(chave, randomBytes(32)).impressao(DOCUMENTO);
-    const comOutro = new DocumentoCrypto(chave, randomBytes(32)).impressao(DOCUMENTO);
+    const comUmSegredo = new DocumentoCrypto({
+      chaveDeCifra: chave,
+      segredoDaImpressao: randomBytes(32),
+    }).impressao(DOCUMENTO);
+    const comOutro = new DocumentoCrypto({
+      chaveDeCifra: chave,
+      segredoDaImpressao: randomBytes(32),
+    }).impressao(DOCUMENTO);
 
     expect(comUmSegredo).not.toBe(comOutro);
   });
 
   it('recusa chave que não tem trinta e dois bytes', () => {
-    expect(() => new DocumentoCrypto(randomBytes(16), randomBytes(32))).toThrow(/trinta e dois/i);
+    expect(
+      () =>
+        new DocumentoCrypto({ chaveDeCifra: randomBytes(16), segredoDaImpressao: randomBytes(32) }),
+    ).toThrow(/trinta e dois/i);
   });
 });

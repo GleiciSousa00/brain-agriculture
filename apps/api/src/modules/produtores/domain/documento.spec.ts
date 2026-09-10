@@ -103,4 +103,43 @@ describe('Documento', () => {
       );
     });
   });
+
+  describe('restauração do que já está gravado', () => {
+    const CPF_COM_DIGITO_ERRADO = '52998224726';
+    const CNPJ_COM_DIGITO_ERRADO = 'ABCDEFGHIJKL81';
+
+    it('aceita um CPF gravado que `criar` recusa hoje', () => {
+      expect(() => Documento.criar(CPF_COM_DIGITO_ERRADO)).toThrow(DocumentoInvalido);
+
+      const restaurado = Documento.restaurar(CPF_COM_DIGITO_ERRADO);
+
+      expect(restaurado.tipo).toBe('CPF');
+      expect(restaurado.mascarado()).toBe('***.***.247-26');
+    });
+
+    it('aceita um CNPJ gravado que `criar` recusa hoje', () => {
+      expect(() => Documento.criar(CNPJ_COM_DIGITO_ERRADO)).toThrow(DocumentoInvalido);
+
+      const restaurado = Documento.restaurar(CNPJ_COM_DIGITO_ERRADO);
+
+      expect(restaurado.tipo).toBe('CNPJ');
+      expect(restaurado.mascarado()).toBe('**.***.***/IJKL-81');
+    });
+
+    it.each([['vazio', ''], ['curto demais', '1234567890'], ['comprimento entre os dois', '123456789012']])(
+      'recusa comprimento que não é de CPF nem de CNPJ, %s: "%s"',
+      (_caso, gravado) => {
+        expect(() => Documento.restaurar(gravado)).toThrow(DocumentoInvalido);
+      },
+    );
+
+    it.each([['529.982.247-25'], ['12.ABC.345/01DE-35']])(
+      'devolve o mesmo Documento que entrou, para %s',
+      (entrada) => {
+        const criado = Documento.criar(entrada);
+
+        expect(Documento.restaurar(criado.valor).igualA(criado)).toBe(true);
+      },
+    );
+  });
 });

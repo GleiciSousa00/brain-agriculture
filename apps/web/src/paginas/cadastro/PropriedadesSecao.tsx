@@ -1,7 +1,5 @@
 import type { Propriedade } from '@cadastro-rural/contracts';
-import { useCallback, useId, useState } from 'react';
-import { mensagemDe } from '../../api/chamada';
-import { TAMANHO_DA_PAGINA } from '../../api/pagina';
+import { useId, useState } from 'react';
 import { listarPropriedades } from '../../api/propriedades';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { Campo } from '../../componentes/Campo';
@@ -9,12 +7,11 @@ import { Escolha } from '../../componentes/Escolha';
 import { comoNumero, formatarHectares } from '../../formato';
 import { useCadastro } from './CadastroContexto';
 import { Listagem } from './Listagem';
-import { usePagina } from './usePagina';
+import { useTentativa } from './useTentativa';
 
 const CARREGANDO = 'Carregando as Propriedades…';
 const VAZIO = 'Nenhuma Propriedade cadastrada ainda.';
 const SEM_PRODUTOR = 'Registre um Produtor antes: toda Propriedade é registrada em nome de um.';
-const FORA_DO_CATALOGO = '—';
 
 /** O que o formulário guarda enquanto se digita: texto, como o campo devolve. */
 interface Rascunho {
@@ -62,15 +59,13 @@ function corpoDe(rascunho: Rascunho) {
 }
 
 export function PropriedadesSecao() {
-  const { produtores, criarPropriedade, editarPropriedade, excluirPropriedade, versao } =
+  const { produtores, nomeDoProdutor, criarPropriedade, editarPropriedade, excluirPropriedade } =
     useCadastro();
-  const buscar = useCallback((pagina: number) => listarPropriedades(pagina, TAMANHO_DA_PAGINA), []);
-  const pagina = usePagina(buscar, versao);
 
   const [emEdicao, setEmEdicao] = useState<Propriedade>();
   const [rascunho, setRascunho] = useState<Rascunho>(RASCUNHO_LIMPO);
-  const [recusaDoFormulario, setRecusaDoFormulario] = useState<string>();
-  const [recusaDaExclusao, setRecusaDaExclusao] = useState<string>();
+  const tentativaDoFormulario = useTentativa();
+  const tentativaDaExclusao = useTentativa();
   const tituloId = useId();
 
   const campo = (chave: keyof Rascunho) => (valor: string) => {
@@ -80,51 +75,32 @@ export function PropriedadesSecao() {
   function limpar(): void {
     setEmEdicao(undefined);
     setRascunho(RASCUNHO_LIMPO);
-    setRecusaDoFormulario(undefined);
+    tentativaDoFormulario.limpar();
   }
 
   function comecarAEditar(propriedade: Propriedade): void {
     setEmEdicao(propriedade);
     setRascunho(rascunhoDe(propriedade));
-    setRecusaDoFormulario(undefined);
+    tentativaDoFormulario.limpar();
   }
 
   /** A regra das áreas mora na API. Aqui só se mostra a recusa que ela mandou. */
   async function enviar(): Promise<void> {
-    setRecusaDoFormulario(undefined);
-
-    try {
+    const passou = await tentativaDoFormulario.tentar(async () => {
       if (emEdicao === undefined) {
         await criarPropriedade({ produtorId: rascunho.produtorId, ...corpoDe(rascunho) });
       } else {
         await editarPropriedade(emEdicao.id, corpoDe(rascunho));
       }
+    });
 
+    if (passou) {
       limpar();
-    } catch (causa: unknown) {
-      setRecusaDoFormulario(mensagemDe(causa));
     }
   }
 
   async function excluir(id: string): Promise<void> {
-    setRecusaDaExclusao(undefined);
-
-    try {
-      await excluirPropriedade(id);
-    } catch (causa: unknown) {
-      setRecusaDaExclusao(mensagemDe(causa));
-    }
-  }
-
-  /**
-   * O nome do Produtor de uma Propriedade.
-   *
-   * Ele sai do catálogo em memória, que vai até cem. Passando disso, a Propriedade de um
-   * Produtor que ficou de fora aparece sem nome, e o aviso do alto da tela é quem explica
-   * por quê.
-   */
-  function nomeDoProdutor(produtorId: string): string {
-    return produtores.find((produtor) => produtor.id === produtorId)?.nome ?? FORA_DO_CATALOGO;
+    await tentativaDaExclusao.tentar(() => excluirPropriedade(id));
   }
 
   // Sem Produtor no cadastro não há em nome de quem registrar, e um formulário que só
@@ -203,16 +179,20 @@ export function PropriedadesSecao() {
               </button>
             )}
           </p>
-          {recusaDoFormulario !== undefined && <p role="alert">{recusaDoFormulario}</p>}
+          {tentativaDoFormulario.recusa !== undefined && (
+            <p role="alert">{tentativaDoFormulario.recusa}</p>
+          )}
         </form>
       ) : (
         <p className="cartao vazio">{SEM_PRODUTOR}</p>
       )}
 
       {/* A recusa de uma exclusão fica junto da tabela, que é onde ela foi pedida. */}
-      {recusaDaExclusao !== undefined && <p role="alert">{recusaDaExclusao}</p>}
+      {tentativaDaExclusao.recusa !== undefined && (
+        <p role="alert">{tentativaDaExclusao.recusa}</p>
+      )}
 
-      <Listagem pagina={pagina} carregando={CARREGANDO} vazio={VAZIO}>
+      <Listagem listar={listarPropriedades} carregando={CARREGANDO} vazio={VAZIO}>
         {(propriedades) => (
           <table className="tabela">
             <thead>

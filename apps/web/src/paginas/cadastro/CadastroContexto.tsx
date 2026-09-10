@@ -50,6 +50,14 @@ export interface Catalogos {
   cortado: boolean;
 }
 
+/**
+ * O que a tela põe no lugar do nome que não pôde ser resolvido.
+ *
+ * É o sintoma de `cortado`: o catálogo veio até cem e o registro apontado ficou de fora.
+ * Quem explica o travessão é o aviso do alto do cadastro, e não a célula onde ele aparece.
+ */
+const FORA_DO_CATALOGO = '—';
+
 const CATALOGOS_VAZIOS: Catalogos = {
   produtores: [],
   propriedades: [],
@@ -68,6 +76,16 @@ export interface Cadastro extends Catalogos {
    * refazerem, porque a fatia que elas mostram não passa por aqui.
    */
   versao: number;
+  /**
+   * O nome de quem só chegou como identificador, ou o travessão.
+   *
+   * A API entrega Propriedade e Plantio apontando para Produtor, Cultura e Safra, e quem
+   * tem o nome é o catálogo que já está aqui para os campos de escolha. Resolver o nome é
+   * do contexto, e não de cada tabela, porque o travessão é a mesma resposta em todas.
+   */
+  nomeDoProdutor: (id: string) => string;
+  nomeDaCultura: (id: string) => string;
+  anoDaSafra: (id: string) => string;
   criarProdutor: (corpo: CriarProdutor) => Promise<void>;
   editarProdutor: (id: string, corpo: EditarProdutor) => Promise<void>;
   excluirProdutor: (id: string) => Promise<void>;
@@ -184,6 +202,15 @@ export function CadastroProvider({ children }: Props) {
       carregando,
       erro,
       versao,
+      nomeDoProdutor: (id) =>
+        catalogos.produtores.find((produtor) => produtor.id === id)?.nome ?? FORA_DO_CATALOGO,
+      nomeDaCultura: (id) =>
+        catalogos.culturas.find((cultura) => cultura.id === id)?.nome ?? FORA_DO_CATALOGO,
+      anoDaSafra: (id) => {
+        const safra = catalogos.safras.find((candidata) => candidata.id === id);
+
+        return safra === undefined ? FORA_DO_CATALOGO : String(safra.ano);
+      },
       criarProdutor: (corpo) => escrever(() => criarProdutor(corpo)),
       editarProdutor: (id, corpo) => escrever(() => editarProdutor(id, corpo)),
       excluirProdutor: (id) => escrever(() => excluirProdutor(id)),

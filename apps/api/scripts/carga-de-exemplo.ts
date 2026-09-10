@@ -7,9 +7,9 @@ import { carregarDadosDeExemplo, jaTemCadastro, type Servidor } from './carregad
  * Ele precisa do Postgres de pé, e de mais nada: a aplicação sobe em processo e roda as
  * migrações no arranque. Quem tem a composição no ar já tem o banco.
  *
- * O comando roda a partir do repositório, e não de dentro da imagem: a pasta de comandos
- * fica fora do que a imagem carrega, e a carga se apoia no supertest, que é dependência de
- * desenvolvimento.
+ * O comando roda dos dois lados. No repositório, com `pnpm carga:exemplo`, e de dentro do
+ * contêiner da API, com `docker compose exec api pnpm carga:exemplo`: a imagem carrega
+ * esta pasta e mantém o ts-node e o supertest de que a carga precisa.
  */
 rodarComando(async () => {
   await comAplicacao(async (app) => {

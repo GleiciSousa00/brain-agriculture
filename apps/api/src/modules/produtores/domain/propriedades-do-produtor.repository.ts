@@ -24,13 +24,6 @@ export interface PropriedadesDoProdutorRepository {
    * depender de um número que ninguém controla.
    */
   listByProdutor(recorte: RecorteDePropriedadesDoProdutor): Promise<Recortados<Propriedade>>;
-  /**
-   * Remove as Propriedades do Produtor, e com elas os Plantios delas. Ver o registro 0003.
-   *
-   * Está aqui, e não só na chave estrangeira, para a cascata ficar provável em teste de
-   * caso de uso, sem Postgres de pé.
-   */
-  deleteByProdutor(produtorId: string): Promise<void>;
 }
 
 export const PROPRIEDADES_DO_PRODUTOR_REPOSITORY = Symbol('PropriedadesDoProdutorRepository');

@@ -34,5 +34,9 @@ A chave de cifra e o segredo do HMAC passam a ser dependências operacionais: pe
 significa perder a capacidade de exibir os documentos já gravados, e trocá-los obriga
 a recifrar e recalcular todas as linhas.
 
+O Documento decifrado volta ao domínio por `Documento.restaurar`, sem passar de novo pela
+validação da Receita, para que apertar a regra do registro 0008 não torne ilegível o que já
+está gravado.
+
 A proteção vale contra quem tem acesso ao banco, ao backup ou aos logs. **Não vale
 contra o comprometimento da própria aplicação**, que necessariamente detém a chave.

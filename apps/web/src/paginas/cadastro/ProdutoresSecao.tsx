@@ -1,27 +1,23 @@
 import type { Produtor } from '@cadastro-rural/contracts';
-import { useCallback, useId, useState } from 'react';
-import { mensagemDe } from '../../api/chamada';
-import { TAMANHO_DA_PAGINA } from '../../api/pagina';
+import { useId, useState } from 'react';
 import { listarProdutores } from '../../api/produtores';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { Campo } from '../../componentes/Campo';
 import { useCadastro } from './CadastroContexto';
 import { Listagem } from './Listagem';
-import { usePagina } from './usePagina';
+import { useTentativa } from './useTentativa';
 
 const CARREGANDO = 'Carregando os Produtores…';
 const VAZIO = 'Nenhum Produtor cadastrado ainda.';
 
 export function ProdutoresSecao() {
-  const { criarProdutor, editarProdutor, excluirProdutor, versao } = useCadastro();
-  const buscar = useCallback((pagina: number) => listarProdutores(pagina, TAMANHO_DA_PAGINA), []);
-  const pagina = usePagina(buscar, versao);
+  const { criarProdutor, editarProdutor, excluirProdutor } = useCadastro();
 
   const [emEdicao, setEmEdicao] = useState<Produtor>();
   const [nome, setNome] = useState('');
   const [documento, setDocumento] = useState('');
-  const [recusaDoFormulario, setRecusaDoFormulario] = useState<string>();
-  const [recusaDaExclusao, setRecusaDaExclusao] = useState<string>();
+  const tentativaDoFormulario = useTentativa();
+  const tentativaDaExclusao = useTentativa();
   const tituloId = useId();
 
   function limpar(): void {
@@ -30,41 +26,33 @@ export function ProdutoresSecao() {
     setDocumento('');
     // A recusa some com o formulário que a recebeu. Deixá-la sobre um formulário vazio
     // seria acusar de recusado o que ninguém mandou.
-    setRecusaDoFormulario(undefined);
+    tentativaDoFormulario.limpar();
   }
 
   function comecarAEditar(produtor: Produtor): void {
     setEmEdicao(produtor);
     setNome(produtor.nome);
     setDocumento('');
-    setRecusaDoFormulario(undefined);
+    tentativaDoFormulario.limpar();
   }
 
   /** Nenhum campo é conferido aqui: quem recusa é a API, e o texto dela é o que aparece. */
   async function enviar(): Promise<void> {
-    setRecusaDoFormulario(undefined);
-
-    try {
+    const passou = await tentativaDoFormulario.tentar(async () => {
       if (emEdicao === undefined) {
         await criarProdutor({ nome, documento });
       } else {
         await editarProdutor(emEdicao.id, { nome });
       }
+    });
 
+    if (passou) {
       limpar();
-    } catch (causa: unknown) {
-      setRecusaDoFormulario(mensagemDe(causa));
     }
   }
 
   async function excluir(id: string): Promise<void> {
-    setRecusaDaExclusao(undefined);
-
-    try {
-      await excluirProdutor(id);
-    } catch (causa: unknown) {
-      setRecusaDaExclusao(mensagemDe(causa));
-    }
+    await tentativaDaExclusao.tentar(() => excluirProdutor(id));
   }
 
   return (
@@ -106,13 +94,17 @@ export function ProdutoresSecao() {
             </button>
           )}
         </p>
-        {recusaDoFormulario !== undefined && <p role="alert">{recusaDoFormulario}</p>}
+        {tentativaDoFormulario.recusa !== undefined && (
+          <p role="alert">{tentativaDoFormulario.recusa}</p>
+        )}
       </form>
 
       {/* A recusa de uma exclusão fica junto da tabela, que é onde ela foi pedida. */}
-      {recusaDaExclusao !== undefined && <p role="alert">{recusaDaExclusao}</p>}
+      {tentativaDaExclusao.recusa !== undefined && (
+        <p role="alert">{tentativaDaExclusao.recusa}</p>
+      )}
 
-      <Listagem pagina={pagina} carregando={CARREGANDO} vazio={VAZIO}>
+      <Listagem listar={listarProdutores} carregando={CARREGANDO} vazio={VAZIO}>
         {(produtores) => (
           <table className="tabela">
             <thead>

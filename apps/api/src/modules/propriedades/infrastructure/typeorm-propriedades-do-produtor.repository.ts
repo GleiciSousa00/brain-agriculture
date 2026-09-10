@@ -34,8 +34,4 @@ export class TypeormPropriedadesDoProdutorRepository implements PropriedadesDoPr
 
     return { itens: linhas.map(propriedadeParaDominio), total };
   }
-
-  async deleteByProdutor(produtorId: string): Promise<void> {
-    await this.linhas.delete({ produtorId });
-  }
 }
