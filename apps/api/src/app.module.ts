@@ -7,6 +7,7 @@ import { databaseOptions } from './config/database.config';
 import { CulturasModule } from './modules/culturas/culturas.module';
 import { HealthModule } from './health/health.module';
 import { ProdutoresModule } from './modules/produtores/produtores.module';
+import { PropriedadesModule } from './modules/propriedades/propriedades.module';
 import { SafrasModule } from './modules/safras/safras.module';
 import { ProblemDetailsFilter } from './shared/http/problem-details.filter';
 import { LoggingModule } from './shared/logging/logging.module';
@@ -21,6 +22,7 @@ import { LoggingModule } from './shared/logging/logging.module';
     }),
     HealthModule,
     ProdutoresModule,
+    PropriedadesModule,
     SafrasModule,
     CulturasModule,
   ],

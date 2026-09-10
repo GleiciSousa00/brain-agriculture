@@ -18,3 +18,28 @@ export const produtorSchema = z.object({
 export type ProdutorResposta = z.infer<typeof produtorSchema>;
 
 export class ProdutorDto extends createZodDto(produtorSchema) {}
+
+/**
+ * A Propriedade como o cadastro do Produtor a mostra.
+ *
+ * O esquema é declarado aqui, e não importado do módulo de Propriedade, porque a camada
+ * `http` de um módulo não enxerga a de outro. Quem responde pelo formato desta resposta é
+ * quem a devolve. Ver o registro 0005.
+ */
+export const propriedadeDoProdutorSchema = z.object({
+  id: z.uuid(),
+  cidade: z.string(),
+  estado: z.string().describe('A sigla da unidade federativa.'),
+  areaTotal: z.number().describe('Em hectares.'),
+  areaAgricultavel: z.number().describe('Em hectares.'),
+  areaDeVegetacao: z.number().describe('Em hectares.'),
+});
+
+/** O cadastro inteiro: o Produtor e as Propriedades em nome dele. */
+export const produtorDetalhadoSchema = produtorSchema.extend({
+  propriedades: z.array(propriedadeDoProdutorSchema),
+});
+
+export type ProdutorDetalhadoResposta = z.infer<typeof produtorDetalhadoSchema>;
+
+export class ProdutorDetalhadoDto extends createZodDto(produtorDetalhadoSchema) {}
