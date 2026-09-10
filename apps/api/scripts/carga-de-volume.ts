@@ -54,8 +54,6 @@ rodarComando(async () => {
     await emConexaoSemTeto(dataSource, async (conexao) => {
       await inserir(conexao, propriedadesNovas, produtores);
 
-      // Sem estatística nova o Postgres continua planejando para a tabela pequena que ele
-      // conhecia, e a medição do plano mediria uma ficção.
       await conexao.query('VACUUM ANALYZE');
     });
 

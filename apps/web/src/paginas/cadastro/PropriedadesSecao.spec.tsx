@@ -36,13 +36,10 @@ describe('a seção de Propriedades', () => {
     expect(within(linha).getByText('Ana Lima')).toBeInTheDocument();
     expect(within(linha).getByText('Uberaba/MG')).toBeInTheDocument();
     expect(within(linha).getByText('100 ha')).toBeInTheDocument();
-    // Duas na mesma cidade, distinguidas pelo nome, que é para o que o nome existe.
     expect(screen.getByRole('row', { name: /Sítio do Meio/ })).toBeInTheDocument();
   });
 
   it('mostra um travessão quando o Produtor da Propriedade ficou fora do catálogo', async () => {
-    // Passando de cem Produtores o catálogo vem cortado, e o dono desta Propriedade é um
-    // dos que ficaram de fora. Quem explica o travessão é o aviso do alto do cadastro.
     servirCadastro({
       produtores: [AGRO_BETO],
       propriedades: [BOA_VISTA],
@@ -203,9 +200,6 @@ describe('a seção de Propriedades', () => {
     renderizarNoCadastro(<PropriedadesSecao />);
     await screen.findByText('Nenhuma Propriedade cadastrada ainda.');
 
-    // Uma área fora do passo de duas casas faria o navegador recusar o envio com um texto
-    // dele, e a recusa da API nunca chegaria à tela. O jsdom não faz conferência
-    // interativa, então quem se afirma é o atributo que a desliga.
     const formulario = screen.getByRole('button', { name: 'Registrar' }).closest('form');
     expect(formulario).toHaveAttribute('novalidate');
   });

@@ -8,10 +8,10 @@ import { OPENAPI_PATH, buildOpenApiDocument } from './config/openapi';
 const DEFAULT_PORT = 3000;
 
 async function bootstrap(): Promise<void> {
-  // `bufferLogs` segura as linhas do arranque até o logger de JSON estar de pé.
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   app.useLogger(app.get(Logger));
+  app.getHttpAdapter().getInstance().disable('x-powered-by');
   app.enableShutdownHooks();
 
   SwaggerModule.setup(OPENAPI_PATH, app, buildOpenApiDocument(app));

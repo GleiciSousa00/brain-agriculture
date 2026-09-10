@@ -39,10 +39,6 @@ export function Listagem<T>({ listar, carregando, vazio, children }: Props<T>) {
   const [conteudo, setConteudo] = useState<Pagina<T>>();
   const [erro, setErro] = useState<string>();
 
-  // A busca mais recente fica guardada, e o efeito depende só de página e versão. É o que
-  // permite ao chamador passar uma função inline: se o efeito dependesse dela, uma função
-  // nova a cada renderização refaria a busca sem parar, e daí vinha o `useCallback` que
-  // cada seção era obrigada a lembrar.
   const buscar = useRef(listar);
 
   useEffect(() => {
@@ -60,8 +56,6 @@ export function Listagem<T>({ listar, carregando, vazio, children }: Props<T>) {
           return;
         }
 
-        // Excluir o último registro de uma página deixa quem opera numa página que não
-        // existe mais. Voltar uma é melhor do que mostrar tabela vazia sob "página 3 de 2".
         if (resposta.itens.length === 0 && pagina > PRIMEIRA_PAGINA) {
           setPagina(pagina - 1);
 
@@ -72,8 +66,6 @@ export function Listagem<T>({ listar, carregando, vazio, children }: Props<T>) {
       })
       .catch((causa: unknown) => {
         if (!cancelado) {
-          // A tabela sai da tela junto com a falha. Deixar as linhas anteriores sob um
-          // aviso de erro seria mostrar um dado e dizer que ele é outro.
           setConteudo(undefined);
           setErro(mensagemDe(causa));
         }

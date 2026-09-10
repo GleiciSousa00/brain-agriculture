@@ -7,8 +7,6 @@ import { servirCadastro } from './teste/cadastro-falso';
 import { PAINEL_VAZIO } from './teste/exemplos';
 
 function abrirEm(endereco: string) {
-  // O cadastro busca os quatro catálogos ao montar, e o painel busca os próprios números.
-  // A navegação passa pelos dois, então o duplo serve os dois.
   servirCadastro({}, { 'GET /api/painel': () => ({ corpo: PAINEL_VAZIO }) });
 
   return render(

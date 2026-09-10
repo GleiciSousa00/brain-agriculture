@@ -50,7 +50,6 @@ export function PlantiosSecao() {
           valor={propriedadeId}
           aoMudar={(valor) => {
             setPropriedadeId(valor);
-            // A recusa era do que se mandou para a Propriedade anterior, e não para esta.
             limpar();
           }}
           vazia="Escolha uma Propriedade"
@@ -62,7 +61,6 @@ export function PlantiosSecao() {
 
         {propriedadeId !== NADA_ESCOLHIDO && (
           <form
-            // Sem a conferência do navegador: a recusa tem de vir do corpo da API.
             noValidate
             onSubmit={(evento) => {
               evento.preventDefault();
@@ -95,8 +93,6 @@ export function PlantiosSecao() {
       {propriedadeId === NADA_ESCOLHIDO ? (
         <p className="vazio">{SEM_PROPRIEDADE_ESCOLHIDA}</p>
       ) : (
-        // A chave refaz a tabela ao trocar de Propriedade, e com ela a página em que se
-        // estava: a terceira página de uma Propriedade não diz nada sobre a outra.
         <PlantiosDaPropriedade key={propriedadeId} propriedadeId={propriedadeId} />
       )}
     </section>

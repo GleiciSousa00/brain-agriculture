@@ -11,8 +11,6 @@ describe('Area', () => {
   });
 
   it('soma sem o erro do ponto flutuante', () => {
-    // 0,1 + 0,2 em ponto flutuante dá 0,30000000000000004, que passaria de 0,3 e faria a
-    // regra da Propriedade recusar um cadastro correto.
     const soma = Area.criar(0.1).somar(Area.criar(0.2));
 
     expect(soma.hectares).toBe(0.3);
@@ -38,8 +36,6 @@ describe('Area', () => {
   });
 
   it('arredonda abaixo do metro quadrado em vez de recusar', () => {
-    // Recusar transformaria a precisão do registro em regra de negócio, e a operadora
-    // levaria erro por uma diferença que o cadastro não distingue.
     expect(Area.criar(12.34567).hectares).toBe(12.3457);
   });
 

@@ -30,8 +30,6 @@ import { IndexaNomeDeProdutor1789065000000 } from './infrastructure/migrations/1
  * continuar testável sem Nest. Ver o registro 0005.
  */
 @Module({
-  // O módulo de Propriedade entra aqui só para fornecer a implementação da porta que este
-  // módulo declara no próprio domínio. É a única coisa que ele exporta.
   imports: [TypeOrmModule.forFeature([ProdutorOrmEntity]), PropriedadesModule],
   controllers: [ProdutoresController],
   providers: [

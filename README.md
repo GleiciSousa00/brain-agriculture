@@ -250,7 +250,11 @@ mesmo de o campo existir.
 **Erro.** Toda falha sai no formato Problem Details da
 [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457), aplicado por filtro global, com o
 tipo de conteúdo `application/problem+json` e o identificador de correlação no corpo.
-Erro não previsto vira 500 com detalhe genérico: o rastro fica no log, não na resposta.
+Erro não previsto vira 500 com detalhe genérico: o rastro fica no log, não na resposta. A
+recusa de esquema publica em `erros` o campo recusado e o motivo, um por um, para a
+interface apontar o campo no formulário. Recusa é logada em `warn`, e não em `error`:
+identificador digitado errado é uso normal, e o nível de erro fica para o que a aplicação
+não previu.
 
 ## A especificação OpenAPI
 

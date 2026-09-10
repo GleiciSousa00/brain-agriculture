@@ -34,7 +34,6 @@ describe('Cultura', () => {
       ['sem acento', 'Cafe'],
       ['com espaço em volta', '  café  '],
     ])('trata %s como a mesma Cultura que "Café"', (_caso, nome) => {
-      // É o que impede a mesma espécie de entrar no catálogo escrita de três jeitos.
       expect(Cultura.criar({ nome }).chave).toBe(Cultura.criar({ nome: 'Café' }).chave);
     });
 

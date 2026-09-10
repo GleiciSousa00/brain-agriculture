@@ -9,7 +9,6 @@ const IDIOMA = 'pt-BR';
 
 const QUANTIDADE = new Intl.NumberFormat(IDIOMA, { maximumFractionDigits: 0 });
 
-// Duas casas é o que a coluna de área guarda; mais do que isso seria precisão inventada.
 const HECTARES = new Intl.NumberFormat(IDIOMA, { maximumFractionDigits: 2 });
 
 const PARTICIPACAO = new Intl.NumberFormat(IDIOMA, { maximumFractionDigits: 1 });
