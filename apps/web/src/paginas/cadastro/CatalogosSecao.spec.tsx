@@ -12,6 +12,11 @@ function cartaoDe(titulo: string): HTMLElement {
   return screen.getByRole('region', { name: titulo });
 }
 
+/** Os formulários nascem fechados: quem vai registrar pede por eles antes. */
+async function abrir(botao: string): Promise<void> {
+  await userEvent.click(screen.getByRole('button', { name: botao }));
+}
+
 describe('a seção de Culturas e Safras', () => {
   it('mostra os dois catálogos, cada um no seu cartão', async () => {
     servirCadastro({ culturas: [MILHO, SOJA], safras: [SAFRA_DE_2025, SAFRA_DE_2024] });
@@ -22,6 +27,8 @@ describe('a seção de Culturas e Safras', () => {
     expect(within(cartaoDe('Culturas')).getByText('Soja')).toBeInTheDocument();
     expect(within(cartaoDe('Safras')).getByText('2025')).toBeInTheDocument();
     expect(within(cartaoDe('Safras')).getByText('2024')).toBeInTheDocument();
+    expect(within(cartaoDe('Culturas')).getByText('2 culturas')).toBeInTheDocument();
+    expect(within(cartaoDe('Safras')).getByText('2 safras')).toBeInTheDocument();
   });
 
   it('acrescenta uma espécie e ela passa a aparecer no catálogo', async () => {
@@ -41,6 +48,7 @@ describe('a seção de Culturas e Safras', () => {
 
     renderizarNoCadastro(<CatalogosSecao />);
     await screen.findByText('Nenhuma Cultura no catálogo ainda.');
+    await abrir('Nova Cultura');
 
     await userEvent.type(screen.getByLabelText('Nome da Cultura'), 'Café');
     await userEvent.click(screen.getByRole('button', { name: 'Acrescentar' }));
@@ -66,6 +74,7 @@ describe('a seção de Culturas e Safras', () => {
 
     renderizarNoCadastro(<CatalogosSecao />);
     await screen.findByText('Nenhuma Safra registrada ainda.');
+    await abrir('Nova Safra');
 
     await userEvent.type(screen.getByLabelText('Ano da Safra'), '2026');
     await userEvent.click(screen.getByRole('button', { name: 'Registrar' }));
@@ -92,6 +101,7 @@ describe('a seção de Culturas e Safras', () => {
 
     renderizarNoCadastro(<CatalogosSecao />);
     await screen.findByText('Soja');
+    await abrir('Nova Cultura');
 
     await userEvent.type(screen.getByLabelText('Nome da Cultura'), 'Soja');
     await userEvent.click(screen.getByRole('button', { name: 'Acrescentar' }));

@@ -1,6 +1,7 @@
 import type { Cultura, Plantio, Produtor, Propriedade, Safra } from '@cadastro-rural/contracts';
 import { render } from '@testing-library/react';
 import type { ReactNode } from 'react';
+import { MemoryRouter } from 'react-router';
 import { CadastroProvider } from '../paginas/cadastro/CadastroContexto';
 import type { RotaFalsa } from './fetch-falso';
 import { servirRotas } from './fetch-falso';
@@ -47,9 +48,18 @@ export function servirCadastro(
   servirRotas({ ...rotasDosCatalogos(base), ...extras });
 }
 
-/** Monta uma seção dentro do provedor, que é o único lugar onde ela funciona. */
-export function renderizarNoCadastro(secao: ReactNode) {
-  return render(<CadastroProvider>{secao}</CadastroProvider>);
+/**
+ * Monta uma seção dentro do provedor, que é o único lugar onde ela funciona.
+ *
+ * O endereço vai junto porque é dele que sai o recorte da hierarquia: passar
+ * `/cadastro/propriedades?produtor=x` é como se chega às Propriedades de um Produtor.
+ */
+export function renderizarNoCadastro(secao: ReactNode, endereco = '/cadastro') {
+  return render(
+    <MemoryRouter initialEntries={[endereco]}>
+      <CadastroProvider>{secao}</CadastroProvider>
+    </MemoryRouter>,
+  );
 }
 
 /** Um Plantio, montado a partir da trinca que o identifica. */

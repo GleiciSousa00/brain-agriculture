@@ -86,6 +86,14 @@ export interface Cadastro extends Catalogos {
   nomeDoProdutor: (id: string) => string;
   nomeDaCultura: (id: string) => string;
   anoDaSafra: (id: string) => string;
+  /**
+   * Quantas Propriedades um Produtor tem, contadas no catálogo que já está em memória.
+   *
+   * É o número que a coluna de Propriedades mostra, e é ele que distingue o Produtor sem
+   * Propriedade nenhuma — o único a quem a tela oferece registrar a primeira. Passando do
+   * teto de cem, a conta é do que veio, e é isso que o aviso de `cortado` explica.
+   */
+  quantasPropriedadesDe: (produtorId: string) => number;
   criarProdutor: (corpo: CriarProdutor) => Promise<void>;
   editarProdutor: (id: string, corpo: EditarProdutor) => Promise<void>;
   excluirProdutor: (id: string) => Promise<void>;
@@ -211,6 +219,9 @@ export function CadastroProvider({ children }: Props) {
 
         return safra === undefined ? FORA_DO_CATALOGO : String(safra.ano);
       },
+      quantasPropriedadesDe: (produtorId) =>
+        catalogos.propriedades.filter((propriedade) => propriedade.produtorId === produtorId)
+          .length,
       criarProdutor: (corpo) => escrever(() => criarProdutor(corpo)),
       editarProdutor: (id, corpo) => escrever(() => editarProdutor(id, corpo)),
       excluirProdutor: (id) => escrever(() => excluirProdutor(id)),

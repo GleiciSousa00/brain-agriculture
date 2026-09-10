@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { paginar, renderizarNoCadastro, servirCadastro } from '../../teste/cadastro-falso';
-import { AGRO_BETO, ANA } from '../../teste/exemplos';
+import { AGRO_BETO, ANA, BOA_VISTA, SITIO_DO_MEIO } from '../../teste/exemplos';
 import { corpoEnviadoPara, servirRotas } from '../../teste/fetch-falso';
 import { ProdutoresSecao } from './ProdutoresSecao';
 
@@ -16,6 +16,11 @@ async function preencher(rotulo: string, texto: string): Promise<void> {
   const campo = screen.getByLabelText(rotulo);
   await userEvent.clear(campo);
   await userEvent.type(campo, texto);
+}
+
+/** O formulário nasce fechado: quem vai registrar pede por ele antes. */
+async function abrirONovo(): Promise<void> {
+  await userEvent.click(screen.getByRole('button', { name: 'Novo Produtor' }));
 }
 
 describe('a seção de Produtores', () => {
@@ -54,6 +59,7 @@ describe('a seção de Produtores', () => {
 
     renderizarNoCadastro(<ProdutoresSecao />);
     await screen.findByText('Nenhum Produtor cadastrado ainda.');
+    await abrirONovo();
 
     await preencher('Nome', 'Ana Lima');
     await preencher('Documento', '123.456.789-00');
@@ -70,14 +76,15 @@ describe('a seção de Produtores', () => {
 
     renderizarNoCadastro(<ProdutoresSecao />);
     await screen.findByText('Nenhum Produtor cadastrado ainda.');
+    await abrirONovo();
 
     await preencher('Nome', 'Ana Lima');
     await preencher('Documento', '12345678900');
     await userEvent.click(screen.getByRole('button', { name: 'Registrar' }));
 
-    // O formulário só se esvazia depois que a escrita passou.
+    // O formulário só se fecha depois que a escrita passou.
     await waitFor(() => {
-      expect(screen.getByLabelText('Nome')).toHaveValue('');
+      expect(screen.queryByLabelText('Nome')).toBeNull();
     });
     await expect(corpoEnviadoPara('POST', '/api/produtores')).resolves.toEqual({
       nome: 'Ana Lima',
@@ -102,6 +109,7 @@ describe('a seção de Produtores', () => {
 
     renderizarNoCadastro(<ProdutoresSecao />);
     await screen.findByText('Nenhum Produtor cadastrado ainda.');
+    await abrirONovo();
 
     await preencher('Nome', 'Ana Lima');
     await preencher('Documento', '111');
@@ -241,11 +249,49 @@ describe('a seção de Produtores', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
     await screen.findByRole('alert');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Cancelar edição' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
 
     // A recusa era do que se mandou. Deixá-la sobre o formulário vazio de novo Produtor
     // seria acusar de recusado o que ninguém mandou.
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('conta quantos Produtores existem, e não quantos couberam na página', async () => {
+    const muitos = Array.from({ length: 23 }, (_, indice) => ({
+      ...ANA,
+      id: `produtor-${String(indice)}`,
+      nome: `Produtor ${String(indice).padStart(2, '0')}`,
+    }));
+    servirCadastro({ produtores: muitos });
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+
+    expect(await screen.findByText('23 registros')).toBeInTheDocument();
+  });
+
+  it('leva de cada Produtor às Propriedades dele, dizendo quantas são', async () => {
+    servirCadastro({ produtores: [ANA], propriedades: [BOA_VISTA, SITIO_DO_MEIO] });
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Ana Lima');
+
+    const descida = screen.getByRole('link', { name: 'Ver as Propriedades de Ana Lima' });
+    expect(descida).toHaveTextContent('2 propriedades');
+    expect(descida).toHaveAttribute('href', `/cadastro/propriedades?produtor=${ANA.id}`);
+  });
+
+  it('oferece registrar a primeira ao Produtor que ainda não tem Propriedade', async () => {
+    servirCadastro({ produtores: [ANA], propriedades: [] });
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Ana Lima');
+
+    const descida = screen.getByRole('link', {
+      name: 'Registrar a primeira Propriedade de Ana Lima',
+    });
+    expect(descida).toHaveTextContent('Registrar a primeira');
+    // O formulário do outro lado já abre, porque quem clicou pediu para registrar.
+    expect(descida).toHaveAttribute('href', `/cadastro/propriedades?produtor=${ANA.id}&novo=1`);
   });
 
   it('tira a tabela da tela quando a listagem falha, em vez de deixar linha velha', async () => {

@@ -24,6 +24,21 @@ export function formatarHectares(valor: number): string {
   return `${HECTARES.format(valor)} ha`;
 }
 
+/** Área sem a unidade, para onde a unidade já está escrita ao lado. */
+export function formatarArea(valor: number): string {
+  return HECTARES.format(valor);
+}
+
+/**
+ * Quantos, e do quê, com o substantivo concordando.
+ *
+ * "1 propriedade" e "3 propriedades" dizem a mesma coisa que "1 propriedade(s)" sem
+ * pedir que quem lê faça a concordância de cabeça.
+ */
+export function formatarContagem(valor: number, singular: string, plural: string): string {
+  return `${formatarQuantidade(valor)} ${valor === 1 ? singular : plural}`;
+}
+
 /** Quanto a fatia representa do total. Total zero devolve zero, e não divisão por zero. */
 export function formatarParticipacao(valor: number, total: number): string {
   const fracao = total === 0 ? 0 : (valor / total) * 100;

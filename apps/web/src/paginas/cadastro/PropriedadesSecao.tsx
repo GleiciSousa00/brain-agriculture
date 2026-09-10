@@ -1,17 +1,28 @@
 import type { Propriedade } from '@cadastro-rural/contracts';
-import { useId, useState } from 'react';
-import { listarPropriedades } from '../../api/propriedades';
+import { useState } from 'react';
+import { Link } from 'react-router';
+import { listarPropriedades, listarPropriedadesDoProdutor } from '../../api/propriedades';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { Campo } from '../../componentes/Campo';
 import { Escolha } from '../../componentes/Escolha';
-import { comoNumero, formatarHectares } from '../../formato';
+import { comoNumero, formatarArea, formatarHectares } from '../../formato';
 import { useCadastro } from './CadastroContexto';
+import {
+  PRODUTORES,
+  plantiosDe,
+  propriedadesDe,
+  useEsquecerAbertura,
+  useHierarquia,
+} from './hierarquia';
 import { Listagem } from './Listagem';
+import { UNIDADES_FEDERATIVAS } from './unidades-federativas';
 import { useTentativa } from './useTentativa';
 
 const CARREGANDO = 'Carregando as Propriedades…';
 const VAZIO = 'Nenhuma Propriedade cadastrada ainda.';
 const SEM_PRODUTOR = 'Registre um Produtor antes: toda Propriedade é registrada em nome de um.';
+const AJUDA_DAS_AREAS =
+  'Até duas casas decimais. A área agricultável mais a de vegetação não passam do total.';
 
 /** O que o formulário guarda enquanto se digita: texto, como o campo devolve. */
 interface Rascunho {
@@ -58,27 +69,87 @@ function corpoDe(rascunho: Rascunho) {
   };
 }
 
-export function PropriedadesSecao() {
-  const { produtores, nomeDoProdutor, criarPropriedade, editarPropriedade, excluirPropriedade } =
-    useCadastro();
+/**
+ * O que as três áreas já somam, dito enquanto se digita.
+ *
+ * A regra é da API e é ela quem recusa. Isto não confere nada: só põe a conta na frente
+ * de quem a está fazendo de cabeça, que é o que evita a recusa em vez de explicá-la.
+ */
+function somaDasAreas(rascunho: Rascunho): string {
+  const [total, agricultavel, vegetacao] = [
+    rascunho.areaTotal,
+    rascunho.areaAgricultavel,
+    rascunho.areaDeVegetacao,
+  ].map(comoNumero);
 
+  if ([total, agricultavel, vegetacao].every(Number.isNaN)) {
+    return AJUDA_DAS_AREAS;
+  }
+
+  const repartido = (agricultavel || 0) + (vegetacao || 0);
+
+  return `Agricultável mais vegetação: ${formatarArea(repartido)} ha de ${formatarArea(total || 0)} ha no total.`;
+}
+
+/**
+ * A seção, presa ao recorte em que se está.
+ *
+ * A chave remonta tudo quando o recorte muda: o formulário volta a nascer em nome do
+ * Produtor certo e a lista volta à primeira página, que é o único comportamento honesto
+ * — a terceira página de um Produtor não diz nada sobre outro. Fechar o formulário não
+ * remonta nada, e é por isso que a chave ignora o pedido de abertura.
+ */
+export function PropriedadesSecao() {
+  const { produtorId, abrindo } = useHierarquia();
+
+  return <Recorte key={produtorId} produtorId={produtorId} abrindo={abrindo} />;
+}
+
+interface PropsDoRecorte {
+  produtorId: string;
+  abrindo: boolean;
+}
+
+function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
+  const {
+    produtores,
+    carregando,
+    nomeDoProdutor,
+    criarPropriedade,
+    editarPropriedade,
+    excluirPropriedade,
+  } = useCadastro();
+
+  const esquecerAbertura = useEsquecerAbertura();
+  const [aberto, setAberto] = useState(abrindo);
   const [emEdicao, setEmEdicao] = useState<Propriedade>();
-  const [rascunho, setRascunho] = useState<Rascunho>(RASCUNHO_LIMPO);
+  const [rascunho, setRascunho] = useState<Rascunho>({
+    ...RASCUNHO_LIMPO,
+    // Chegando pelo recorte de um Produtor, é em nome dele que se registra.
+    produtorId,
+  });
   const tentativaDoFormulario = useTentativa();
   const tentativaDaExclusao = useTentativa();
-  const tituloId = useId();
 
   const campo = (chave: keyof Rascunho) => (valor: string) => {
     setRascunho((anterior) => ({ ...anterior, [chave]: valor }));
   };
 
-  function limpar(): void {
+  function fechar(): void {
+    setAberto(false);
     setEmEdicao(undefined);
-    setRascunho(RASCUNHO_LIMPO);
+    setRascunho({ ...RASCUNHO_LIMPO, produtorId });
     tentativaDoFormulario.limpar();
+    esquecerAbertura();
   }
 
-  function comecarAEditar(propriedade: Propriedade): void {
+  function abrirParaRegistrar(): void {
+    fechar();
+    setAberto(true);
+  }
+
+  function abrirParaEditar(propriedade: Propriedade): void {
+    setAberto(true);
     setEmEdicao(propriedade);
     setRascunho(rascunhoDe(propriedade));
     tentativaDoFormulario.limpar();
@@ -95,7 +166,7 @@ export function PropriedadesSecao() {
     });
 
     if (passou) {
-      limpar();
+      fechar();
     }
   }
 
@@ -106,93 +177,137 @@ export function PropriedadesSecao() {
   // Sem Produtor no cadastro não há em nome de quem registrar, e um formulário que só
   // pode ser recusado é pior do que um formulário que não aparece.
   const podeRegistrar = emEdicao !== undefined || produtores.length > 0;
+  const recortado = produtorId !== '';
+  // Quem é o recorte só se sabe com o catálogo em mãos. Até lá a lista já é a dele, mas
+  // ainda não tem nome: escrever "Propriedades de —" seria pior do que não nomear.
+  const dono = recortado && !carregando ? nomeDoProdutor(produtorId) : '';
 
   return (
-    <section className="secao" aria-labelledby={tituloId}>
-      <h2 id={tituloId}>Propriedades</h2>
-
-      {podeRegistrar ? (
-        <form
-          className="cartao formulario"
-          // Sem a conferência do navegador: a recusa tem de vir do corpo da API, e um
-          // valor fora do passo faria o navegador barrar o envio com texto dele.
-          noValidate
-          onSubmit={(evento) => {
-            evento.preventDefault();
-            void enviar();
-          }}
-        >
-          <h3>{emEdicao === undefined ? 'Nova Propriedade' : `Editar ${emEdicao.nome}`}</h3>
-          {emEdicao === undefined ? (
-            <Escolha
-              rotulo="Produtor"
-              valor={rascunho.produtorId}
-              aoMudar={campo('produtorId')}
-              vazia="Escolha um Produtor"
-              opcoes={produtores.map((produtor) => ({
-                valor: produtor.id,
-                rotulo: produtor.nome,
-              }))}
-            />
-          ) : (
-            // Mudar a Propriedade de Produtor não é uma operação que a API ofereça.
-            <p className="campo">
-              <span className="rotulo-fixo">Produtor</span>
-              <span>{nomeDoProdutor(emEdicao.produtorId)}</span>
-            </p>
-          )}
-          <Campo rotulo="Nome" valor={rascunho.nome} aoMudar={campo('nome')} />
-          <Campo rotulo="Cidade" valor={rascunho.cidade} aoMudar={campo('cidade')} />
-          <Campo
-            rotulo="Estado"
-            valor={rascunho.estado}
-            aoMudar={campo('estado')}
-            ajuda="A sigla da unidade federativa, como MG."
-          />
-          <Campo
-            rotulo="Área total"
-            tipo="number"
-            passo="0.01"
-            valor={rascunho.areaTotal}
-            aoMudar={campo('areaTotal')}
-            ajuda="Em hectares."
-          />
-          <Campo
-            rotulo="Área agricultável"
-            tipo="number"
-            passo="0.01"
-            valor={rascunho.areaAgricultavel}
-            aoMudar={campo('areaAgricultavel')}
-          />
-          <Campo
-            rotulo="Área de vegetação"
-            tipo="number"
-            passo="0.01"
-            valor={rascunho.areaDeVegetacao}
-            aoMudar={campo('areaDeVegetacao')}
-          />
-          <p className="acoes">
-            <button type="submit">{emEdicao === undefined ? 'Registrar' : 'Salvar'}</button>
-            {emEdicao !== undefined && (
-              <button type="button" onClick={limpar}>
-                Cancelar edição
-              </button>
+    <div className="secao">
+      {aberto &&
+        (podeRegistrar ? (
+          <form
+            className="cartao formulario"
+            // Sem a conferência do navegador: a recusa tem de vir do corpo da API, e um
+            // valor fora do passo faria o navegador barrar o envio com texto dele.
+            noValidate
+            onSubmit={(evento) => {
+              evento.preventDefault();
+              void enviar();
+            }}
+          >
+            <h3>{emEdicao === undefined ? 'Nova Propriedade' : `Editar ${emEdicao.nome}`}</h3>
+            {emEdicao === undefined ? (
+              <Escolha
+                rotulo="Produtor"
+                valor={rascunho.produtorId}
+                aoMudar={campo('produtorId')}
+                vazia="Escolha um Produtor"
+                opcoes={produtores.map((produtor) => ({
+                  valor: produtor.id,
+                  rotulo: produtor.nome,
+                }))}
+              />
+            ) : (
+              // Mudar a Propriedade de Produtor não é uma operação que a API ofereça.
+              <p className="campo">
+                <span className="rotulo-fixo">Produtor</span>
+                <span className="valor-fixo">{nomeDoProdutor(emEdicao.produtorId)}</span>
+                <span className="ajuda">Uma Propriedade não muda de Produtor.</span>
+              </p>
             )}
-          </p>
-          {tentativaDoFormulario.recusa !== undefined && (
-            <p role="alert">{tentativaDoFormulario.recusa}</p>
-          )}
-        </form>
-      ) : (
-        <p className="cartao vazio">{SEM_PRODUTOR}</p>
-      )}
+            <Campo rotulo="Nome" valor={rascunho.nome} aoMudar={campo('nome')} />
+            <Campo rotulo="Cidade" valor={rascunho.cidade} aoMudar={campo('cidade')} />
+            <Escolha
+              rotulo="Estado"
+              valor={rascunho.estado}
+              aoMudar={campo('estado')}
+              vazia="UF"
+              opcoes={UNIDADES_FEDERATIVAS.map((sigla) => ({ valor: sigla, rotulo: sigla }))}
+            />
+            <fieldset className="medidas largura-inteira">
+              <legend>Áreas, em hectares</legend>
+              <div className="trio">
+                <Campo
+                  rotulo="Total"
+                  tipo="number"
+                  passo="0.01"
+                  unidade="ha"
+                  valor={rascunho.areaTotal}
+                  aoMudar={campo('areaTotal')}
+                />
+                <Campo
+                  rotulo="Agricultável"
+                  tipo="number"
+                  passo="0.01"
+                  unidade="ha"
+                  valor={rascunho.areaAgricultavel}
+                  aoMudar={campo('areaAgricultavel')}
+                />
+                <Campo
+                  rotulo="Vegetação"
+                  tipo="number"
+                  passo="0.01"
+                  unidade="ha"
+                  valor={rascunho.areaDeVegetacao}
+                  aoMudar={campo('areaDeVegetacao')}
+                />
+              </div>
+              <span className="ajuda">{somaDasAreas(rascunho)}</span>
+            </fieldset>
+            {tentativaDoFormulario.recusa !== undefined && (
+              <p className="largura-inteira" role="alert">
+                {tentativaDoFormulario.recusa}
+              </p>
+            )}
+            <p className="acoes largura-inteira">
+              <button type="submit">{emEdicao === undefined ? 'Registrar' : 'Salvar'}</button>
+              <button type="button" onClick={fechar}>
+                Cancelar
+              </button>
+            </p>
+          </form>
+        ) : (
+          <div className="cartao formulario">
+            <h3>Nova Propriedade</h3>
+            <p className="largura-inteira ajuda">{SEM_PRODUTOR}</p>
+            <p className="acoes largura-inteira">
+              <Link to={PRODUTORES}>Ir para Produtores</Link>
+            </p>
+          </div>
+        ))}
 
-      {/* A recusa de uma exclusão fica junto da tabela, que é onde ela foi pedida. */}
+      {/* A recusa de uma exclusão fica junto da lista, que é onde ela foi pedida. */}
       {tentativaDaExclusao.recusa !== undefined && (
         <p role="alert">{tentativaDaExclusao.recusa}</p>
       )}
 
-      <Listagem listar={listarPropriedades} carregando={CARREGANDO} vazio={VAZIO}>
+      <Listagem
+        titulo={dono === '' ? 'Propriedades' : `Propriedades de ${dono}`}
+        acoes={
+          <>
+            {recortado && (
+              <Link className="ligacao" to={propriedadesDe('')}>
+                Ver todas
+              </Link>
+            )}
+            {!aberto && (
+              <button type="button" className="abridor" onClick={abrirParaRegistrar}>
+                Nova Propriedade
+              </button>
+            )}
+          </>
+        }
+        listar={(pagina, tamanho) =>
+          recortado
+            ? listarPropriedadesDoProdutor(produtorId, pagina, tamanho)
+            : listarPropriedades(pagina, tamanho)
+        }
+        carregando={CARREGANDO}
+        vazio={
+          dono === '' ? VAZIO : `${dono} ainda não tem Propriedade. Registre a primeira acima.`
+        }
+      >
         {(propriedades) => (
           <table className="tabela">
             <thead>
@@ -200,24 +315,40 @@ export function PropriedadesSecao() {
                 <th scope="col">Nome</th>
                 <th scope="col">Produtor</th>
                 <th scope="col">Onde</th>
-                <th scope="col">Área total</th>
+                <th scope="col" className="numero">
+                  Área total
+                </th>
+                <th scope="col">Plantios</th>
                 <th scope="col">Ações</th>
               </tr>
             </thead>
             <tbody>
               {propriedades.map((propriedade) => (
-                <tr key={propriedade.id}>
+                <tr
+                  key={propriedade.id}
+                  className={emEdicao?.id === propriedade.id ? 'em-edicao' : ''}
+                >
                   <td>{propriedade.nome}</td>
                   <td>{nomeDoProdutor(propriedade.produtorId)}</td>
-                  <td>
+                  <td className="apagado">
                     {propriedade.cidade}/{propriedade.estado}
                   </td>
-                  <td>{formatarHectares(propriedade.areaTotal)}</td>
+                  <td className="numero">{formatarHectares(propriedade.areaTotal)}</td>
+                  <td>
+                    <Link
+                      className="ligacao"
+                      to={plantiosDe(propriedade.id, propriedade.produtorId)}
+                      aria-label={`Ver os Plantios de ${propriedade.nome}`}
+                    >
+                      Ver Plantios ›
+                    </Link>
+                  </td>
                   <td className="acoes">
                     <button
                       type="button"
+                      className="miudo"
                       onClick={() => {
-                        comecarAEditar(propriedade);
+                        abrirParaEditar(propriedade);
                       }}
                     >
                       Editar {propriedade.nome}
@@ -236,6 +367,6 @@ export function PropriedadesSecao() {
           </table>
         )}
       </Listagem>
-    </section>
+    </div>
   );
 }

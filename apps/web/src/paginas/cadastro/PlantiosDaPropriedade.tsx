@@ -1,38 +1,141 @@
+import { useState } from 'react';
+import { Link } from 'react-router';
 import { listarPlantiosDaPropriedade } from '../../api/plantios';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
+import { Escolha, NADA_ESCOLHIDO } from '../../componentes/Escolha';
 import { useCadastro } from './CadastroContexto';
+import { CATALOGOS } from './hierarquia';
 import { Listagem } from './Listagem';
 import { useTentativa } from './useTentativa';
 
 const CARREGANDO = 'Carregando os Plantios…';
 const VAZIO = 'Nenhum Plantio registrado nesta Propriedade ainda.';
+const FALTA_CATALOGO = 'Falta Cultura ou Safra no catálogo.';
 
 interface Props {
   propriedadeId: string;
+  /**
+   * O nome dela, quando o catálogo o alcança.
+   *
+   * Passando do centésimo registro o catálogo não traz a Propriedade, e ainda assim os
+   * Plantios dela são listáveis: a rota que os busca pede o identificador, não o nome.
+   */
+  nome?: string;
+  /** Chegou-se aqui pedindo para registrar, e não só para ver. */
+  abrindo: boolean;
 }
 
 /**
- * A tabela de Plantios de uma Propriedade.
+ * Os Plantios de uma Propriedade, com o formulário que os registra.
  *
- * Ela é um componente à parte porque a listagem só existe a partir de uma Propriedade:
+ * Ela é um componente à parte porque tudo aqui só existe a partir de uma Propriedade:
  * enquanto não há uma escolhida, não há o que buscar, e um gancho que buscasse assim
  * mesmo pediria a rota de um identificador vazio.
  *
  * O Plantio que a API devolve só tem identificadores. Quem os troca por nome é o catálogo
  * do contexto, que já está em memória para os campos de escolha.
  */
-export function PlantiosDaPropriedade({ propriedadeId }: Props) {
-  const { nomeDaCultura, anoDaSafra, excluirPlantio } = useCadastro();
-  const { recusa, tentar } = useTentativa();
+export function PlantiosDaPropriedade({ propriedadeId, nome, abrindo }: Props) {
+  const { culturas, safras, nomeDaCultura, anoDaSafra, registrarPlantio, excluirPlantio } =
+    useCadastro();
 
-  async function excluir(id: string): Promise<void> {
-    await tentar(() => excluirPlantio(id));
+  const [aberto, setAberto] = useState(abrindo);
+  const [culturaId, setCulturaId] = useState(NADA_ESCOLHIDO);
+  const [safraId, setSafraId] = useState(NADA_ESCOLHIDO);
+  const tentativaDoFormulario = useTentativa();
+  const tentativaDaExclusao = useTentativa();
+
+  function fechar(): void {
+    setAberto(false);
+    setCulturaId(NADA_ESCOLHIDO);
+    setSafraId(NADA_ESCOLHIDO);
+    tentativaDoFormulario.limpar();
   }
 
+  /** A unicidade da trinca é regra da API. A tela repete o que ela respondeu. */
+  async function enviar(): Promise<void> {
+    const passou = await tentativaDoFormulario.tentar(() =>
+      registrarPlantio({ propriedadeId, culturaId, safraId }),
+    );
+
+    if (passou) {
+      fechar();
+    }
+  }
+
+  async function excluir(id: string): Promise<void> {
+    await tentativaDaExclusao.tentar(() => excluirPlantio(id));
+  }
+
+  // Sem uma Cultura e uma Safra no catálogo não há trinca a formar, e os dois campos de
+  // escolha nasceriam vazios sem dizer por quê.
+  const faltaCatalogo = culturas.length === 0 || safras.length === 0;
+
   return (
-    <>
-      {recusa !== undefined && <p role="alert">{recusa}</p>}
+    <div className="secao">
+      {aberto && (
+        <form
+          className="cartao formulario"
+          // Sem a conferência do navegador: a recusa tem de vir do corpo da API.
+          noValidate
+          onSubmit={(evento) => {
+            evento.preventDefault();
+            void enviar();
+          }}
+        >
+          <h3>Novo Plantio</h3>
+          <Escolha
+            rotulo="Cultura"
+            valor={culturaId}
+            aoMudar={setCulturaId}
+            vazia="Escolha uma Cultura"
+            opcoes={culturas.map((cultura) => ({ valor: cultura.id, rotulo: cultura.nome }))}
+          />
+          <Escolha
+            rotulo="Safra"
+            valor={safraId}
+            aoMudar={setSafraId}
+            vazia="Escolha uma Safra"
+            opcoes={safras.map((safra) => ({ valor: safra.id, rotulo: String(safra.ano) }))}
+          />
+          {faltaCatalogo && (
+            <p className="largura-inteira ajuda">
+              {FALTA_CATALOGO} <Link to={CATALOGOS}>Ir para Culturas e Safras</Link>
+            </p>
+          )}
+          {tentativaDoFormulario.recusa !== undefined && (
+            <p className="largura-inteira" role="alert">
+              {tentativaDoFormulario.recusa}
+            </p>
+          )}
+          <p className="acoes largura-inteira">
+            <button type="submit">Registrar</button>
+            <button type="button" onClick={fechar}>
+              Cancelar
+            </button>
+          </p>
+        </form>
+      )}
+
+      {tentativaDaExclusao.recusa !== undefined && (
+        <p role="alert">{tentativaDaExclusao.recusa}</p>
+      )}
+
       <Listagem
+        titulo={nome === undefined ? 'Plantios da Propriedade' : `Plantios de ${nome}`}
+        acoes={
+          !aberto && (
+            <button
+              type="button"
+              className="abridor"
+              onClick={() => {
+                setAberto(true);
+              }}
+            >
+              Novo Plantio
+            </button>
+          )
+        }
         listar={(pagina, tamanho) => listarPlantiosDaPropriedade(propriedadeId, pagina, tamanho)}
         carregando={CARREGANDO}
         vazio={VAZIO}
@@ -54,7 +157,7 @@ export function PlantiosDaPropriedade({ propriedadeId }: Props) {
                 return (
                   <tr key={plantio.id}>
                     <td>{cultura}</td>
-                    <td>{safra}</td>
+                    <td className="tabular">{safra}</td>
                     <td className="acoes">
                       <BotaoDeExclusao
                         rotulo={`Excluir ${cultura} em ${safra}`}
@@ -71,6 +174,6 @@ export function PlantiosDaPropriedade({ propriedadeId }: Props) {
           </table>
         )}
       </Listagem>
-    </>
+    </div>
   );
 }

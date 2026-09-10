@@ -1,4 +1,4 @@
-import { formatarHectares, formatarQuantidade } from '../formato';
+import { formatarArea, formatarQuantidade } from '../formato';
 
 interface Props {
   propriedades: number;
@@ -15,7 +15,10 @@ export function Totais({ propriedades, areaTotal }: Props) {
       </div>
       <div className="cartao">
         <dt>Área total</dt>
-        <dd>{formatarHectares(areaTotal)}</dd>
+        {/* A unidade é miúda ao lado do número: ela mede, e não é o que se lê primeiro. */}
+        <dd>
+          {formatarArea(areaTotal)} <span className="unidade">ha</span>
+        </dd>
       </div>
     </dl>
   );
