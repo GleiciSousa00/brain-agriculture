@@ -1,4 +1,5 @@
 import type { Pagina } from '../../../shared/application/pagina';
+import { paginaPara } from '../../../shared/http/pagina.presenter';
 import type { Propriedade } from '../domain/propriedade';
 import type { PropriedadeResposta, PropriedadesPaginaResposta } from './dto/propriedade.dto';
 
@@ -16,10 +17,5 @@ export function paraResposta(propriedade: Propriedade): PropriedadeResposta {
 }
 
 export function paraPagina(pagina: Pagina<Propriedade>): PropriedadesPaginaResposta {
-  return {
-    itens: pagina.itens.map(paraResposta),
-    total: pagina.total,
-    pagina: pagina.pagina,
-    tamanho: pagina.tamanho,
-  };
+  return paginaPara(pagina, paraResposta);
 }

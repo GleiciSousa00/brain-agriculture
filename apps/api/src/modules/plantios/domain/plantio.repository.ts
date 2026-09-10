@@ -1,23 +1,9 @@
+import type { Recorte, Recortados } from '../../../shared/domain/recorte';
 import type { LigacaoDoPlantio, Plantio } from './plantio';
 
-/**
- * O recorte que a porta entende.
- *
- * A porta fala em deslocamento e limite, e não em página, porque `domain` não enxerga
- * `shared/application`, que é onde a fatia de listagem mora. Quem converte página em
- * deslocamento é o caso de uso. Ver o registro 0005.
- */
-export interface RecorteDePlantios {
-  /** A listagem é sempre a de uma Propriedade, e nunca a do cadastro inteiro. */
+/** O recorte comum, mais a Propriedade: a listagem é sempre a dela, nunca a do cadastro. */
+export interface RecorteDePlantios extends Recorte {
   propriedadeId: string;
-  deslocamento: number;
-  limite: number;
-}
-
-export interface PlantiosRecortados {
-  itens: Plantio[];
-  /** Quantos Plantios a Propriedade tem ao todo, e não quantos vieram neste recorte. */
-  total: number;
 }
 
 /** Porta de persistência do Plantio. Quem a implementa mora em `infrastructure`. */
@@ -35,7 +21,7 @@ export interface PlantioRepository {
    * está no domínio, quem a guarda é a coluna de criação, e o identificador desempata as
    * linhas gravadas na mesma transação.
    */
-  listByPropriedade(recorte: RecorteDePlantios): Promise<PlantiosRecortados>;
+  listByPropriedade(recorte: RecorteDePlantios): Promise<Recortados<Plantio>>;
 }
 
 export const PLANTIO_REPOSITORY = Symbol('PlantioRepository');

@@ -1,4 +1,5 @@
 import type { Pagina } from '../../../shared/application/pagina';
+import { paginaPara } from '../../../shared/http/pagina.presenter';
 import type { Plantio } from '../domain/plantio';
 import type { PlantioResposta, PlantiosPaginaResposta } from './dto/plantio.dto';
 
@@ -13,10 +14,5 @@ export function paraResposta(plantio: Plantio): PlantioResposta {
 }
 
 export function paraPagina(pagina: Pagina<Plantio>): PlantiosPaginaResposta {
-  return {
-    itens: pagina.itens.map(paraResposta),
-    total: pagina.total,
-    pagina: pagina.pagina,
-    tamanho: pagina.tamanho,
-  };
+  return paginaPara(pagina, paraResposta);
 }

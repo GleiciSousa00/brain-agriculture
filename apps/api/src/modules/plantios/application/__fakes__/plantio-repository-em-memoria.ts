@@ -5,11 +5,8 @@ import {
   PropriedadeDoPlantioNaoEncontrada,
   SafraDoPlantioNaoEncontrada,
 } from '../../domain/plantio.errors';
-import type {
-  PlantioRepository,
-  PlantiosRecortados,
-  RecorteDePlantios,
-} from '../../domain/plantio.repository';
+import type { Recortados } from '../../../../shared/domain/recorte';
+import type { PlantioRepository, RecorteDePlantios } from '../../domain/plantio.repository';
 
 /**
  * O que o cadastro tem, do ponto de vista das três chaves estrangeiras.
@@ -77,7 +74,7 @@ export class PlantioRepositoryEmMemoria implements PlantioRepository {
     propriedadeId,
     deslocamento,
     limite,
-  }: RecorteDePlantios): Promise<PlantiosRecortados> {
+  }: RecorteDePlantios): Promise<Recortados<Plantio>> {
     // A mesma ordem que o repositório de verdade promete, que é a de registro. Aqui ela sai
     // de graça, porque o mapa preserva a ordem de inserção. Um substituto que ordena
     // diferente faz o teste de paginação passar por acidente.

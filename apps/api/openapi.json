@@ -886,6 +886,16 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Não existe Propriedade com esse identificador.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
           }
         },
         "summary": "Lista os Plantios de uma Propriedade, em páginas.",

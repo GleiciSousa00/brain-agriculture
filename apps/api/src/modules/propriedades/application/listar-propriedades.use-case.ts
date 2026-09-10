@@ -1,5 +1,5 @@
 import type { Pagina, PedidoDePagina } from '../../../shared/application/pagina';
-import { deslocamentoDe } from '../../../shared/application/pagina';
+import { paginar } from '../../../shared/application/pagina';
 import type { Propriedade } from '../domain/propriedade';
 import type { PropriedadeRepository } from '../domain/propriedade.repository';
 
@@ -13,12 +13,7 @@ import type { PropriedadeRepository } from '../domain/propriedade.repository';
 export class ListarPropriedadesUseCase {
   constructor(private readonly propriedades: PropriedadeRepository) {}
 
-  async execute(pedido: PedidoDePagina): Promise<Pagina<Propriedade>> {
-    const { itens, total } = await this.propriedades.list({
-      deslocamento: deslocamentoDe(pedido),
-      limite: pedido.tamanho,
-    });
-
-    return { itens, total, pagina: pedido.pagina, tamanho: pedido.tamanho };
+  execute(pedido: PedidoDePagina): Promise<Pagina<Propriedade>> {
+    return paginar(pedido, (recorte) => this.propriedades.list(recorte));
   }
 }

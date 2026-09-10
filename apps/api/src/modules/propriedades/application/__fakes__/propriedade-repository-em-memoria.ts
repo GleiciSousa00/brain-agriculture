@@ -1,9 +1,6 @@
+import type { Recorte, Recortados } from '../../../../shared/domain/recorte';
 import type { Propriedade } from '../../domain/propriedade';
-import type {
-  PropriedadeRepository,
-  PropriedadesRecortadas,
-  RecorteDePropriedades,
-} from '../../domain/propriedade.repository';
+import type { PropriedadeRepository } from '../../domain/propriedade.repository';
 
 /**
  * Repositório substituto, usado pelos testes de caso de uso. `__fakes__` fica fora do
@@ -24,7 +21,7 @@ export class PropriedadeRepositoryEmMemoria implements PropriedadeRepository {
     this.propriedades.delete(id);
   }
 
-  async list({ deslocamento, limite }: RecorteDePropriedades): Promise<PropriedadesRecortadas> {
+  async list({ deslocamento, limite }: Recorte): Promise<Recortados<Propriedade>> {
     // A mesma ordem que o repositório de verdade promete. Um substituto que ordena
     // diferente faz o teste de paginação passar por acidente.
     const ordenadas = [...this.propriedades.values()].sort(

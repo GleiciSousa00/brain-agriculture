@@ -1,7 +1,8 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { ParametrosDePaginaDto } from '../../../shared/http/dto/pagina.dto';
+import { ProblemDetailsDto } from '../../../shared/http/dto/problem-details.dto';
 import { ListarPlantiosDaPropriedadeUseCase } from '../application/listar-plantios-da-propriedade.use-case';
 import { PlantiosPaginaDto, type PlantiosPaginaResposta } from './dto/plantio.dto';
 import { paraPagina } from './plantio.presenter';
@@ -22,6 +23,10 @@ export class PlantiosDaPropriedadeController {
   @ApiOkResponse({
     description: 'A fatia pedida. Uma Propriedade sem nenhum Plantio devolve a fatia vazia.',
     type: PlantiosPaginaDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Não existe Propriedade com esse identificador.',
+    type: ProblemDetailsDto,
   })
   async listar(
     @Param('propriedadeId', ParseUUIDPipe) propriedadeId: string,

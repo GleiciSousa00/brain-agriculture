@@ -1054,6 +1054,15 @@ export interface operations {
                     "application/json": components["schemas"]["PlantiosPaginaDto"];
                 };
             };
+            /** @description Não existe Propriedade com esse identificador. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
         };
     };
 }
