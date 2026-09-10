@@ -181,8 +181,8 @@ describe('A aplicação contra um Postgres de verdade', () => {
     expect(segunda.body.codigo).toBe('produtor-duplicado');
   });
 
-  it('o Plantio recusa a ligação repetida e some junto com a Propriedade', async () => {
-    const propriedadeId = await propriedadeDeTeste();
+  it('o Plantio recusa a ligação repetida e some com a Propriedade quando o Produtor é apagado', async () => {
+    const { produtorId, propriedadeId } = await propriedadeDeTeste();
     const [{ id: culturaId }] = (await request(app.getHttpServer()).get('/culturas').expect(200))
       .body;
     const { id: safraId } = (
@@ -205,13 +205,18 @@ describe('A aplicação contra um Postgres de verdade', () => {
     expect(semSafra.status).toBe(404);
     expect(semSafra.body.codigo).toBe('safra-do-plantio-nao-encontrada');
 
-    // A cascata é da chave estrangeira, e é o único jeito de prová-la.
-    await request(app.getHttpServer()).delete(`/propriedades/${propriedadeId}`).expect(204);
+    // A cascata parte do Produtor, e é o único jeito de provar a chave estrangeira de
+    // verdade: apagá-lo leva a Propriedade e, dali, o Plantio, na mesma instrução.
+    await request(app.getHttpServer()).delete(`/produtores/${produtorId}`).expect(204);
 
-    const sobraram = await app
+    const propriedadesRestantes = await app
+      .get(DataSource)
+      .query(`SELECT id FROM propriedades WHERE id = $1`, [propriedadeId]);
+    const plantiosRestantes = await app
       .get(DataSource)
       .query(`SELECT id FROM plantios WHERE id = $1`, [primeiro.body.id]);
-    expect(sobraram).toEqual([]);
+    expect(propriedadesRestantes).toEqual([]);
+    expect(plantiosRestantes).toEqual([]);
   });
 
   it('o painel agrega no banco e confere com o conjunto de exemplo', async () => {
@@ -305,7 +310,7 @@ describe('A aplicação contra um Postgres de verdade', () => {
    * Cada passo confere o próprio status. Sem isso um preparo que falha chega ao caso como
    * identificador indefinido, e o teste acusa o Plantio por um erro que não é dele.
    */
-  async function propriedadeDeTeste(): Promise<string> {
+  async function propriedadeDeTeste(): Promise<{ produtorId: string; propriedadeId: string }> {
     const produtor = await request(app.getHttpServer())
       .post('/produtores')
       .send({ documento: '693.318.670-93', nome: 'Quem planta' })
@@ -324,6 +329,6 @@ describe('A aplicação contra um Postgres de verdade', () => {
       })
       .expect(201);
 
-    return propriedade.body.id;
+    return { produtorId: produtor.body.id, propriedadeId: propriedade.body.id };
   }
 });

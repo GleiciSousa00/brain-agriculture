@@ -31,12 +31,6 @@ export class PropriedadesDoProdutorEmMemoria implements PropriedadesDoProdutorRe
       total: doProdutor.length,
     };
   }
-
-  async deleteByProdutor(produtorId: string): Promise<void> {
-    this.propriedades = this.propriedades.filter(
-      (propriedade) => propriedade.produtorId !== produtorId,
-    );
-  }
 }
 
 function porNome(uma: Propriedade, outra: Propriedade): number {
