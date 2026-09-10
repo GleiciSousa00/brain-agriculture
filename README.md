@@ -31,6 +31,37 @@ A rota de saúde responde sem tocar em nenhuma tabela do cadastro: ela manda um 
 no banco e mais nada. As migrações rodam no arranque da API, então o banco sobe pronto,
 com o catálogo de Culturas já semeado.
 
+## Encher o painel com dados de exemplo
+
+O banco sobe vazio, então o painel abre zerado. Um comando enche o cadastro com um
+conjunto pequeno e escolhido a dedo, para que as três distribuições digam algo:
+
+```bash
+docker compose exec api pnpm carga:exemplo
+```
+
+São 3 Produtores, 5 Propriedades em quatro estados, 10 Plantios de quatro Culturas e 3
+Safras. É o mesmo conjunto que o teste de integração do painel confere à mão, então o que
+a tela mostra é o que o teste prova.
+
+A carga entra pela API, e não por SQL, de propósito: assim ela percorre a validação do
+Documento, a regra da soma das áreas e a cifra em repouso. Um conjunto que só entrasse por
+SQL poderia ser um conjunto que a aplicação recusaria, e ninguém descobriria.
+
+Rodar duas vezes não duplica nada: a carga desiste assim que encontra um Produtor
+cadastrado, e não sobrescreve o que existe. Para começar do zero, derrube com
+`docker compose down --volumes` e suba de novo.
+
+O comando acima usa o `pnpm` da imagem, que o Corepack baixa na primeira execução. Sem
+saída para a internet, chame o `ts-node` direto, que já vem na imagem:
+
+```bash
+docker compose exec api node_modules/.bin/ts-node --project tsconfig.json scripts/carga-de-exemplo.ts
+```
+
+Sem Docker, o comando é `pnpm carga:exemplo` na raiz do repositório, com o Postgres de pé
+e as dependências instaladas. Ver [Desenvolver sem Docker](#desenvolver-sem-docker).
+
 ## As duas telas
 
 O painel fica em `/painel` e mostra o total de Propriedades cadastradas, a soma da Área
