@@ -51,10 +51,13 @@ export class TypeormPlantioRepository implements PlantioRepository {
     deslocamento,
     limite,
   }: RecorteDePlantios): Promise<PlantiosRecortados> {
-    // A contagem vem na mesma ida ao banco que a fatia, e é a da Propriedade inteira.
+    // A contagem vem na mesma ida ao banco que a fatia, e é a da Propriedade inteira. O
+    // índice da restrição de unicidade começa por `propriedade_id` e atende o filtro; a
+    // ordenação não é indexada porque uma Propriedade tem poucos Plantios, um por Cultura
+    // em cada Safra.
     const [linhas, total] = await this.linhas.findAndCount({
       where: { propriedadeId },
-      order: { culturaId: 'ASC', safraId: 'ASC' },
+      order: { criadoEm: 'ASC', id: 'ASC' },
       skip: deslocamento,
       take: limite,
     });

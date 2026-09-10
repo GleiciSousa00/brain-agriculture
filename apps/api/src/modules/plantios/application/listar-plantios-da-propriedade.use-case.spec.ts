@@ -5,7 +5,6 @@ import { RegistrarPlantioUseCase } from './registrar-plantio.use-case';
 const PROPRIEDADE = '3f1b7e5c-0a4d-4c8e-9a11-6b2c8d5e7f01';
 const OUTRA_PROPRIEDADE = '9d7c5b3a-1e2f-4068-8a4c-0b6d8e2f4a17';
 const SEM_PLANTIO = 'e2d4f6a8-0b1c-4d3e-9f50-6a7b8c9d0e1f';
-/** Nomes escolhidos para o identificador ordenar ao contrário da ordem de cadastro. */
 const CAFE = 'a1b2c3d4-e5f6-4708-9a1b-2c3d4e5f6a7b';
 const MILHO = 'b2c3d4e5-f6a7-4819-8b2c-3d4e5f6a7b8c';
 const SOJA = 'c3d4e5f6-a7b8-492a-9c3d-4e5f6a7b8c9d';
@@ -14,15 +13,19 @@ const SAFRA_2026 = 'e5f6a7b8-c9d0-4b4c-9e5f-6a7b8c9d0e1f';
 
 function cenario() {
   const repository = new PlantioRepositoryEmMemoria();
-  const registrar = new RegistrarPlantioUseCase(repository);
-  const listar = new ListarPlantiosDaPropriedadeUseCase(repository);
 
-  return { repository, registrar, listar };
+  return {
+    repository,
+    registrar: new RegistrarPlantioUseCase(repository),
+    listar: new ListarPlantiosDaPropriedadeUseCase(repository),
+  };
 }
 
 describe('ListarPlantiosDaPropriedadeUseCase', () => {
-  it('devolve os Plantios da Propriedade em ordem de Cultura e depois de Safra', async () => {
+  it('devolve os Plantios da Propriedade na ordem em que foram registrados', async () => {
     const { registrar, listar } = cenario();
+    // Cadastrados fora de qualquer ordem alfabética ou de identificador, para a ordem de
+    // registro ser a única que explica o resultado.
     await registrar.execute({ propriedadeId: PROPRIEDADE, culturaId: SOJA, safraId: SAFRA_2026 });
     await registrar.execute({ propriedadeId: PROPRIEDADE, culturaId: CAFE, safraId: SAFRA_2026 });
     await registrar.execute({ propriedadeId: PROPRIEDADE, culturaId: SOJA, safraId: SAFRA_2025 });
@@ -31,10 +34,10 @@ describe('ListarPlantiosDaPropriedadeUseCase', () => {
     const pagina = await listar.execute(PROPRIEDADE, { pagina: 1, tamanho: 20 });
 
     expect(pagina.itens.map((plantio) => [plantio.culturaId, plantio.safraId])).toEqual([
-      [CAFE, SAFRA_2026],
-      [MILHO, SAFRA_2026],
-      [SOJA, SAFRA_2025],
       [SOJA, SAFRA_2026],
+      [CAFE, SAFRA_2026],
+      [SOJA, SAFRA_2025],
+      [MILHO, SAFRA_2026],
     ]);
     expect(pagina).toMatchObject({ total: 4, pagina: 1, tamanho: 20 });
   });

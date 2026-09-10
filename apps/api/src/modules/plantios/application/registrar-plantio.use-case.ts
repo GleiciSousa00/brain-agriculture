@@ -2,8 +2,6 @@ import { Plantio, type LigacaoDoPlantio } from '../domain/plantio';
 import { PlantioDuplicado } from '../domain/plantio.errors';
 import type { PlantioRepository } from '../domain/plantio.repository';
 
-export type RegistrarPlantioEntrada = LigacaoDoPlantio;
-
 /**
  * Liga uma Cultura a uma Propriedade em uma Safra.
  *
@@ -15,7 +13,7 @@ export type RegistrarPlantioEntrada = LigacaoDoPlantio;
 export class RegistrarPlantioUseCase {
   constructor(private readonly plantios: PlantioRepository) {}
 
-  async execute(entrada: RegistrarPlantioEntrada): Promise<Plantio> {
+  async execute(entrada: LigacaoDoPlantio): Promise<Plantio> {
     if (await this.plantios.findByLigacao(entrada)) {
       throw new PlantioDuplicado();
     }

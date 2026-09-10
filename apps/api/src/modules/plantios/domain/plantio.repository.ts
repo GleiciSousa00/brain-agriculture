@@ -28,11 +28,12 @@ export interface PlantioRepository {
   findByLigacao(ligacao: LigacaoDoPlantio): Promise<Plantio | null>;
   delete(id: string): Promise<void>;
   /**
-   * Lista os Plantios de uma Propriedade, em ordem de Cultura e depois de Safra.
+   * Lista os Plantios de uma Propriedade, na ordem em que foram registrados.
    *
-   * Os dois campos bastam para a ordem ser total, porque a restrição de unicidade impede
-   * que a mesma Propriedade repita o par. Por isso não há terceiro critério de desempate,
-   * ao contrário das outras listagens do cadastro.
+   * Ordenar pelos identificadores de Cultura e de Safra também seria estável, mas eles são
+   * opacos, e a ordem não diria nada a quem opera. A ordem de registro diz. Como ela não
+   * está no domínio, quem a guarda é a coluna de criação, e o identificador desempata as
+   * linhas gravadas na mesma transação.
    */
   listByPropriedade(recorte: RecorteDePlantios): Promise<PlantiosRecortados>;
 }

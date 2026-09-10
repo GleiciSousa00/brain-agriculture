@@ -26,7 +26,6 @@ export class PlantioOrmEntity {
   @Column({ name: 'cultura_id', type: 'uuid' })
   culturaId!: string;
 
-  @Index()
   @Column({ name: 'safra_id', type: 'uuid' })
   safraId!: string;
 

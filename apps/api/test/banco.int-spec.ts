@@ -67,6 +67,9 @@ describe('A aplicação contra um Postgres de verdade', () => {
     const plantios: { column_name: string }[] = await dataSource.query(
       `SELECT column_name FROM information_schema.columns WHERE table_name = 'plantios'`,
     );
+    const restricoes: { conname: string }[] = await dataSource.query(
+      `SELECT conname FROM pg_constraint WHERE conrelid = 'plantios'::regclass ORDER BY conname`,
+    );
 
     expect(dataSource.options.synchronize).toBe(false);
     expect(colunas.map((coluna) => coluna.column_name).sort()).toEqual([
@@ -83,6 +86,16 @@ describe('A aplicação contra um Postgres de verdade', () => {
       'id',
       'propriedade_id',
       'safra_id',
+    ]);
+    // O repositório de Plantio se apoia nestes nomes para dizer qual das três referências
+    // falta. Renomear um deles na migração faria a tradução cair no caso geral, e a
+    // resposta viraria 500 com a pipeline verde.
+    expect(restricoes.map((restricao) => restricao.conname)).toEqual([
+      'fk_plantios_cultura',
+      'fk_plantios_propriedade',
+      'fk_plantios_safra',
+      'pk_plantios',
+      'uq_plantios_ligacao',
     ]);
     expect(catalogo.map((cultura) => cultura.nome)).toEqual(
       [...CULTURAS_INICIAIS].sort((um, outro) => (chaveDe(um) < chaveDe(outro) ? -1 : 1)),
@@ -141,9 +154,11 @@ describe('A aplicação contra um Postgres de verdade', () => {
 
   it('o Plantio recusa a ligação repetida e some junto com a Propriedade', async () => {
     const propriedadeId = await propriedadeDeTeste();
-    const [{ id: culturaId }] = (await request(app.getHttpServer()).get('/culturas')).body;
-    const { id: safraId } = (await request(app.getHttpServer()).post('/safras').send({ ano: 2031 }))
+    const [{ id: culturaId }] = (await request(app.getHttpServer()).get('/culturas').expect(200))
       .body;
+    const { id: safraId } = (
+      await request(app.getHttpServer()).post('/safras').send({ ano: 2031 }).expect(201)
+    ).body;
 
     const primeiro = await request(app.getHttpServer())
       .post('/plantios')
@@ -170,20 +185,29 @@ describe('A aplicação contra um Postgres de verdade', () => {
     expect(sobraram).toEqual([]);
   });
 
-  /** Um Produtor com uma Propriedade, que é o mínimo para um Plantio poder existir. */
+  /**
+   * Um Produtor com uma Propriedade, que é o mínimo para um Plantio poder existir.
+   *
+   * Cada passo confere o próprio status. Sem isso um preparo que falha chega ao caso como
+   * identificador indefinido, e o teste acusa o Plantio por um erro que não é dele.
+   */
   async function propriedadeDeTeste(): Promise<string> {
     const produtor = await request(app.getHttpServer())
       .post('/produtores')
-      .send({ documento: '693.318.670-93', nome: 'Quem planta' });
+      .send({ documento: '693.318.670-93', nome: 'Quem planta' })
+      .expect(201);
 
-    const propriedade = await request(app.getHttpServer()).post('/propriedades').send({
-      produtorId: produtor.body.id,
-      cidade: 'Sorriso',
-      estado: 'MT',
-      areaTotal: 100,
-      areaAgricultavel: 60,
-      areaDeVegetacao: 40,
-    });
+    const propriedade = await request(app.getHttpServer())
+      .post('/propriedades')
+      .send({
+        produtorId: produtor.body.id,
+        cidade: 'Sorriso',
+        estado: 'MT',
+        areaTotal: 100,
+        areaAgricultavel: 60,
+        areaDeVegetacao: 40,
+      })
+      .expect(201);
 
     return propriedade.body.id;
   }

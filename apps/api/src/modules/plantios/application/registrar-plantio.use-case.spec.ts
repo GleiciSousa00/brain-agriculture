@@ -1,6 +1,12 @@
-import { PlantioDuplicado } from '../domain/plantio.errors';
+import {
+  CulturaDoPlantioNaoEncontrada,
+  PlantioDuplicado,
+  PropriedadeDoPlantioNaoEncontrada,
+  SafraDoPlantioNaoEncontrada,
+} from '../domain/plantio.errors';
 import { PlantioRepositoryEmMemoria } from './__fakes__/plantio-repository-em-memoria';
 import { RegistrarPlantioUseCase } from './registrar-plantio.use-case';
+import type { ReferenciasConhecidas } from './__fakes__/plantio-repository-em-memoria';
 
 const PROPRIEDADE = '3f1b7e5c-0a4d-4c8e-9a11-6b2c8d5e7f01';
 const OUTRA_PROPRIEDADE = '9d7c5b3a-1e2f-4068-8a4c-0b6d8e2f4a17';
@@ -9,11 +15,20 @@ const MILHO = 'a1b2c3d4-e5f6-4708-9a1b-2c3d4e5f6a7b';
 const SAFRA_2026 = 'b5e8d3c1-2a6f-4907-9c4b-8e1d3f5a7c69';
 const SAFRA_2025 = 'c6f9e4d2-3b70-4a18-8d5c-9f2e4a6b8c01';
 
-function cenario() {
-  const repository = new PlantioRepositoryEmMemoria();
+const INEXISTENTE = 'f0e1d2c3-b4a5-4968-8778-695a4b3c2d1e';
+
+function cenario(conhecidas?: ReferenciasConhecidas) {
+  const repository = new PlantioRepositoryEmMemoria(conhecidas);
 
   return { repository, registrar: new RegistrarPlantioUseCase(repository) };
 }
+
+/** Um cadastro onde só a Propriedade, a Cultura e a Safra abaixo existem. */
+const CADASTRO: ReferenciasConhecidas = {
+  propriedades: [PROPRIEDADE],
+  culturas: [SOJA],
+  safras: [SAFRA_2026],
+};
 
 describe('RegistrarPlantioUseCase', () => {
   it('liga a Cultura à Propriedade na Safra', async () => {
@@ -99,5 +114,37 @@ describe('RegistrarPlantioUseCase', () => {
 
     await expect(registrar.execute(ligacao)).rejects.toThrow(PlantioDuplicado);
     expect(save).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      'a Propriedade não existe',
+      { propriedadeId: INEXISTENTE, culturaId: SOJA, safraId: SAFRA_2026 },
+      PropriedadeDoPlantioNaoEncontrada,
+    ],
+    [
+      'a Cultura não está no catálogo',
+      { propriedadeId: PROPRIEDADE, culturaId: INEXISTENTE, safraId: SAFRA_2026 },
+      CulturaDoPlantioNaoEncontrada,
+    ],
+    [
+      'a Safra não existe',
+      { propriedadeId: PROPRIEDADE, culturaId: SOJA, safraId: INEXISTENTE },
+      SafraDoPlantioNaoEncontrada,
+    ],
+  ])('recusa e diz qual referência falta quando %s', async (_caso, ligacao, esperado) => {
+    // Quem recusa é a chave estrangeira, na gravação. O que se prova aqui é que o caso de
+    // uso deixa a recusa subir, com o erro que diz qual dos três campos corrigir.
+    const { registrar } = cenario(CADASTRO);
+
+    await expect(registrar.execute(ligacao)).rejects.toThrow(esperado);
+  });
+
+  it('grava quando as três referências existem', async () => {
+    const { registrar } = cenario(CADASTRO);
+
+    await expect(
+      registrar.execute({ propriedadeId: PROPRIEDADE, culturaId: SOJA, safraId: SAFRA_2026 }),
+    ).resolves.toMatchObject({ propriedadeId: PROPRIEDADE });
   });
 });
