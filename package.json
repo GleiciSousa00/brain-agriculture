@@ -16,6 +16,9 @@
     "test:integration": "turbo run test:integration",
     "openapi": "pnpm --filter @cadastro-rural/api openapi && pnpm --filter @cadastro-rural/contracts gerar",
     "openapi:check": "pnpm openapi && git diff --exit-code -- apps/api/openapi.json packages/contracts/src/generated",
+    "carga:exemplo": "pnpm --filter @cadastro-rural/api carga:exemplo",
+    "carga:volume": "pnpm --filter @cadastro-rural/api carga:volume",
+    "medir:painel": "pnpm --filter @cadastro-rural/api medir:painel",
     "depcruise": "dependency-cruiser --config .dependency-cruiser.cjs apps packages",
     "audit:gate": "pnpm audit --audit-level high",
     "audit:report": "pnpm audit --audit-level moderate || true"

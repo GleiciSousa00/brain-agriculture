@@ -15,6 +15,7 @@ import {
   type ProdutorRepository,
 } from '../src/modules/produtores/domain/produtor.repository';
 import { ProdutorDuplicado } from '../src/modules/produtores/domain/produtor.errors';
+import { carregarDadosDeExemplo, catalogoPorNome } from '../scripts/carregador-de-exemplo';
 
 /**
  * A suíte de contêiner é pequena de propósito. Ela cobre só o que apenas o banco prova: que
@@ -27,6 +28,10 @@ import { ProdutorDuplicado } from '../src/modules/produtores/domain/produtor.err
  * repositório e pela API. O caso do painel entrou juntando os dois da cifra, que eram um
  * `it.each` sobre CPF e CNPJ: os dois documentos passaram a ser percorridos dentro de um
  * caso só, sem que nenhuma asserção se perdesse.
+ *
+ * O caso do painel carrega o conjunto de dados de exemplo, que é o mesmo que `pnpm
+ * carga:exemplo` insere. Os números que ele espera foram conferidos à mão contra esse
+ * conjunto, e é isso que faz o teste provar o cadastro que a operadora vê.
  */
 describe('A aplicação contra um Postgres de verdade', () => {
   let postgres: StartedPostgreSqlContainer;
@@ -209,7 +214,7 @@ describe('A aplicação contra um Postgres de verdade', () => {
     expect(sobraram).toEqual([]);
   });
 
-  it('o painel agrega no banco e confere com os números conhecidos', async () => {
+  it('o painel agrega no banco e confere com o conjunto de exemplo', async () => {
     // A base é esvaziada primeiro porque as agregações são do cadastro inteiro, e os casos
     // acima deixaram Propriedades e Plantios para trás. A cascata leva os Plantios junto.
     await app.get(DataSource).query(`TRUNCATE TABLE propriedades CASCADE`);
@@ -222,42 +227,49 @@ describe('A aplicação contra um Postgres de verdade', () => {
       plantiosPorCultura: [],
     });
 
-    const { soja, milho, safraId, outraSafraId } = await cadastroDoPainel();
+    // O mesmo conjunto que a carga de exemplo insere, pelo mesmo caminho. Os números
+    // esperados abaixo foram conferidos à mão contra `scripts/dados-de-exemplo.ts`.
+    await carregarDadosDeExemplo(app.getHttpServer());
 
+    const culturas = await catalogoPorNome(app.getHttpServer());
     const inteiro = await request(app.getHttpServer()).get('/painel').expect(200);
     const recortado = await request(app.getHttpServer())
       .get('/painel')
-      .query({ safraId })
+      .query({ safraId: await safraDoAno(2024) })
       .expect(200);
 
-    // Três Propriedades: 100 + 50 + 25,5 hectares, com 60 + 30 + 15,5 agricultáveis.
-    expect(inteiro.body.totais).toEqual({ propriedades: 3, areaTotal: 175.5 });
-    expect(inteiro.body.usoDoSolo).toEqual({ areaAgricultavel: 105.5, areaDeVegetacao: 70 });
+    // Cinco Propriedades: 1200 + 800 + 450 + 300 + 250 hectares, dos quais 2050 são
+    // agricultáveis e 950 são de vegetação.
+    expect(inteiro.body.totais).toEqual({ propriedades: 5, areaTotal: 3000 });
+    expect(inteiro.body.usoDoSolo).toEqual({ areaAgricultavel: 2050, areaDeVegetacao: 950 });
     expect(inteiro.body.propriedadesPorEstado).toEqual([
       { estado: 'MT', propriedades: 2 },
-      { estado: 'SP', propriedades: 1 },
+      { estado: 'GO', propriedades: 1 },
+      { estado: 'MG', propriedades: 1 },
+      { estado: 'PE', propriedades: 1 },
     ]);
     expect(inteiro.body.plantiosPorCultura).toEqual([
-      { culturaId: soja.id, cultura: soja.nome, plantios: 3 },
-      { culturaId: milho.id, cultura: milho.nome, plantios: 2 },
+      fatiaEsperada(culturas, 'Soja', 4),
+      fatiaEsperada(culturas, 'Milho', 3),
+      fatiaEsperada(culturas, 'Café', 2),
+      fatiaEsperada(culturas, 'Algodão', 1),
     ]);
 
     // O filtro recorta a distribuição por Cultura e não toca no resto.
     expect(recortado.body.plantiosPorCultura).toEqual([
-      { culturaId: soja.id, cultura: soja.nome, plantios: 3 },
-      { culturaId: milho.id, cultura: milho.nome, plantios: 1 },
+      fatiaEsperada(culturas, 'Soja', 3),
+      fatiaEsperada(culturas, 'Milho', 2),
+      fatiaEsperada(culturas, 'Café', 1),
     ]);
     expect(recortado.body.totais).toEqual(inteiro.body.totais);
     expect(recortado.body.usoDoSolo).toEqual(inteiro.body.usoDoSolo);
     expect(recortado.body.propriedadesPorEstado).toEqual(inteiro.body.propriedadesPorEstado);
 
-    const daOutraSafra = await request(app.getHttpServer())
+    const de2023 = await request(app.getHttpServer())
       .get('/painel')
-      .query({ safraId: outraSafraId })
+      .query({ safraId: await safraDoAno(2023) })
       .expect(200);
-    expect(daOutraSafra.body.plantiosPorCultura).toEqual([
-      { culturaId: milho.id, cultura: milho.nome, plantios: 1 },
-    ]);
+    expect(de2023.body.plantiosPorCultura).toEqual([fatiaEsperada(culturas, 'Milho', 1)]);
 
     // Uma Safra sem nenhum Plantio devolve a fatia vazia, e não erro. Contra o Postgres
     // porque é aqui que o agrupamento filtrado devolve zero linha de verdade.
@@ -269,68 +281,22 @@ describe('A aplicação contra um Postgres de verdade', () => {
     expect(semPlantio.body.totais).toEqual(inteiro.body.totais);
   });
 
-  /**
-   * O cadastro conferido à mão de que o caso do painel se cobra: três Propriedades em dois
-   * estados, duas Culturas do catálogo e cinco Plantios em duas Safras.
-   */
-  async function cadastroDoPainel() {
-    const produtor = await request(app.getHttpServer())
-      .post('/produtores')
-      .send({ documento: '295.379.955-93', nome: 'Quem aparece no painel' })
-      .expect(201);
-    const emMatoGrosso = await propriedadeDoPainel(produtor.body.id, 'MT', 100, 60, 40);
-    const outraEmMatoGrosso = await propriedadeDoPainel(produtor.body.id, 'MT', 50, 30, 20);
-    const emSaoPaulo = await propriedadeDoPainel(produtor.body.id, 'SP', 25.5, 15.5, 10);
+  /** A fatia do gráfico por Cultura, como a resposta a monta. */
+  function fatiaEsperada(culturas: Map<string, string>, nome: string, plantios: number) {
+    return { culturaId: culturas.get(nome), cultura: nome, plantios };
+  }
 
-    const catalogo: { id: string; nome: string }[] = (
-      await request(app.getHttpServer()).get('/culturas').expect(200)
+  async function safraDoAno(ano: number): Promise<string> {
+    const safras: { id: string; ano: number }[] = (
+      await request(app.getHttpServer()).get('/safras').expect(200)
     ).body;
-    const [soja, milho] = catalogo;
+    const encontrada = safras.find((safra) => safra.ano === ano);
 
-    if (soja === undefined || milho === undefined) {
-      throw new Error('A carga inicial do catálogo precisa ter pelo menos duas Culturas.');
+    if (encontrada === undefined) {
+      throw new Error(`O conjunto de exemplo devia ter criado a Safra de ${ano}.`);
     }
 
-    const { id: safraId } = (
-      await request(app.getHttpServer()).post('/safras').send({ ano: 2041 }).expect(201)
-    ).body;
-    const { id: outraSafraId } = (
-      await request(app.getHttpServer()).post('/safras').send({ ano: 2042 }).expect(201)
-    ).body;
-
-    await plantioDoPainel(emMatoGrosso, soja.id, safraId);
-    await plantioDoPainel(outraEmMatoGrosso, soja.id, safraId);
-    await plantioDoPainel(emSaoPaulo, soja.id, safraId);
-    await plantioDoPainel(emMatoGrosso, milho.id, safraId);
-    await plantioDoPainel(outraEmMatoGrosso, milho.id, outraSafraId);
-
-    return { soja, milho, safraId, outraSafraId };
-  }
-
-  async function propriedadeDoPainel(
-    produtorId: string,
-    estado: string,
-    areaTotal: number,
-    areaAgricultavel: number,
-    areaDeVegetacao: number,
-  ): Promise<string> {
-    const criada = await request(app.getHttpServer())
-      .post('/propriedades')
-      .send({ produtorId, cidade: 'Sorriso', estado, areaTotal, areaAgricultavel, areaDeVegetacao })
-      .expect(201);
-
-    return criada.body.id;
-  }
-
-  async function plantioDoPainel(
-    propriedadeId: string,
-    culturaId: string,
-    safraId: string,
-  ): Promise<void> {
-    await request(app.getHttpServer())
-      .post('/plantios')
-      .send({ propriedadeId, culturaId, safraId })
-      .expect(201);
+    return encontrada.id;
   }
 
   /**

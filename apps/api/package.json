@@ -10,7 +10,10 @@
     "test": "jest --config jest.config.ts",
     "test:coverage": "jest --config jest.config.ts --coverage",
     "test:integration": "jest --config jest.integration.config.ts",
-    "openapi": "ts-node --project tsconfig.json src/openapi.ts"
+    "openapi": "ts-node --project tsconfig.json src/openapi.ts",
+    "carga:exemplo": "ts-node --project tsconfig.json scripts/carga-de-exemplo.ts",
+    "carga:volume": "ts-node --project tsconfig.json scripts/carga-de-volume.ts",
+    "medir:painel": "ts-node --project tsconfig.json scripts/medir-painel.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.6",

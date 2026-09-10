@@ -38,6 +38,7 @@ Isolar as camadas hoje custa pouco e evita que qualquer uma dessas três coisas 
 | `shared/<camada>` | o que a camada de mesmo nome pode | o que ela não pode, mais qualquer módulo |
 | `shared/logging` | `@nestjs/*`, `pino` | qualquer módulo |
 | fora de um módulo | o `<modulo>.module.ts` e o que ele publica | qualquer camada de dentro do módulo |
+| `apps/api/scripts` | o mesmo que fora de um módulo | o mesmo que fora de um módulo |
 | `<modulo>.module.ts` | tudo | nada |
 | `apps/web` | `packages/contracts` | `apps/api` |
 
@@ -54,6 +55,13 @@ noutro módulo, declara uma porta no próprio domínio e a infraestrutura a impl
 A regra vale para o código que vai para a imagem. Os testes estão de fora dela de
 propósito: um teste alcança a camada que precisa afirmar, e obrigar cada módulo a publicar
 o que só o teste usa inflaria o arquivo de módulo sem proteger nada.
+
+Os comandos de `apps/api/scripts` não vão para a imagem e também não são teste: eles
+carregam dados e medem o banco. Eles obedecem à regra de quem está fora de um módulo, e não
+à dispensa dos testes. O motivo é que um comando roda contra o banco de verdade, com a
+aplicação de pé, e um comando que alcança a `infrastructure` de um módulo é um segundo
+caminho de escrita que ninguém revisa. O que um comando precisa de um módulo, o arquivo de
+módulo publica.
 
 A tabela acima é a versão legível. A versão executável é a configuração do
 `dependency-cruiser`, que roda como portão obrigatório da pipeline e falha o build.

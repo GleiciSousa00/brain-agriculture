@@ -1,5 +1,9 @@
+import type { Recortados } from '../../../../shared/domain/recorte';
 import type { Propriedade } from '../../../propriedades/domain/propriedade';
-import type { PropriedadesDoProdutorRepository } from '../../domain/propriedades-do-produtor.repository';
+import type {
+  PropriedadesDoProdutorRepository,
+  RecorteDePropriedadesDoProdutor,
+} from '../../domain/propriedades-do-produtor.repository';
 
 /**
  * Substituto da porta que o módulo de Produtor abre para o de Propriedade. Como qualquer
@@ -12,8 +16,20 @@ export class PropriedadesDoProdutorEmMemoria implements PropriedadesDoProdutorRe
     this.propriedades.push(...novas);
   }
 
-  async listByProdutor(produtorId: string): Promise<Propriedade[]> {
-    return this.propriedades.filter((propriedade) => propriedade.produtorId === produtorId);
+  async listByProdutor({
+    produtorId,
+    deslocamento,
+    limite,
+  }: RecorteDePropriedadesDoProdutor): Promise<Recortados<Propriedade>> {
+    // A mesma ordem do repositório de verdade: cidade, com o identificador desempatando.
+    const doProdutor = this.propriedades
+      .filter((propriedade) => propriedade.produtorId === produtorId)
+      .sort(porCidade);
+
+    return {
+      itens: doProdutor.slice(deslocamento, deslocamento + limite),
+      total: doProdutor.length,
+    };
   }
 
   async deleteByProdutor(produtorId: string): Promise<void> {
@@ -21,4 +37,12 @@ export class PropriedadesDoProdutorEmMemoria implements PropriedadesDoProdutorRe
       (propriedade) => propriedade.produtorId !== produtorId,
     );
   }
+}
+
+function porCidade(uma: Propriedade, outra: Propriedade): number {
+  if (uma.cidade !== outra.cidade) {
+    return uma.cidade < outra.cidade ? -1 : 1;
+  }
+
+  return uma.id < outra.id ? -1 : 1;
 }

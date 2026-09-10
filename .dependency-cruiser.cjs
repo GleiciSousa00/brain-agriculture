@@ -87,6 +87,14 @@ module.exports = {
       to: { path: '^apps/api/src/modules/[^/]+/(domain|application|infrastructure|http)/' },
     },
     {
+      name: 'comando-so-enxerga-o-arquivo-de-modulo',
+      severity: 'error',
+      comment:
+        'Os comandos de `apps/api/scripts` não vão para a imagem, mas continuam falando com os módulos pela face que eles mostram: o arquivo de módulo e o que ele publica. Sem esta regra a pasta seria um caminho de fora da regra de dependência.',
+      from: { path: '^apps/api/scripts/' },
+      to: { path: '^apps/api/src/modules/[^/]+/(domain|application|infrastructure|http)/' },
+    },
+    {
       name: 'shared-nao-conhece-modulo',
       severity: 'error',
       comment: '`shared` é usado pelos módulos e não conhece nenhum deles. A seta aponta num sentido só.',

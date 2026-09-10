@@ -41,6 +41,10 @@ describe('paraRespostaDetalhada', () => {
     nome: 'Maria da Silva',
   });
 
+  function fatiaCom(...propriedades: Propriedade[]) {
+    return { itens: propriedades, total: propriedades.length, pagina: 1, tamanho: 20 };
+  }
+
   function propriedade() {
     return Propriedade.criar({
       produtorId: produtor.id,
@@ -53,9 +57,9 @@ describe('paraRespostaDetalhada', () => {
   }
 
   it('devolve as áreas em hectares, e não o objeto de valor', () => {
-    const resposta = paraRespostaDetalhada({ produtor, propriedades: [propriedade()] });
+    const resposta = paraRespostaDetalhada({ produtor, propriedades: fatiaCom(propriedade()) });
 
-    expect(resposta.propriedades[0]).toMatchObject({
+    expect(resposta.propriedades.itens[0]).toMatchObject({
       cidade: 'Sorriso',
       estado: 'MT',
       areaTotal: 100.5,
@@ -65,14 +69,19 @@ describe('paraRespostaDetalhada', () => {
   });
 
   it('continua mascarando o Documento', () => {
-    const resposta = paraRespostaDetalhada({ produtor, propriedades: [propriedade()] });
+    const resposta = paraRespostaDetalhada({ produtor, propriedades: fatiaCom(propriedade()) });
 
     expect(resposta.documento).toBe('***.***.247-25');
     expect(JSON.stringify(resposta)).not.toContain('52998224725');
   });
 
-  it('devolve lista vazia quando o Produtor não tem Propriedade', () => {
-    expect(paraRespostaDetalhada({ produtor, propriedades: [] }).propriedades).toEqual([]);
+  it('devolve a fatia vazia quando o Produtor não tem Propriedade', () => {
+    expect(paraRespostaDetalhada({ produtor, propriedades: fatiaCom() }).propriedades).toEqual({
+      itens: [],
+      total: 0,
+      pagina: 1,
+      tamanho: 20,
+    });
   });
 });
 

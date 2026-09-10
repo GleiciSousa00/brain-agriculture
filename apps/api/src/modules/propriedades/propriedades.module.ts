@@ -90,4 +90,13 @@ export class PropriedadesModule {}
 /** O que o módulo publica para a raiz de composição montar o catálogo do ORM. */
 export const PROPRIEDADES_ENTIDADES = [PropriedadeOrmEntity];
 
+/**
+ * As vinte e sete siglas, publicadas para fora do módulo.
+ *
+ * Quem está fora não alcança as quatro camadas, e o arquivo de módulo é a face que o módulo
+ * mostra. A carga de volume distribui as Propriedades sintéticas entre os estados e precisa
+ * da lista; copiá-la para lá criaria duas listas que divergem. Ver o registro 0005.
+ */
+export { UNIDADES_FEDERATIVAS } from './domain/propriedade';
+
 export const PROPRIEDADES_MIGRACOES = [CriaPropriedades1789070000000];

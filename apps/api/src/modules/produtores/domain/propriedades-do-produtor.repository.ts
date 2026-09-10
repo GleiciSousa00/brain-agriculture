@@ -1,4 +1,10 @@
+import type { Recorte, Recortados } from '../../../shared/domain/recorte';
 import type { Propriedade } from '../../propriedades/domain/propriedade';
+
+/** O recorte comum, mais o Produtor: a lista é sempre a dele, nunca a do cadastro. */
+export interface RecorteDePropriedadesDoProdutor extends Recorte {
+  produtorId: string;
+}
 
 /**
  * A porta pela qual o módulo de Produtor alcança as Propriedades dele.
@@ -10,7 +16,14 @@ import type { Propriedade } from '../../propriedades/domain/propriedade';
  * território comum.
  */
 export interface PropriedadesDoProdutorRepository {
-  listByProdutor(produtorId: string): Promise<Propriedade[]>;
+  /**
+   * Lista em fatias as Propriedades do Produtor, na mesma ordem da listagem do cadastro.
+   *
+   * A fatia existe porque nada limita quantas Propriedades um Produtor tem. Devolver
+   * todas era carregar a resposta inteira na memória e no JSON, e o tamanho dela passava a
+   * depender de um número que ninguém controla.
+   */
+  listByProdutor(recorte: RecorteDePropriedadesDoProdutor): Promise<Recortados<Propriedade>>;
   /**
    * Remove as Propriedades do Produtor, e com elas os Plantios delas. Ver o registro 0003.
    *
