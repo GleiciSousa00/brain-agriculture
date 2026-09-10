@@ -27,7 +27,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Lista Produtores por nome, em páginas, com o Documento mascarado. */
+        get: operations["ProdutoresController_listar"];
         put?: never;
         /** Registra um Produtor. */
         post: operations["ProdutoresController_criar"];
@@ -48,10 +49,15 @@ export interface paths {
         get: operations["ProdutoresController_buscar"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Exclui um Produtor, e com ele suas Propriedades e seus Plantios.
+         * @description A exclusão é física e não tem desfazer, conforme o registro de decisão 0003 sobre o direito à eliminação.
+         */
+        delete: operations["ProdutoresController_excluir"];
         options?: never;
         head?: never;
-        patch?: never;
+        /** Corrige o nome de um Produtor. O Documento não é editável. */
+        patch: operations["ProdutoresController_editar"];
         trace?: never;
     };
     "/propriedades": {
@@ -158,6 +164,21 @@ export interface components {
             /** @description Código do erro de regra de negócio, quando a falha veio do domínio. */
             codigo?: string;
         };
+        ProdutoresPaginaDto: {
+            itens: {
+                /** Format: uuid */
+                id: string;
+                nome: string;
+                /** @description Mascarado. Os dois últimos grupos aparecem, o resto não. */
+                documento: string;
+                /** @enum {string} */
+                tipoDeDocumento: "CPF" | "CNPJ";
+            }[];
+            /** @description Quantos registros existem ao todo. */
+            total: number;
+            pagina: number;
+            tamanho: number;
+        };
         ProdutorDetalhadoDto: {
             /** Format: uuid */
             id: string;
@@ -179,6 +200,10 @@ export interface components {
                 /** @description Em hectares. */
                 areaDeVegetacao: number;
             }[];
+        };
+        EditarProdutorDto: {
+            /** @description Nome do Produtor. */
+            nome: string;
         };
         CriarPropriedadeDto: {
             /**
@@ -398,6 +423,39 @@ export interface operations {
             };
         };
     };
+    ProdutoresController_listar: {
+        parameters: {
+            query?: {
+                /** @description A página pedida. A primeira é a de número um. */
+                pagina?: number;
+                /** @description Quantos registros por página, no máximo 100. */
+                tamanho?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdutoresPaginaDto"];
+                };
+            };
+            /** @description A página ou o tamanho pedido não é válido. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+        };
+    };
     ProdutoresController_criar: {
         parameters: {
             query?: never;
@@ -456,6 +514,78 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProdutorDetalhadoDto"];
+                };
+            };
+            /** @description Não existe Produtor com esse identificador. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+        };
+    };
+    ProdutoresController_excluir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O Produtor foi excluído. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Não existe Produtor com esse identificador. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+        };
+    };
+    ProdutoresController_editar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditarProdutorDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdutorDto"];
+                };
+            };
+            /** @description O nome informado não é válido. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
             /** @description Não existe Produtor com esse identificador. */

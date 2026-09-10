@@ -1,7 +1,12 @@
+import type { Pagina } from '../../../shared/application/pagina';
 import type { Propriedade } from '../../propriedades/domain/propriedade';
 import type { ProdutorComPropriedades } from '../application/buscar-produtor.use-case';
 import type { Produtor } from '../domain/produtor';
-import type { ProdutorDetalhadoResposta, ProdutorResposta } from './dto/produtor.dto';
+import type {
+  ProdutorDetalhadoResposta,
+  ProdutorResposta,
+  ProdutoresPaginaResposta,
+} from './dto/produtor.dto';
 
 /** Monta a resposta a partir do Produtor, mascarando o Documento no caminho. */
 export function paraResposta(produtor: Produtor): ProdutorResposta {
@@ -30,4 +35,14 @@ function paraPropriedade(propriedade: Propriedade) {
     areaAgricultavel: propriedade.areaAgricultavel.hectares,
     areaDeVegetacao: propriedade.areaDeVegetacao.hectares,
   };
+}
+
+/** Monta a fatia da listagem. O Documento sai mascarado aqui como sai em qualquer rota. */
+export function paraPagina({
+  itens,
+  total,
+  pagina,
+  tamanho,
+}: Pagina<Produtor>): ProdutoresPaginaResposta {
+  return { itens: itens.map(paraResposta), total, pagina, tamanho };
 }

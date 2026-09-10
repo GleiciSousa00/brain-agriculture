@@ -1,7 +1,7 @@
 import { Area } from '../../propriedades/domain/area';
 import { Propriedade } from '../../propriedades/domain/propriedade';
 import { Documento } from '../domain/documento';
-import { paraResposta, paraRespostaDetalhada } from './produtor.presenter';
+import { paraPagina, paraResposta, paraRespostaDetalhada } from './produtor.presenter';
 import { Produtor } from '../domain/produtor';
 
 describe('paraResposta', () => {
@@ -73,5 +73,25 @@ describe('paraRespostaDetalhada', () => {
 
   it('devolve lista vazia quando o Produtor não tem Propriedade', () => {
     expect(paraRespostaDetalhada({ produtor, propriedades: [] }).propriedades).toEqual([]);
+  });
+});
+
+describe('paraPagina', () => {
+  const produtor = Produtor.criar({
+    documento: Documento.criar('529.982.247-25'),
+    nome: 'Maria da Silva',
+  });
+
+  const pagina = { itens: [produtor], total: 37, pagina: 2, tamanho: 20 };
+
+  it('mascara o Documento também na listagem', () => {
+    const resposta = paraPagina(pagina);
+
+    expect(JSON.stringify(resposta)).not.toContain('52998224725');
+    expect(resposta.itens.at(0)?.documento).toBe('***.***.247-25');
+  });
+
+  it('devolve o total do cadastro e repete a página pedida', () => {
+    expect(paraPagina(pagina)).toMatchObject({ total: 37, pagina: 2, tamanho: 20 });
   });
 });
