@@ -7,7 +7,7 @@ import {
   respondaComProblema,
 } from '../teste/fetch-falso';
 import { ErroDaApi } from './chamada';
-import { buscarPainel, buscarSafras } from './painel';
+import { buscarPainel } from './painel';
 
 describe('buscarPainel', () => {
   it('chama a rota do painel na própria origem, sem filtro', async () => {
@@ -61,13 +61,5 @@ describe('buscarPainel', () => {
     fetchFalso.mockRejectedValueOnce(new TypeError('Failed to fetch'));
 
     await expect(buscarPainel()).rejects.toBeInstanceOf(ErroDaApi);
-  });
-});
-
-describe('buscarSafras', () => {
-  it('devolve a lista do catálogo', async () => {
-    respondaCom([{ id: 'uma', ano: 2025 }]);
-
-    await expect(buscarSafras()).resolves.toEqual([{ id: 'uma', ano: 2025 }]);
   });
 });

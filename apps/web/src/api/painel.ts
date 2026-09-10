@@ -1,4 +1,4 @@
-import type { Painel, Safra } from '@cadastro-rural/contracts';
+import type { Painel } from '@cadastro-rural/contracts';
 import { colher } from './chamada';
 import { api } from './cliente';
 
@@ -14,9 +14,4 @@ export async function buscarPainel(safraId?: string): Promise<Painel> {
       params: { query: safraId === undefined ? {} : { safraId } },
     }),
   );
-}
-
-/** O catálogo de Safras, que alimenta o controle ao lado do gráfico de Cultura. */
-export async function buscarSafras(): Promise<Safra[]> {
-  return colher(() => api.GET('/safras', {}));
 }

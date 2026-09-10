@@ -30,3 +30,13 @@ export function formatarParticipacao(valor: number, total: number): string {
 
   return `${PARTICIPACAO.format(fracao)}%`;
 }
+
+/**
+ * O número que um campo de digitação entrega para a API.
+ *
+ * Campo vazio vira `NaN`, que o corpo leva como nulo e a API recusa com a mensagem dela.
+ * Mandar zero no lugar seria a interface inventando um valor que ninguém digitou.
+ */
+export function comoNumero(texto: string): number {
+  return texto.trim() === '' ? Number.NaN : Number(texto);
+}

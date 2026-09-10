@@ -18,8 +18,8 @@ function cartaoDe(titulo: string): HTMLElement {
 /** O caso comum: o painel responde sempre a mesma coisa, e há duas Safras no catálogo. */
 function painelEstavel(): void {
   servirRotas({
-    '/api/painel': () => ({ corpo: PAINEL_COM_DADOS }),
-    '/api/safras': () => ({ corpo: [SAFRA_DE_2025, SAFRA_DE_2024] }),
+    'GET /api/painel': () => ({ corpo: PAINEL_COM_DADOS }),
+    'GET /api/safras': () => ({ corpo: [SAFRA_DE_2025, SAFRA_DE_2024] }),
   });
 }
 
@@ -77,7 +77,7 @@ describe('a tela do painel', () => {
     // O recorte devolve totais e distribuições diferentes de propósito, o que a API não
     // faz: é assim que se prova que a tela aproveita apenas a fatia da Cultura.
     servirRotas({
-      '/api/painel': (url) =>
+      'GET /api/painel': ({ url }) =>
         url.searchParams.get('safraId') === SAFRA_DE_2025.id
           ? {
               corpo: {
@@ -88,7 +88,7 @@ describe('a tela do painel', () => {
               },
             }
           : { corpo: PAINEL_COM_DADOS },
-      '/api/safras': () => ({ corpo: [SAFRA_DE_2025, SAFRA_DE_2024] }),
+      'GET /api/safras': () => ({ corpo: [SAFRA_DE_2025, SAFRA_DE_2024] }),
     });
 
     render(<PainelPage />);
@@ -108,8 +108,8 @@ describe('a tela do painel', () => {
 
   it('com a base vazia, explica cada gráfico em vez de deixá-lo em branco', async () => {
     servirRotas({
-      '/api/painel': () => ({ corpo: PAINEL_VAZIO }),
-      '/api/safras': () => ({ corpo: [] }),
+      'GET /api/painel': () => ({ corpo: PAINEL_VAZIO }),
+      'GET /api/safras': () => ({ corpo: [] }),
     });
 
     render(<PainelPage />);
@@ -124,8 +124,8 @@ describe('a tela do painel', () => {
 
   it('com a base vazia, o recorte por Safra diz que a Safra é que está vazia', async () => {
     servirRotas({
-      '/api/painel': () => ({ corpo: PAINEL_VAZIO }),
-      '/api/safras': () => ({ corpo: [SAFRA_DE_2025] }),
+      'GET /api/painel': () => ({ corpo: PAINEL_VAZIO }),
+      'GET /api/safras': () => ({ corpo: [SAFRA_DE_2025] }),
     });
 
     render(<PainelPage />);
@@ -138,14 +138,14 @@ describe('a tela do painel', () => {
 
   it('mostra o texto que a API mandou quando a primeira carga falha', async () => {
     servirRotas({
-      '/api/painel': () => ({
+      'GET /api/painel': () => ({
         problema: {
           status: 500,
           title: 'Internal Server Error',
           detail: 'O banco não respondeu a tempo.',
         },
       }),
-      '/api/safras': () => ({ corpo: [] }),
+      'GET /api/safras': () => ({ corpo: [] }),
     });
 
     render(<PainelPage />);
@@ -156,7 +156,7 @@ describe('a tela do painel', () => {
   describe('quando o recorte por Safra falha', () => {
     function painelQueRecusaORecorte(): void {
       servirRotas({
-        '/api/painel': (url) =>
+        'GET /api/painel': ({ url }) =>
           url.searchParams.get('safraId') === null
             ? { corpo: PAINEL_COM_DADOS }
             : {
@@ -166,7 +166,7 @@ describe('a tela do painel', () => {
                   detail: 'O filtro de Safra não é um identificador válido.',
                 },
               },
-        '/api/safras': () => ({ corpo: [SAFRA_DE_2025] }),
+        'GET /api/safras': () => ({ corpo: [SAFRA_DE_2025] }),
       });
     }
 
@@ -208,7 +208,7 @@ describe('a tela do painel', () => {
     });
 
     servirRotas({
-      '/api/painel': (url) =>
+      'GET /api/painel': ({ url }) =>
         url.searchParams.get('safraId') === null
           ? { corpo: PAINEL_COM_DADOS }
           : recorteLiberado.then(() => ({
@@ -217,7 +217,7 @@ describe('a tela do painel', () => {
                 plantiosPorCultura: [{ culturaId: 'c2', cultura: 'Milho', plantios: 7 }],
               },
             })),
-      '/api/safras': () => ({ corpo: [SAFRA_DE_2025] }),
+      'GET /api/safras': () => ({ corpo: [SAFRA_DE_2025] }),
     });
 
     render(<PainelPage />);

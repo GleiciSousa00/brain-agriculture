@@ -1,17 +1,11 @@
 import type { Painel, Safra } from '@cadastro-rural/contracts';
 import { useEffect, useRef, useState } from 'react';
-import { ErroDaApi } from '../../api/chamada';
-import { buscarPainel, buscarSafras } from '../../api/painel';
+import { mensagemDe } from '../../api/chamada';
+import { listarSafras } from '../../api/catalogo';
+import { buscarPainel } from '../../api/painel';
 
 /** O valor do controle quando nenhuma Safra recorta a distribuição por Cultura. */
 export const TODAS_AS_SAFRAS = '';
-
-const FALHA_SEM_NOME = 'Algo deu errado ao falar com a API.';
-
-function mensagemDe(causa: unknown): string {
-  // O texto vem do corpo Problem Details da resposta. O outro ramo é só rede de segurança.
-  return causa instanceof ErroDaApi ? causa.message : FALHA_SEM_NOME;
-}
 
 export interface PainelEmTela {
   painel?: Painel;
@@ -91,7 +85,7 @@ export function usePainel(): PainelEmTela {
   useEffect(() => {
     let cancelado = false;
 
-    buscarSafras()
+    listarSafras()
       .then((resposta) => {
         if (!cancelado) {
           setSafras(resposta);
