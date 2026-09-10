@@ -18,8 +18,8 @@ a regra de negócio não mora nela. O que os testes provam é o comportamento da
 
 **Endereço da API: a própria origem, sob `/api`.** O navegador nunca chama a porta da API
 direto. Quem repassa é o servidor que entrega a tela: o nginx no Docker, por
-`apps/web/nginx.conf`, e o Vite em desenvolvimento, por `server.proxy`. Nas duas pontas a
-barra final do destino corta o prefixo, então `/api/painel` chega na API como `/painel`.
+`apps/web/nginx.conf`, e o Vite em desenvolvimento, por `server.proxy`. Nas duas pontas o
+prefixo é cortado, então `/api/painel` chega na API como `/painel`.
 
 A tela de cadastro existe como andaime desde já, com uma frase e nada mais. Ela é da
 issue 11, mas o menu precisa de dois destinos para que a navegação seja navegação, e um
@@ -54,8 +54,14 @@ autorizar. Quem servir a interface por outro caminho precisa repassar `/api`, e 
 contrato que `nginx.conf` e `vite.config.ts` cumprem.
 
 O roteador do navegador exige que o servidor devolva o `index.html` para endereço que não
-é arquivo. É o `try_files` do `nginx.conf`; apagá-lo quebra o recarregamento das telas
-internas sem quebrar teste nenhum.
+é arquivo. É o `try_files` do `nginx.conf`. O portão desse arquivo é o CI construir a
+imagem da interface e mandar o próprio nginx conferir a configuração.
+
+O nome da API no `nginx.conf` fica numa variável, com o DNS embutido do Docker como
+resolvedor. Escrito direto no `proxy_pass`, o nome é resolvido uma vez no arranque: o
+nginx recusaria subir com a API ainda fora do ar, e seguiria falando com o endereço antigo
+se ela reiniciasse. O preço é que o corte do prefixo deixa de ser automático e passa a ser
+um `rewrite` explícito; trocar um pelo outro sem trocar o outro quebra todas as rotas.
 
 Recharts não desenha nada num ambiente sem tamanho, e o `jsdom` é um desses. Por isso o
 gráfico tem tamanho fixo e a legenda em texto existe: é ela que o teste afirma, e é ela
