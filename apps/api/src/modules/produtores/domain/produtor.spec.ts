@@ -46,4 +46,29 @@ describe('Produtor', () => {
 
     expect(produtor.id).toBe('0b8b6f3a-1c2d-4e5f-8a9b-0c1d2e3f4a5b');
   });
+  it('renomeia mantendo o identificador e o Documento', () => {
+    const produtor = Produtor.criar({ documento: DOCUMENTO, nome: 'Maria da Silva' });
+
+    const renomeado = produtor.renomear('Maria da Silva Souza');
+
+    expect(renomeado.id).toBe(produtor.id);
+    expect(renomeado.documento.igualA(DOCUMENTO)).toBe(true);
+    expect(renomeado.nome).toBe('Maria da Silva Souza');
+  });
+
+  it('descarta espaço em volta do nome ao renomear', () => {
+    const produtor = Produtor.criar({ documento: DOCUMENTO, nome: 'Maria da Silva' });
+
+    expect(produtor.renomear('  Maria Souza  ').nome).toBe('Maria Souza');
+  });
+
+  it.each([
+    ['vazio', ''],
+    ['só espaço', '   '],
+    ['longo demais', 'a'.repeat(201)],
+  ])('recusa renomear para nome %s', (_caso, nome) => {
+    const produtor = Produtor.criar({ documento: DOCUMENTO, nome: 'Maria da Silva' });
+
+    expect(() => produtor.renomear(nome)).toThrow(NomeDeProdutorInvalido);
+  });
 });

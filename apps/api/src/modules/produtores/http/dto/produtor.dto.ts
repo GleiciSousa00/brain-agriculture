@@ -1,5 +1,6 @@
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
+import { paginaSchema } from '../../../../shared/http/dto/pagina.dto';
 
 /**
  * O que sai da API, montado a partir deste esquema e de mais nada.
@@ -43,3 +44,10 @@ export const produtorDetalhadoSchema = produtorSchema.extend({
 export type ProdutorDetalhadoResposta = z.infer<typeof produtorDetalhadoSchema>;
 
 export class ProdutorDetalhadoDto extends createZodDto(produtorDetalhadoSchema) {}
+
+/** Uma fatia da listagem de Produtores, no mesmo formato de fatia de toda a API. */
+export const produtoresPaginaSchema = paginaSchema(produtorSchema);
+
+export type ProdutoresPaginaResposta = z.infer<typeof produtoresPaginaSchema>;
+
+export class ProdutoresPaginaDto extends createZodDto(produtoresPaginaSchema) {}
