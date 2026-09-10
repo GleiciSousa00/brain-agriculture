@@ -60,16 +60,43 @@ jobs:
       - name: Build dos pacotes
         run: pnpm build
 
+      # Puxar imagem do Docker Hub falha de vez em quando por conta do serviço, e não da
+      # mudança: em 2026-09-10 o registro devolveu 500 ao autorizar o `node:24-alpine`, e a
+      # execução seguinte, sem alteração nenhuma, passou inteira. Três tentativas em shell
+      # puro, sem ação de terceiro, pela mesma razão que trocou a ação do pnpm pelo Corepack.
+      # Autenticar no registro não resolveria: o limite de uso anônimo é 429, e a falha foi
+      # 500 do serviço de autorização.
       - name: Imagem Docker da API
-        run: docker build --file apps/api/Dockerfile --tag cadastro-rural-api:${{ github.sha }} .
+        run: |
+          for tentativa in 1 2 3; do
+            if docker build --file apps/api/Dockerfile --tag cadastro-rural-api:${{ github.sha }} .; then
+              exit 0
+            fi
+            echo "a construção falhou na tentativa $tentativa"
+            [ "$tentativa" = 3 ] || sleep 15
+          done
+          echo 'a imagem da API não foi construída em três tentativas'
+          exit 1
 
       # A imagem da web carrega o `nginx.conf` que entrega o estático e repassa `/api`.
       # Construí-la e mandar o próprio nginx conferir a configuração é o único portão que
       # esse arquivo tem: nenhum teste de unidade o alcança.
+      #
+      # A nova tentativa envolve só a construção. O `nginx -t` roda uma vez, no ramo de
+      # sucesso, porque ele reprova por configuração inválida, que não é falha de registro e
+      # não melhora com tentativa nova.
       - name: Imagem Docker da interface web
         run: |
-          docker build --file apps/web/Dockerfile --tag cadastro-rural-web:${{ github.sha }} .
-          docker run --rm cadastro-rural-web:${{ github.sha }} nginx -t
+          for tentativa in 1 2 3; do
+            if docker build --file apps/web/Dockerfile --tag cadastro-rural-web:${{ github.sha }} .; then
+              docker run --rm cadastro-rural-web:${{ github.sha }} nginx -t
+              exit 0
+            fi
+            echo "a construção falhou na tentativa $tentativa"
+            [ "$tentativa" = 3 ] || sleep 15
+          done
+          echo 'a imagem da interface web não foi construída em três tentativas'
+          exit 1
 
   # Trabalho lento: reservado aos testes de integração, que sobem dependência de verdade.
   integration:
@@ -98,9 +125,29 @@ jobs:
         run: pnpm test:integration
 
       # A composição é conferida aqui porque este é o trabalho que pode gastar tempo.
+      #
+      # Os dois laços deste passo contam coisas diferentes, e por isso não repetem o nome
+      # da variável. O de `subida` é nova tentativa contra a falha de registro descrita
+      # acima, e desiste na terceira. O de `tentativa` não é nova tentativa: é a espera
+      # pela API terminar de arrancar, e esgotá-la reprova o passo. É esse segundo laço que
+      # pega uma API que não sobe, e é por isso que ele fica exatamente como estava.
       - name: Subir a composição e conferir a rota de saúde
         run: |
-          docker compose up --build --detach postgres api
+          subiu=nao
+          for subida in 1 2 3; do
+            if docker compose up --build --detach postgres api; then
+              subiu=sim
+              break
+            fi
+            echo "a composição não subiu na tentativa $subida"
+            [ "$subida" = 3 ] || sleep 15
+          done
+          if [ "$subiu" = nao ]; then
+            echo 'a composição não subiu em três tentativas'
+            docker compose logs
+            exit 1
+          fi
+
           for tentativa in $(seq 1 30); do
             if curl --fail --silent http://localhost:3000/health; then
               echo
