@@ -39,10 +39,10 @@ import { IndexaNomeDeProdutor1789065000000 } from './infrastructure/migrations/1
       provide: DocumentoCrypto,
       inject: [ConfigService],
       useFactory: (config: ConfigService) =>
-        new DocumentoCrypto(
-          segredo(config, 'DOCUMENTO_ENCRYPTION_KEY'),
-          segredo(config, 'DOCUMENTO_FINGERPRINT_SECRET'),
-        ),
+        new DocumentoCrypto({
+          chaveDeCifra: segredo(config, 'DOCUMENTO_ENCRYPTION_KEY'),
+          segredoDaImpressao: segredo(config, 'DOCUMENTO_FINGERPRINT_SECRET'),
+        }),
     },
     {
       provide: ProdutorMapper,
