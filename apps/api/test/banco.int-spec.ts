@@ -6,6 +6,8 @@ import { Logger } from 'nestjs-pino';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
+import { chaveDe } from '../src/modules/culturas/domain/cultura';
+import { CULTURAS_INICIAIS } from '../src/modules/culturas/infrastructure/culturas-iniciais';
 import { Documento } from '../src/modules/produtores/domain/documento';
 import { Produtor } from '../src/modules/produtores/domain/produtor';
 import {
@@ -20,7 +22,7 @@ import { ProdutorDuplicado } from '../src/modules/produtores/domain/produtor.err
  * recusa o Documento repetido. Regra de negócio é assunto dos testes de unidade, que rodam
  * sem Docker e em milissegundos.
  */
-describe('Produtor contra um Postgres de verdade', () => {
+describe('A aplicação contra um Postgres de verdade', () => {
   let postgres: StartedPostgreSqlContainer;
   let app: INestApplication;
 
@@ -47,11 +49,17 @@ describe('Produtor contra um Postgres de verdade', () => {
     await postgres?.stop();
   });
 
-  it('a migração criou o esquema, e a sincronização automática está desligada', async () => {
+  it('as migrações criaram o esquema e semearam o catálogo, sem sincronização automática', async () => {
     const dataSource = app.get(DataSource);
 
     const colunas: { column_name: string }[] = await dataSource.query(
       `SELECT column_name FROM information_schema.columns WHERE table_name = 'produtores'`,
+    );
+    const catalogo: { nome: string }[] = await dataSource.query(
+      `SELECT nome FROM culturas ORDER BY chave`,
+    );
+    const safras: { column_name: string }[] = await dataSource.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'safras'`,
     );
 
     expect(dataSource.options.synchronize).toBe(false);
@@ -62,6 +70,10 @@ describe('Produtor contra um Postgres de verdade', () => {
       'id',
       'nome',
     ]);
+    expect(safras.map((coluna) => coluna.column_name).sort()).toEqual(['ano', 'criado_em', 'id']);
+    expect(catalogo.map((cultura) => cultura.nome)).toEqual(
+      [...CULTURAS_INICIAIS].sort((um, outro) => (chaveDe(um) < chaveDe(outro) ? -1 : 1)),
+    );
   });
 
   it.each([

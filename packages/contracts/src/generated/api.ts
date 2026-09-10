@@ -54,6 +54,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/safras": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista as Safras, da mais recente para a mais antiga. */
+        get: operations["SafrasController_listar"];
+        put?: never;
+        /** Registra uma Safra, compartilhada por todas as Propriedades. */
+        post: operations["SafrasController_criar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/culturas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista o catálogo em ordem alfabética. */
+        get: operations["CulturasController_listar"];
+        put?: never;
+        /** Acrescenta uma espécie ao catálogo. */
+        post: operations["CulturasController_acrescentar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -86,6 +122,34 @@ export interface components {
             /** @description Código do erro de regra de negócio, quando a falha veio do domínio. */
             codigo?: string;
         };
+        CriarSafraDto: {
+            /** @description Ano do ciclo agrícola, entre 1900 e 2100. */
+            ano: number;
+        };
+        SafraDto: {
+            /** Format: uuid */
+            id: string;
+            ano: number;
+        };
+        SafrasDto: {
+            /** Format: uuid */
+            id: string;
+            ano: number;
+        }[];
+        AcrescentarCulturaDto: {
+            /** @description Nome da espécie, como Soja, Milho ou Café. */
+            nome: string;
+        };
+        CulturaDto: {
+            /** Format: uuid */
+            id: string;
+            nome: string;
+        };
+        CulturasDto: {
+            /** Format: uuid */
+            id: string;
+            nome: string;
+        }[];
     };
     responses: never;
     parameters: never;
@@ -275,6 +339,126 @@ export interface operations {
             };
             /** @description Não existe Produtor com esse identificador. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+        };
+    };
+    SafrasController_listar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SafrasDto"];
+                };
+            };
+        };
+    };
+    SafrasController_criar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CriarSafraDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SafraDto"];
+                };
+            };
+            /** @description O ano informado não serve. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description Já existe Safra para esse ano. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+        };
+    };
+    CulturasController_listar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CulturasDto"];
+                };
+            };
+        };
+    };
+    CulturasController_acrescentar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcrescentarCulturaDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CulturaDto"];
+                };
+            };
+            /** @description O nome informado não serve. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description O catálogo já tem essa espécie, ainda que escrita de outro jeito. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

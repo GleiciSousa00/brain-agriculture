@@ -1,4 +1,6 @@
+import { CULTURAS_ENTIDADES, CULTURAS_MIGRACOES } from '../modules/culturas/culturas.module';
 import { PRODUTORES_ENTIDADES, PRODUTORES_MIGRACOES } from '../modules/produtores/produtores.module';
+import { SAFRAS_ENTIDADES, SAFRAS_MIGRACOES } from '../modules/safras/safras.module';
 
 /**
  * O catálogo do ORM, montado na raiz de composição.
@@ -10,8 +12,8 @@ import { PRODUTORES_ENTIDADES, PRODUTORES_MIGRACOES } from '../modules/produtore
  *
  * A lista é explícita em vez de varrer pasta por padrão de nome porque, empacotada na
  * imagem, a varredura depende de onde os arquivos caíram, e uma migração que não é
- * encontrada é uma migração que não roda.
+ * encontrada é uma migração que não roda. A ordem das migrações é a de execução.
  */
-export const ORM_ENTITIES = [...PRODUTORES_ENTIDADES];
+export const ORM_ENTITIES = [...PRODUTORES_ENTIDADES, ...SAFRAS_ENTIDADES, ...CULTURAS_ENTIDADES];
 
-export const ORM_MIGRATIONS = [...PRODUTORES_MIGRACOES];
+export const ORM_MIGRATIONS = [...PRODUTORES_MIGRACOES, ...SAFRAS_MIGRACOES, ...CULTURAS_MIGRACOES];
