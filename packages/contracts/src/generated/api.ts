@@ -44,11 +44,47 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Recupera um Produtor, com o Documento mascarado. */
+        /** Recupera um Produtor e suas Propriedades, com o Documento mascarado. */
         get: operations["ProdutoresController_buscar"];
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/propriedades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista as Propriedades por cidade, em páginas. */
+        get: operations["PropriedadesController_listar"];
+        put?: never;
+        /** Registra uma Propriedade em nome de um Produtor. */
+        post: operations["PropriedadesController_criar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/propriedades/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Atualiza a localização e as áreas de uma Propriedade. */
+        put: operations["PropriedadesController_editar"];
+        post?: never;
+        /** Exclui uma Propriedade, e com ela seus Plantios. */
+        delete: operations["PropriedadesController_excluir"];
         options?: never;
         head?: never;
         patch?: never;
@@ -121,6 +157,91 @@ export interface components {
             correlationId?: string;
             /** @description Código do erro de regra de negócio, quando a falha veio do domínio. */
             codigo?: string;
+        };
+        ProdutorDetalhadoDto: {
+            /** Format: uuid */
+            id: string;
+            nome: string;
+            /** @description Mascarado. Os dois últimos grupos aparecem, o resto não. */
+            documento: string;
+            /** @enum {string} */
+            tipoDeDocumento: "CPF" | "CNPJ";
+            propriedades: {
+                /** Format: uuid */
+                id: string;
+                cidade: string;
+                /** @description A sigla da unidade federativa. */
+                estado: string;
+                /** @description Em hectares. */
+                areaTotal: number;
+                /** @description Em hectares. */
+                areaAgricultavel: number;
+                /** @description Em hectares. */
+                areaDeVegetacao: number;
+            }[];
+        };
+        CriarPropriedadeDto: {
+            /**
+             * Format: uuid
+             * @description O Produtor em nome de quem a Propriedade é registrada.
+             */
+            produtorId: string;
+            cidade: string;
+            /** @description A sigla da unidade federativa. */
+            estado: string;
+            /** @description Em hectares, com até duas casas decimais. */
+            areaTotal: number;
+            /** @description Em hectares, com até duas casas decimais. */
+            areaAgricultavel: number;
+            /** @description Em hectares, com até duas casas decimais. */
+            areaDeVegetacao: number;
+        };
+        PropriedadeDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            produtorId: string;
+            cidade: string;
+            /** @description A sigla da unidade federativa. */
+            estado: string;
+            /** @description Em hectares. */
+            areaTotal: number;
+            /** @description Em hectares. */
+            areaAgricultavel: number;
+            /** @description Em hectares. */
+            areaDeVegetacao: number;
+        };
+        PropriedadesPaginaDto: {
+            itens: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                produtorId: string;
+                cidade: string;
+                /** @description A sigla da unidade federativa. */
+                estado: string;
+                /** @description Em hectares. */
+                areaTotal: number;
+                /** @description Em hectares. */
+                areaAgricultavel: number;
+                /** @description Em hectares. */
+                areaDeVegetacao: number;
+            }[];
+            /** @description Quantos registros existem ao todo. */
+            total: number;
+            pagina: number;
+            tamanho: number;
+        };
+        EditarPropriedadeDto: {
+            cidade: string;
+            /** @description A sigla da unidade federativa. */
+            estado: string;
+            /** @description Em hectares, com até duas casas decimais. */
+            areaTotal: number;
+            /** @description Em hectares, com até duas casas decimais. */
+            areaAgricultavel: number;
+            /** @description Em hectares, com até duas casas decimais. */
+            areaDeVegetacao: number;
         };
         CriarSafraDto: {
             /** @description Ano do ciclo agrícola, entre 1900 e 2100. */
@@ -334,10 +455,147 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProdutorDto"];
+                    "application/json": components["schemas"]["ProdutorDetalhadoDto"];
                 };
             };
             /** @description Não existe Produtor com esse identificador. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+        };
+    };
+    PropriedadesController_listar: {
+        parameters: {
+            query?: {
+                /** @description A página pedida. A primeira é a de número um. */
+                pagina?: number;
+                /** @description Quantos registros por página, no máximo 100. */
+                tamanho?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PropriedadesPaginaDto"];
+                };
+            };
+        };
+    };
+    PropriedadesController_criar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CriarPropriedadeDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PropriedadeDto"];
+                };
+            };
+            /** @description A entrada não é válida, ou a soma da Área Agricultável com a Área de Vegetação passa da Área Total. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description Não existe Produtor com esse identificador. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+        };
+    };
+    PropriedadesController_editar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditarPropriedadeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PropriedadeDto"];
+                };
+            };
+            /** @description A entrada não é válida, ou a soma da Área Agricultável com a Área de Vegetação passa da Área Total. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description Não existe Propriedade com esse identificador. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+        };
+    };
+    PropriedadesController_excluir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A Propriedade foi excluída. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Não existe Propriedade com esse identificador. */
             404: {
                 headers: {
                     [name: string]: unknown;
