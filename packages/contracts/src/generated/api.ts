@@ -183,6 +183,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/painel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Devolve os totais e as três distribuições do cadastro. */
+        get: operations["PainelController_ver"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -389,6 +406,32 @@ export interface components {
             total: number;
             pagina: number;
             tamanho: number;
+        };
+        PainelDto: {
+            totais: {
+                /** @description Quantas Propriedades existem no cadastro. */
+                propriedades: number;
+                /** @description A soma da Área Total das Propriedades. Em hectares. */
+                areaTotal: number;
+            };
+            usoDoSolo: {
+                /** @description A soma da Área Agricultável. Em hectares. */
+                areaAgricultavel: number;
+                /** @description A soma da Área de Vegetação. Em hectares. */
+                areaDeVegetacao: number;
+            };
+            propriedadesPorEstado: {
+                /** @description A sigla da unidade federativa. */
+                estado: string;
+                propriedades: number;
+            }[];
+            plantiosPorCultura: {
+                /** Format: uuid */
+                culturaId: string;
+                /** @description O nome da Cultura, como está no catálogo. */
+                cultura: string;
+                plantios: number;
+            }[];
         };
     };
     responses: never;
@@ -1056,6 +1099,38 @@ export interface operations {
             };
             /** @description Não existe Propriedade com esse identificador. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+        };
+    };
+    PainelController_ver: {
+        parameters: {
+            query?: {
+                /** @description Recorta apenas a distribuição por Cultura. Sem ele, ela cobre todas as Safras. */
+                safraId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Os números do painel. Uma base vazia devolve zeros e listas vazias. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PainelDto"];
+                };
+            };
+            /** @description O filtro não é válido. */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };

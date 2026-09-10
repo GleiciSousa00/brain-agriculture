@@ -903,6 +903,50 @@
           "Plantios"
         ]
       }
+    },
+    "/painel": {
+      "get": {
+        "operationId": "PainelController_ver",
+        "parameters": [
+          {
+            "name": "safraId",
+            "required": false,
+            "in": "query",
+            "description": "Recorta apenas a distribuição por Cultura. Sem ele, ela cobre todas as Safras.",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Os números do painel. Uma base vazia devolve zeros e listas vazias.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PainelDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "O filtro não é válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Devolve os totais e as três distribuições do cadastro.",
+        "tags": [
+          "Painel"
+        ]
+      }
     }
   },
   "info": {
@@ -1571,6 +1615,103 @@
           "total",
           "pagina",
           "tamanho"
+        ]
+      },
+      "PainelDto": {
+        "type": "object",
+        "properties": {
+          "totais": {
+            "type": "object",
+            "properties": {
+              "propriedades": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Quantas Propriedades existem no cadastro."
+              },
+              "areaTotal": {
+                "type": "number",
+                "description": "A soma da Área Total das Propriedades. Em hectares."
+              }
+            },
+            "required": [
+              "propriedades",
+              "areaTotal"
+            ]
+          },
+          "usoDoSolo": {
+            "type": "object",
+            "properties": {
+              "areaAgricultavel": {
+                "type": "number",
+                "description": "A soma da Área Agricultável. Em hectares."
+              },
+              "areaDeVegetacao": {
+                "type": "number",
+                "description": "A soma da Área de Vegetação. Em hectares."
+              }
+            },
+            "required": [
+              "areaAgricultavel",
+              "areaDeVegetacao"
+            ]
+          },
+          "propriedadesPorEstado": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "estado": {
+                  "type": "string",
+                  "minLength": 2,
+                  "maxLength": 2,
+                  "description": "A sigla da unidade federativa."
+                },
+                "propriedades": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "estado",
+                "propriedades"
+              ]
+            }
+          },
+          "plantiosPorCultura": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "culturaId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "cultura": {
+                  "type": "string",
+                  "description": "O nome da Cultura, como está no catálogo."
+                },
+                "plantios": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "culturaId",
+                "cultura",
+                "plantios"
+              ]
+            }
+          }
+        },
+        "required": [
+          "totais",
+          "usoDoSolo",
+          "propriedadesPorEstado",
+          "plantiosPorCultura"
         ]
       }
     }

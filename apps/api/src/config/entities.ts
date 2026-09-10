@@ -1,4 +1,5 @@
 import { CULTURAS_ENTIDADES, CULTURAS_MIGRACOES } from '../modules/culturas/culturas.module';
+import { PAINEL_MIGRACOES } from '../modules/painel/painel.module';
 import { PLANTIOS_ENTIDADES, PLANTIOS_MIGRACOES } from '../modules/plantios/plantios.module';
 import { PRODUTORES_ENTIDADES, PRODUTORES_MIGRACOES } from '../modules/produtores/produtores.module';
 import {
@@ -39,4 +40,7 @@ export const ORM_MIGRATIONS = [
   ...SAFRAS_MIGRACOES,
   ...CULTURAS_MIGRACOES,
   ...PLANTIOS_MIGRACOES,
+  // O painel não tem entidade, e por isso não aparece no catálogo acima. A migração dele
+  // cria o índice de que a consulta por Safra precisa.
+  ...PAINEL_MIGRACOES,
 ];
