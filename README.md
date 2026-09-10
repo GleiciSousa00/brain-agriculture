@@ -100,10 +100,11 @@ Entre módulos, só `domain` é território comum. Quando um caso de uso precisa
 vive noutro módulo, declara uma porta no próprio domínio e a infraestrutura de lá a
 implementa.
 
-A regra em forma de tabela está no registro
-[`0005`](docs/adr/0005-camadas-isoladas-por-regra-de-dependencia.md), e a versão executável
-dela é [`.dependency-cruiser.cjs`](.dependency-cruiser.cjs), que roda como portão da
-pipeline. Divergência entre as duas é defeito, e quem vale é a configuração.
+A regra está escrita em três lugares, e a ordem entre eles importa. Este diagrama é o
+ilustrativo. A tabela do registro
+[`0005`](docs/adr/0005-camadas-isoladas-por-regra-de-dependencia.md) é o legível. E
+[`.dependency-cruiser.cjs`](.dependency-cruiser.cjs) é o executável, que roda como portão
+da pipeline. Divergência entre os três é defeito, e quem vale é a configuração.
 
 ## O cadastro de um Produtor, do pedido à gravação
 
@@ -119,6 +120,7 @@ sequenceDiagram
     participant caso as application<br/>CriarProdutorUseCase
     participant dom as domain<br/>Documento e Produtor
     participant repo as infrastructure<br/>TypeormProdutorRepository
+    participant mapper as infrastructure<br/>ProdutorMapper
     participant cripto as infrastructure<br/>DocumentoCrypto
     participant banco as Postgres
 
@@ -131,8 +133,10 @@ sequenceDiagram
     Note over dom: Dígito verificador pela norma da Receita,<br/>não pelas bibliotecas de npm. Registro 0008.
     dom-->>caso: Documento válido
     caso->>repo: findByDocumento
-    repo->>cripto: impressao
-    cripto-->>repo: HMAC-SHA-256 com segredo da aplicação
+    repo->>mapper: impressaoDe
+    mapper->>cripto: impressao
+    cripto-->>mapper: HMAC-SHA-256 com segredo da aplicação
+    mapper-->>repo: a impressão do Documento
     repo->>banco: SELECT por documento_impressao
     banco-->>repo: nenhuma linha
     repo-->>caso: null
@@ -140,9 +144,11 @@ sequenceDiagram
     caso->>dom: Produtor.criar, que confere o nome
     dom-->>caso: Produtor
     caso->>repo: save
-    repo->>cripto: cifrar e impressao
-    cripto-->>repo: AES-256-GCM com nonce novo, e o HMAC
+    repo->>mapper: paraLinha
+    mapper->>cripto: cifrar e impressao
+    cripto-->>mapper: AES-256-GCM com nonce novo, e o HMAC
     Note over cripto: O nonce é aleatório, então o mesmo Documento vira<br/>bytes diferentes a cada gravação. É por isso que a<br/>unicidade não pode se apoiar na cifra. Registro 0002.
+    mapper-->>repo: a linha da tabela
     repo->>banco: INSERT em produtores
     banco-->>repo: gravado
     repo-->>caso: pronto
@@ -286,19 +292,19 @@ medição existe para provar que os índices que o registro
 [`0004`](docs/adr/0004-agregacao-do-painel-no-banco.md) mandou criar continuam sendo
 usados.
 
-`pnpm medir:painel` abre o painel pela API, captura o SQL que a aplicação executou e pede
-ao Postgres que o explique. O relatório completo, com as cinco consultas, está em
-[`docs/medicoes/plano-do-painel.md`](docs/medicoes/plano-do-painel.md), é gerado pela
-pipeline a cada execução e não se edita à mão.
+`pnpm medir:painel` abre o painel pela API, pega o SQL que ela executou e manda o Postgres
+explicar cada consulta. O relatório completo, com as cinco, está em
+[`docs/medicoes/plano-do-painel.md`](docs/medicoes/plano-do-painel.md). Ele não se edita à
+mão: a pipeline o regera a cada execução e o publica como artefato, e a cópia versionada só
+muda por commit.
 
 Medição de 2026-09-10, contra PostgreSQL 17.11, sobre **100.010 Plantios**, **1.005
 Propriedades**, 10 Culturas e 10 Safras. As cinco consultas do painel responderam entre
 0,015 ms e 12,2 ms.
 
-Uma agregação sem filtro lê a tabela inteira por definição, e o que o índice compra nesse
-caso é ler só o índice, que é mais estreito do que a tabela e dispensa tocá-la. **O recorte
-por Safra é o único em que o índice também descarta linha**, e por isso é o único que a
-medição cobra como portão:
+Quatro das cinco consultas agregam sem filtro e leem a base inteira por definição. **O
+recorte por Safra é a única em que o índice também descarta linha**, e por isso é a única
+que a medição cobra como portão:
 
 ```
 Sort  (cost=274.82..274.85 rows=10 width=24) (actual time=1.285..1.286 rows=10 loops=1)
@@ -328,6 +334,7 @@ Os mesmos comandos que a pipeline roda, e o requisito a que cada um responde:
 | Unidade com cobertura | `pnpm test:coverage` | não deixa a cobertura de `domain` e `application` cair |
 | Especificação OpenAPI | `pnpm openapi:check` | o contrato versionado e o cliente gerado acompanham os decoradores |
 | Auditoria | `pnpm audit:gate` | reprova em vulnerabilidade alta ou crítica |
+| Auditoria, relatório | `pnpm audit:report` | lista o que é moderado, e nunca reprova: é relatório, não portão |
 | Build | `pnpm build` | os três pacotes compilam |
 | Imagem da API | `docker build` | o Dockerfile de produção continua construindo |
 | Imagem da interface web | `docker build` e `nginx -t` | o único portão que o `nginx.conf` tem: nenhum teste de unidade o alcança |
@@ -341,12 +348,12 @@ pouco e premia teste que só passa por linha. O limite e a razão dele estão em
 [`apps/api/jest.config.ts`](apps/api/jest.config.ts), e ele é barra contra queda, não meta:
 quem subir a cobertura sobe a barra junto.
 
+A linha do relatório de auditoria está na tabela de propósito, ainda que não seja portão:
+quem lê a lista de passos da pipeline precisa saber qual deles não decide nada.
+
 A pipeline roda em dois trabalhos paralelos: um rápido, com tudo acima menos a integração,
 e um lento reservado aos testes de integração, à composição e à medição. Os dois precisam
-passar para o pull request ser incorporado. Os passos que puxam imagem do Docker Hub
-tentam três vezes antes de reprovar, porque o registro falha de vez em quando por conta
-dele mesmo; a espera pela rota de saúde não ganhou tentativa nova, de propósito, porque é
-ela que reprova uma API que não sobe.
+passar para o pull request ser incorporado.
 
 Duas dependências transitivas estão presas por `pnpm.overrides` no `package.json`, porque
 o pacote que as puxa ainda não adotou a correção de segurança: `multer`, vindo de
