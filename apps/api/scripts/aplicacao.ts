@@ -30,7 +30,7 @@ export async function comAplicacao<T>(usar: (app: INestApplication) => Promise<T
  * Sem isso uma promessa rejeitada derruba o processo com rastro de pilha e código zero em
  * algumas versões do Node, e a pipeline seguiria em frente com a carga pela metade.
  */
-export function executar(comando: () => Promise<void>): void {
+export function rodarComando(comando: () => Promise<void>): void {
   comando().catch((erro: unknown) => {
     process.exitCode = 1;
     console.error(erro instanceof Error ? erro.message : erro);

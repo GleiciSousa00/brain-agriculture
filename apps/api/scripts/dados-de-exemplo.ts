@@ -122,22 +122,3 @@ export const PRODUTORES_DE_EXEMPLO: ProdutorDeExemplo[] = [
     ],
   },
 ];
-
-/** Quantas linhas o conjunto tem, para quem carrega dizer o que fez. */
-export const TAMANHO_DO_EXEMPLO = {
-  produtores: PRODUTORES_DE_EXEMPLO.length,
-  propriedades: PRODUTORES_DE_EXEMPLO.reduce(
-    (total, produtor) => total + produtor.propriedades.length,
-    0,
-  ),
-  plantios: PRODUTORES_DE_EXEMPLO.reduce(
-    (total, produtor) =>
-      total +
-      produtor.propriedades.reduce(
-        (doProdutor, propriedade) => doProdutor + propriedade.plantios.length,
-        0,
-      ),
-    0,
-  ),
-  safras: SAFRAS_DE_EXEMPLO.length,
-};

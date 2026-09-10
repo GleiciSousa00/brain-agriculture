@@ -15,7 +15,7 @@ import {
   type ProdutorRepository,
 } from '../src/modules/produtores/domain/produtor.repository';
 import { ProdutorDuplicado } from '../src/modules/produtores/domain/produtor.errors';
-import { carregarDadosDeExemplo } from '../scripts/carga-de-exemplo';
+import { carregarDadosDeExemplo, catalogoPorNome } from '../scripts/carregador-de-exemplo';
 
 /**
  * A suíte de contêiner é pequena de propósito. Ela cobre só o que apenas o banco prova: que
@@ -231,7 +231,7 @@ describe('A aplicação contra um Postgres de verdade', () => {
     // esperados abaixo foram conferidos à mão contra `scripts/dados-de-exemplo.ts`.
     await carregarDadosDeExemplo(app.getHttpServer());
 
-    const culturas = await catalogoPorNome();
+    const culturas = await catalogoPorNome(app.getHttpServer());
     const inteiro = await request(app.getHttpServer()).get('/painel').expect(200);
     const recortado = await request(app.getHttpServer())
       .get('/painel')
@@ -249,17 +249,17 @@ describe('A aplicação contra um Postgres de verdade', () => {
       { estado: 'PE', propriedades: 1 },
     ]);
     expect(inteiro.body.plantiosPorCultura).toEqual([
-      fatia(culturas, 'Soja', 4),
-      fatia(culturas, 'Milho', 3),
-      fatia(culturas, 'Café', 2),
-      fatia(culturas, 'Algodão', 1),
+      fatiaEsperada(culturas, 'Soja', 4),
+      fatiaEsperada(culturas, 'Milho', 3),
+      fatiaEsperada(culturas, 'Café', 2),
+      fatiaEsperada(culturas, 'Algodão', 1),
     ]);
 
     // O filtro recorta a distribuição por Cultura e não toca no resto.
     expect(recortado.body.plantiosPorCultura).toEqual([
-      fatia(culturas, 'Soja', 3),
-      fatia(culturas, 'Milho', 2),
-      fatia(culturas, 'Café', 1),
+      fatiaEsperada(culturas, 'Soja', 3),
+      fatiaEsperada(culturas, 'Milho', 2),
+      fatiaEsperada(culturas, 'Café', 1),
     ]);
     expect(recortado.body.totais).toEqual(inteiro.body.totais);
     expect(recortado.body.usoDoSolo).toEqual(inteiro.body.usoDoSolo);
@@ -269,7 +269,7 @@ describe('A aplicação contra um Postgres de verdade', () => {
       .get('/painel')
       .query({ safraId: await safraDoAno(2023) })
       .expect(200);
-    expect(de2023.body.plantiosPorCultura).toEqual([fatia(culturas, 'Milho', 1)]);
+    expect(de2023.body.plantiosPorCultura).toEqual([fatiaEsperada(culturas, 'Milho', 1)]);
 
     // Uma Safra sem nenhum Plantio devolve a fatia vazia, e não erro. Contra o Postgres
     // porque é aqui que o agrupamento filtrado devolve zero linha de verdade.
@@ -282,16 +282,8 @@ describe('A aplicação contra um Postgres de verdade', () => {
   });
 
   /** A fatia do gráfico por Cultura, como a resposta a monta. */
-  function fatia(culturas: Map<string, string>, nome: string, plantios: number) {
+  function fatiaEsperada(culturas: Map<string, string>, nome: string, plantios: number) {
     return { culturaId: culturas.get(nome), cultura: nome, plantios };
-  }
-
-  async function catalogoPorNome(): Promise<Map<string, string>> {
-    const catalogo: { id: string; nome: string }[] = (
-      await request(app.getHttpServer()).get('/culturas').expect(200)
-    ).body;
-
-    return new Map(catalogo.map((cultura) => [cultura.nome, cultura.id]));
   }
 
   async function safraDoAno(ano: number): Promise<string> {

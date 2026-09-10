@@ -3,19 +3,25 @@ import { dirname, resolve } from 'node:path';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource, type Logger } from 'typeorm';
-import { comAplicacao, executar } from './aplicacao';
+import { comAplicacao, rodarComando } from './aplicacao';
+import { contarLinhas, type Contagem } from './contagem';
+import type { Servidor } from './carregador-de-exemplo';
 
 /**
  * Mede o plano de execução das consultas do painel contra a base carregada.
  *
- * A medição não conhece nenhuma consulta de cor. Ela troca o registrador do TypeORM por um
- * que guarda o que passa, abre o painel duas vezes pela API, e depois manda o Postgres
- * explicar exatamente o SQL que a aplicação executou. É o que impede a medição de provar
- * uma consulta que o código não faz mais.
+ * A medição não escreve consulta nenhuma. Ela troca o registrador do TypeORM por um que
+ * guarda o que passa, abre o painel duas vezes pela API, e depois manda o Postgres explicar
+ * exatamente o SQL que a aplicação executou. É o que impede a medição de provar uma
+ * consulta que o código não faz mais.
  *
- * O resultado vira um arquivo versionado, para o README apontar para ele. Ele também é um
- * portão: se a consulta recortada por Safra parar de usar o índice que o registro 0004
- * mandou criar, o comando falha.
+ * Qual número cada consulta serve vem de duas coisas: em qual das duas aberturas ela
+ * apareceu, e qual tabela ela lê. A abertura é o que separa a consulta recortada por Safra
+ * da que cobre todas elas, e é sobre ela que o portão do índice se apoia.
+ *
+ * O relatório é versionado, para o README apontar para ele. O comando também é portão: se a
+ * consulta recortada por Safra parar de usar o índice que o registro 0004 mandou criar, ele
+ * falha.
  */
 
 const RELATORIO = resolve(__dirname, '..', '..', '..', 'docs', 'medicoes', 'plano-do-painel.md');
@@ -23,13 +29,25 @@ const RELATORIO = resolve(__dirname, '..', '..', '..', 'docs', 'medicoes', 'plan
 /** O índice que existe por causa do recorte por Safra. Ver a migração do painel. */
 const INDICE_DO_RECORTE = 'ix_plantios_safra_cultura';
 
-interface ConsultaCapturada {
+/** Os cinco números que o painel busca, nomeados como o relatório os mostra. */
+const ROTULO = {
+  totais: 'Contagem de Propriedades, soma da Área Total e Uso do Solo',
+  porEstado: 'Propriedades por estado',
+  porCultura: 'Plantios por Cultura, todas as Safras',
+  nomes: 'Nomes das Culturas, por chave primária',
+  recorte: 'Plantios por Cultura, recortados por Safra',
+};
+
+interface Consulta {
   sql: string;
   parametros: unknown[];
 }
 
-interface ConsultaMedida extends ConsultaCapturada {
+interface Rotulada extends Consulta {
   rotulo: string;
+}
+
+interface Medida extends Rotulada {
   plano: string;
 }
 
@@ -41,7 +59,7 @@ interface ConsultaMedida extends ConsultaCapturada {
  * imagem.
  */
 class CapturadorDeSql implements Logger {
-  readonly consultas: ConsultaCapturada[] = [];
+  readonly consultas: Consulta[] = [];
 
   logQuery(sql: string, parametros?: unknown[]): void {
     this.consultas.push({ sql, parametros: parametros ?? [] });
@@ -54,17 +72,23 @@ class CapturadorDeSql implements Logger {
   log(): void {}
 }
 
-executar(async () => {
+rodarComando(async () => {
   await comAplicacao(async (app) => {
     const dataSource = app.get(DataSource);
     const volume = await contarLinhas(dataSource);
 
-    if (volume.plantios === 0) {
-      throw new Error('A base não tem Plantio nenhum. Rode a carga de exemplo e a de volume antes.');
+    if ((volume.plantios ?? 0) === 0) {
+      throw new Error(
+        'A base não tem Plantio nenhum. Rode a carga de exemplo e a de volume antes.',
+      );
     }
 
-    const capturadas = await capturar(app, dataSource, await safraMaisCheia(dataSource));
-    const medidas = await explicar(dataSource, capturadas);
+    const semFiltro = await capturar(app, dataSource);
+    const comFiltro = await capturar(app, dataSource, await safraMaisCheia(dataSource));
+    const medidas = await explicar(dataSource, [
+      ...rotularAbertura(semFiltro),
+      { ...consultaDePlantios(comFiltro), rotulo: ROTULO.recorte },
+    ]);
 
     escrever(medidas, volume, await versaoDoPostgres(dataSource));
     conferirIndiceDoRecorte(medidas);
@@ -77,7 +101,7 @@ executar(async () => {
 });
 
 /**
- * Abre o painel duas vezes, sem filtro e com filtro, e devolve o SQL de cada consulta.
+ * Abre o painel uma vez e devolve o SQL de cada consulta que ele fez.
  *
  * O registrador volta ao que era antes de a medição continuar: sem isso os próprios
  * `EXPLAIN` entrariam na lista, e o relatório mediria a si mesmo.
@@ -85,39 +109,70 @@ executar(async () => {
 async function capturar(
   app: INestApplication,
   dataSource: DataSource,
-  safraId: string,
-): Promise<ConsultaCapturada[]> {
+  safraId?: string,
+): Promise<Consulta[]> {
   const capturador = new CapturadorDeSql();
   const anterior = dataSource.logger;
   dataSource.logger = capturador;
 
   try {
-    const servidor = app.getHttpServer() as Parameters<typeof request>[0];
-    await request(servidor).get('/painel').expect(200);
-    await request(servidor).get('/painel').query({ safraId }).expect(200);
+    const servidor = app.getHttpServer() as Servidor;
+    const painel = request(servidor).get('/painel');
+
+    await (safraId === undefined ? painel : painel.query({ safraId })).expect(200);
   } finally {
     dataSource.logger = anterior;
   }
 
-  return semRepetidas(capturador.consultas);
+  return capturador.consultas;
 }
 
-/** A mesma consulta aparece nas duas aberturas do painel. Medir duas vezes não diz nada. */
-function semRepetidas(consultas: ConsultaCapturada[]): ConsultaCapturada[] {
-  const vistas = new Map<string, ConsultaCapturada>();
+/**
+ * Nomeia as quatro consultas de uma abertura sem filtro, pela tabela que cada uma lê.
+ *
+ * Se o painel deixar de fazer exatamente essas quatro, a medição para aqui em vez de
+ * seguir com um rótulo errado. Um relatório que nomeia mal a consulta é pior do que
+ * relatório nenhum: ele afirma o que não mediu.
+ */
+function rotularAbertura(consultas: Consulta[]): Rotulada[] {
+  const rotuladas = consultas.map((consulta) => ({ ...consulta, rotulo: rotuloDe(consulta.sql) }));
+  const esperados = [ROTULO.totais, ROTULO.porEstado, ROTULO.porCultura, ROTULO.nomes];
+  const vistos = rotuladas.map((rotulada) => rotulada.rotulo);
 
-  for (const consulta of consultas) {
-    vistas.set(`${consulta.sql}|${JSON.stringify(consulta.parametros)}`, consulta);
+  if ([...vistos].sort().join('|') !== [...esperados].sort().join('|')) {
+    throw new Error(
+      `O painel fez outras consultas do que a medição conhece. Vieram: ${vistos.join('; ')}.`,
+    );
   }
 
-  return [...vistas.values()];
+  return rotuladas;
 }
 
-async function explicar(
-  dataSource: DataSource,
-  consultas: ConsultaCapturada[],
-): Promise<ConsultaMedida[]> {
-  const medidas: ConsultaMedida[] = [];
+function rotuloDe(sql: string): string {
+  if (sql.includes('"culturas"')) {
+    return ROTULO.nomes;
+  }
+
+  if (sql.includes('"plantios"')) {
+    return ROTULO.porCultura;
+  }
+
+  return sql.includes('GROUP BY') ? ROTULO.porEstado : ROTULO.totais;
+}
+
+/** Da abertura com filtro só interessa a consulta de Plantio: as outras repetem a anterior. */
+function consultaDePlantios(consultas: Consulta[]): Consulta {
+  const encontrada = consultas.find((consulta) => consulta.sql.includes('"plantios"'));
+
+  if (encontrada === undefined) {
+    throw new Error('O painel recortado por Safra não consultou Plantio. A medição não vale.');
+  }
+
+  return encontrada;
+}
+
+async function explicar(dataSource: DataSource, consultas: Rotulada[]): Promise<Medida[]> {
+  const medidas: Medida[] = [];
 
   for (const consulta of consultas) {
     const linhas: Record<string, string>[] = await dataSource.query(
@@ -125,38 +180,10 @@ async function explicar(
       consulta.parametros,
     );
 
-    medidas.push({
-      ...consulta,
-      rotulo: rotular(consulta),
-      plano: linhas.map((linha) => Object.values(linha)[0] ?? '').join('\n'),
-    });
+    medidas.push({ ...consulta, plano: linhas.map((linha) => Object.values(linha)[0] ?? '').join('\n') });
   }
 
   return medidas;
-}
-
-/**
- * Diz qual número do painel cada consulta serve.
- *
- * O rótulo sai do próprio SQL, e não da ordem em que as consultas chegaram: três delas
- * partem juntas, e a ordem de chegada muda de execução para execução.
- */
-function rotular({ sql, parametros }: ConsultaCapturada): string {
-  if (sql.includes('"culturas"')) {
-    return 'Nomes das Culturas, por chave primária';
-  }
-
-  if (sql.includes('"plantios"')) {
-    return parametros.length > 0
-      ? 'Plantios por Cultura, recortados por Safra'
-      : 'Plantios por Cultura, todas as Safras';
-  }
-
-  if (sql.includes('GROUP BY')) {
-    return 'Propriedades por estado';
-  }
-
-  return 'Contagem de Propriedades, soma da Área Total e Uso do Solo';
 }
 
 /** O recorte mais pesado que existe, que é o que vale a pena medir. */
@@ -172,21 +199,6 @@ async function safraMaisCheia(dataSource: DataSource): Promise<string> {
   return linha.id;
 }
 
-async function contarLinhas(dataSource: DataSource): Promise<Record<string, number>> {
-  const [linha]: Record<string, string>[] = await dataSource.query(
-    `SELECT
-       (SELECT count(*) FROM produtores) AS produtores,
-       (SELECT count(*) FROM propriedades) AS propriedades,
-       (SELECT count(*) FROM culturas) AS culturas,
-       (SELECT count(*) FROM safras) AS safras,
-       (SELECT count(*) FROM plantios) AS plantios`,
-  );
-
-  return Object.fromEntries(
-    Object.entries(linha ?? {}).map(([tabela, total]) => [tabela, Number(total)]),
-  );
-}
-
 async function versaoDoPostgres(dataSource: DataSource): Promise<string> {
   const [linha]: { version: string }[] = await dataSource.query('SELECT version()');
 
@@ -200,25 +212,17 @@ async function versaoDoPostgres(dataSource: DataSource): Promise<string> {
  * Um plano que deixe de usá-lo é ou um índice que morreu, ou uma consulta que mudou de
  * forma, e as duas coisas precisam ser vistas na hora, não meses depois.
  */
-function conferirIndiceDoRecorte(medidas: ConsultaMedida[]): void {
-  const recorte = medidas.find((medida) => medida.rotulo.includes('recortados por Safra'));
+function conferirIndiceDoRecorte(medidas: Medida[]): void {
+  const recorte = medidas.find((medida) => medida.rotulo === ROTULO.recorte);
 
-  if (recorte === undefined) {
-    throw new Error('O painel não fez nenhuma consulta recortada por Safra. A medição não vale.');
-  }
-
-  if (!recorte.plano.includes(INDICE_DO_RECORTE)) {
+  if (recorte === undefined || !recorte.plano.includes(INDICE_DO_RECORTE)) {
     throw new Error(
-      `A consulta recortada por Safra não usou ${INDICE_DO_RECORTE}. O plano foi:\n${recorte.plano}`,
+      `A consulta recortada por Safra não usou ${INDICE_DO_RECORTE}. O plano foi:\n${recorte?.plano ?? 'nenhum'}`,
     );
   }
 }
 
-function escrever(
-  medidas: ConsultaMedida[],
-  volume: Record<string, number>,
-  versao: string,
-): void {
+function escrever(medidas: Medida[], volume: Contagem, versao: string): void {
   const linhas = [
     '# Plano de execução das consultas do painel',
     '',
@@ -232,29 +236,27 @@ function escrever(
     '',
     '| Tabela | Linhas |',
     '| --- | ---: |',
-    ...Object.entries(volume).map(([tabela, total]) => `| ${tabela} | ${total.toLocaleString('pt-BR')} |`),
+    ...Object.entries(volume).map(
+      ([tabela, total]) => `| ${tabela} | ${total.toLocaleString('pt-BR')} |`,
+    ),
     '',
-    '## Resumo',
+    '## O que cada plano faz',
     '',
-    '| Consulta | Índices no plano |',
-    '| --- | --- |',
-    ...medidas.map((medida) => `| ${medida.rotulo} | ${indicesDoPlano(medida.plano)} |`),
+    '| Consulta | Leitura do plano | Tempo |',
+    '| --- | --- | ---: |',
+    ...medidas.map(
+      (medida) => `| ${medida.rotulo} | ${leituraDo(medida.plano)} | ${tempoDe(medida.plano)} |`,
+    ),
+    '',
+    'Uma agregação sem filtro lê a tabela inteira por definição, e o que o índice compra nesse',
+    'caso é ler só o índice, que é mais estreito do que a tabela e dispensa tocá-la. O recorte',
+    'por Safra é o único em que o índice também descarta linha, e por isso é o único que a',
+    'medição cobra como portão.',
     '',
   ];
 
   for (const medida of medidas) {
-    linhas.push(
-      `## ${medida.rotulo}`,
-      '',
-      '```sql',
-      medida.sql,
-      '```',
-      '',
-      '```',
-      medida.plano,
-      '```',
-      '',
-    );
+    linhas.push(`## ${medida.rotulo}`, '', '```sql', medida.sql, '```', '', '```', medida.plano, '```', '');
   }
 
   mkdirSync(dirname(RELATORIO), { recursive: true });
@@ -277,9 +279,29 @@ function origemDaMedicao(): string {
   return `pipeline, ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}`;
 }
 
-/** Os índices citados no plano, que é a leitura que a issue 10 cobra por escrito. */
-function indicesDoPlano(plano: string): string {
-  const citados = [...new Set(plano.match(/\bix_[a-z_]+/g) ?? [])];
+/** A leitura do plano em uma linha, tirada do próprio plano e não de expectativa. */
+function leituraDo(plano: string): string {
+  const soIndice = /Index Only Scan using (\w+) on (\w+)/.exec(plano);
 
-  return citados.length === 0 ? 'nenhum, varredura sequencial' : citados.join(', ');
+  if (soIndice !== null) {
+    return `percorre só o índice \`${soIndice[1]}\`, sem tocar a tabela ${soIndice[2]}`;
+  }
+
+  const comIndice = /Index Scan using (\w+) on (\w+)/.exec(plano);
+
+  if (comIndice !== null) {
+    return `busca pelo índice \`${comIndice[1]}\` e lê a tabela ${comIndice[2]}`;
+  }
+
+  const varredura = /Seq Scan on (\w+)/.exec(plano);
+
+  return varredura === null
+    ? 'plano sem varredura reconhecida'
+    : `varre a tabela ${varredura[1]} inteira`;
+}
+
+function tempoDe(plano: string): string {
+  const tempo = /Execution Time: ([\d.]+) ms/.exec(plano);
+
+  return tempo === null ? 'não informado' : `${tempo[1]} ms`;
 }

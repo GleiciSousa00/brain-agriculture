@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
-import { comAplicacao, executar } from './aplicacao';
-import { UNIDADES_FEDERATIVAS } from '../src/modules/propriedades/domain/propriedade';
+import { comAplicacao, rodarComando } from './aplicacao';
+import { contarLinhas } from './contagem';
+import { UNIDADES_FEDERATIVAS } from '../src/modules/propriedades/propriedades.module';
 
 /**
  * Enche o cadastro até cem mil Plantios, para a medição do painel valer alguma coisa.
@@ -13,9 +14,9 @@ import { UNIDADES_FEDERATIVAS } from '../src/modules/propriedades/domain/proprie
  * painel não conta Produtor em lugar nenhum, então multiplicá-los não mudaria número
  * nenhum da medição.
  *
- * A lista de siglas vem do domínio de Propriedade em vez de ser copiada para cá. Este
- * arquivo não vai para a imagem, e a regra de dependência do registro 0005 fala do código
- * que vai; duas listas de unidades federativas, por outro lado, divergiriam.
+ * Os dados são sintéticos e assumidos como tais: a cidade é numerada e o estado gira pela
+ * lista das vinte e sete siglas, que vem publicada pelo arquivo de módulo de Propriedade.
+ * Copiá-la para cá criaria duas listas que divergem.
  */
 
 /** Quantos Plantios a issue 10 pede. A carga passa disto se a conta não fechar redonda. */
@@ -30,20 +31,23 @@ const PLANTIOS_ALVO = 100_000;
  */
 const ANOS_DE_VOLUME = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
 
-interface Contagem {
-  propriedades: number;
-  plantios: number;
-}
-
-executar(async () => {
+rodarComando(async () => {
   await comAplicacao(async (app) => {
     const dataSource = app.get(DataSource);
+    const antes = await contarLinhas(dataSource);
+
+    if (antes.plantios !== undefined && antes.plantios >= PLANTIOS_ALVO) {
+      console.log(
+        `A base já tem ${antes.plantios.toLocaleString('pt-BR')} Plantios, que é o volume pedido. ` +
+          'Para começar do zero, derrube a composição com `docker compose down --volumes`.',
+      );
+      return;
+    }
 
     await garantirSafras(dataSource);
 
     const produtores = await identificadoresDeProdutor(dataSource);
     const culturas = await quantasCulturas(dataSource);
-    const antes = await contar(dataSource);
     const propriedadesNovas = Math.ceil(PLANTIOS_ALVO / (culturas * ANOS_DE_VOLUME.length));
 
     await inserir(dataSource, propriedadesNovas, produtores);
@@ -52,13 +56,13 @@ executar(async () => {
     // conhecia, e a medição do plano mediria uma ficção.
     await dataSource.query('VACUUM ANALYZE');
 
-    const depois = await contar(dataSource);
+    const depois = await contarLinhas(dataSource);
 
     console.log(
-      `Carga de volume: ${depois.propriedades - antes.propriedades} Propriedades e ` +
-        `${depois.plantios - antes.plantios} Plantios novos, em ${ANOS_DE_VOLUME.length} Safras ` +
-        `e ${culturas} Culturas. A base agora tem ${depois.propriedades} Propriedades e ` +
-        `${depois.plantios} Plantios.`,
+      `Carga de volume: ${diferenca(antes, depois, 'propriedades')} Propriedades e ` +
+        `${diferenca(antes, depois, 'plantios')} Plantios novos, em ${ANOS_DE_VOLUME.length} ` +
+        `Safras e ${culturas} Culturas. A base agora tem ${depois.propriedades} Propriedades ` +
+        `e ${depois.plantios} Plantios.`,
     );
   });
 });
@@ -85,12 +89,12 @@ async function inserir(
         SELECT
           gen_random_uuid(),
           ($2::uuid[])[1 + (n % array_length($2::uuid[], 1))],
-          'Gleba ' || n,
+          'Cidade ' || n,
           ($3::text[])[1 + (n % array_length($3::text[], 1))],
           medida.total,
           round(medida.total * 0.6, 4),
           medida.total - round(medida.total * 0.6, 4)
-        FROM generate_series(1, $1) AS n,
+        FROM generate_series(1, $1::int) AS n,
              LATERAL (SELECT (50 + (n % 950))::numeric(16, 4) AS total) AS medida
         RETURNING id
       )
@@ -128,21 +132,26 @@ async function identificadoresDeProdutor(dataSource: DataSource): Promise<string
   return linhas.map((linha) => linha.id);
 }
 
+/**
+ * Quantas espécies o catálogo tem.
+ *
+ * Ela entra na conta de quantas Propriedades a carga precisa criar, então um catálogo vazio
+ * viraria uma divisão por zero e um `generate_series` infinito. O catálogo vem semeado pela
+ * migração, e estar vazio significa que as migrações não rodaram.
+ */
 async function quantasCulturas(dataSource: DataSource): Promise<number> {
-  const [linha]: { total: string }[] = await dataSource.query('SELECT count(*) AS total FROM culturas');
+  const [linha]: { total: string }[] = await dataSource.query(
+    'SELECT count(*) AS total FROM culturas',
+  );
+  const total = Number(linha?.total ?? 0);
 
-  return Number(linha?.total ?? 0);
+  if (total === 0) {
+    throw new Error('O catálogo de Cultura está vazio, e sem ele não há o que plantar.');
+  }
+
+  return total;
 }
 
-async function contar(dataSource: DataSource): Promise<Contagem> {
-  const [linha]: { propriedades: string; plantios: string }[] = await dataSource.query(
-    `SELECT
-       (SELECT count(*) FROM propriedades) AS propriedades,
-       (SELECT count(*) FROM plantios) AS plantios`,
-  );
-
-  return {
-    propriedades: Number(linha?.propriedades ?? 0),
-    plantios: Number(linha?.plantios ?? 0),
-  };
+function diferenca(antes: Record<string, number>, depois: Record<string, number>, tabela: string): string {
+  return ((depois[tabela] ?? 0) - (antes[tabela] ?? 0)).toLocaleString('pt-BR');
 }
