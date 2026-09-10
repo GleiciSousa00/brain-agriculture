@@ -1,6 +1,7 @@
 import { useId, useState } from 'react';
 import { mensagemDe } from '../../api/chamada';
 import { Campo } from '../../componentes/Campo';
+import { comoNumero } from '../../formato';
 import { useCadastro } from './CadastroContexto';
 
 const SEM_CULTURA = 'Nenhuma Cultura no catálogo ainda.';
@@ -44,7 +45,7 @@ export function CatalogosSecao() {
 
     try {
       // O campo devolve texto; a API espera o ano como número.
-      await criarSafra({ ano: anoDaSafra.trim() === '' ? Number.NaN : Number(anoDaSafra) });
+      await criarSafra({ ano: comoNumero(anoDaSafra) });
       setAnoDaSafra('');
     } catch (causa: unknown) {
       setRecusaDaSafra(mensagemDe(causa));
@@ -59,6 +60,8 @@ export function CatalogosSecao() {
         <section className="cartao formulario" aria-labelledby={culturasId}>
           <h3 id={culturasId}>Culturas</h3>
           <form
+            // Sem a conferência do navegador: a recusa tem de vir do corpo da API.
+            noValidate
             onSubmit={(evento) => {
               evento.preventDefault();
               void enviarCultura();
@@ -89,6 +92,8 @@ export function CatalogosSecao() {
         <section className="cartao formulario" aria-labelledby={safrasId}>
           <h3 id={safrasId}>Safras</h3>
           <form
+            // Sem a conferência do navegador: a recusa tem de vir do corpo da API.
+            noValidate
             onSubmit={(evento) => {
               evento.preventDefault();
               void enviarSafra();

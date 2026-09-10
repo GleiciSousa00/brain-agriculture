@@ -6,14 +6,15 @@ import { listarPropriedades } from '../../api/propriedades';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { Campo } from '../../componentes/Campo';
 import { Escolha } from '../../componentes/Escolha';
-import { Paginacao } from '../../componentes/Paginacao';
-import { formatarHectares } from '../../formato';
+import { comoNumero, formatarHectares } from '../../formato';
 import { useCadastro } from './CadastroContexto';
-import { useFatia } from './useFatia';
+import { Listagem } from './Listagem';
+import { usePagina } from './usePagina';
 
+const CARREGANDO = 'Carregando as Propriedades…';
 const VAZIO = 'Nenhuma Propriedade cadastrada ainda.';
 const SEM_PRODUTOR = 'Registre um Produtor antes: toda Propriedade é registrada em nome de um.';
-const PRODUTOR_DESCONHECIDO = '—';
+const FORA_DO_CATALOGO = '—';
 
 /** O que o formulário guarda enquanto se digita: texto, como o campo devolve. */
 interface Rascunho {
@@ -48,17 +49,8 @@ function rascunhoDe(propriedade: Propriedade): Rascunho {
   };
 }
 
-/**
- * O número que vai para a API.
- *
- * Campo vazio vira `NaN`, que o corpo leva como nulo e a API recusa com a mensagem dela.
- * Mandar zero no lugar seria a tela inventando um valor que ninguém digitou.
- */
-function comoNumero(texto: string): number {
-  return texto.trim() === '' ? Number.NaN : Number(texto);
-}
-
-function areasDe(rascunho: Rascunho) {
+/** O corpo que a API aceita na edição: tudo menos o Produtor, que não muda. */
+function corpoDe(rascunho: Rascunho) {
   return {
     nome: rascunho.nome,
     cidade: rascunho.cidade,
@@ -73,7 +65,7 @@ export function PropriedadesSecao() {
   const { produtores, criarPropriedade, editarPropriedade, excluirPropriedade, versao } =
     useCadastro();
   const buscar = useCallback((pagina: number) => listarPropriedades(pagina, TAMANHO_DA_PAGINA), []);
-  const fatia = useFatia(buscar, versao);
+  const pagina = usePagina(buscar, versao);
 
   const [emEdicao, setEmEdicao] = useState<Propriedade>();
   const [rascunho, setRascunho] = useState<Rascunho>(RASCUNHO_LIMPO);
@@ -88,6 +80,7 @@ export function PropriedadesSecao() {
   function limpar(): void {
     setEmEdicao(undefined);
     setRascunho(RASCUNHO_LIMPO);
+    setRecusaDoFormulario(undefined);
   }
 
   function comecarAEditar(propriedade: Propriedade): void {
@@ -102,9 +95,9 @@ export function PropriedadesSecao() {
 
     try {
       if (emEdicao === undefined) {
-        await criarPropriedade({ produtorId: rascunho.produtorId, ...areasDe(rascunho) });
+        await criarPropriedade({ produtorId: rascunho.produtorId, ...corpoDe(rascunho) });
       } else {
-        await editarPropriedade(emEdicao.id, areasDe(rascunho));
+        await editarPropriedade(emEdicao.id, corpoDe(rascunho));
       }
 
       limpar();
@@ -123,8 +116,15 @@ export function PropriedadesSecao() {
     }
   }
 
+  /**
+   * O nome do Produtor de uma Propriedade.
+   *
+   * Ele sai do catálogo em memória, que vai até cem. Passando disso, a Propriedade de um
+   * Produtor que ficou de fora aparece sem nome, e o aviso do alto da tela é quem explica
+   * por quê.
+   */
   function nomeDoProdutor(produtorId: string): string {
-    return produtores.find((produtor) => produtor.id === produtorId)?.nome ?? PRODUTOR_DESCONHECIDO;
+    return produtores.find((produtor) => produtor.id === produtorId)?.nome ?? FORA_DO_CATALOGO;
   }
 
   // Sem Produtor no cadastro não há em nome de quem registrar, e um formulário que só
@@ -138,6 +138,9 @@ export function PropriedadesSecao() {
       {podeRegistrar ? (
         <form
           className="cartao formulario"
+          // Sem a conferência do navegador: a recusa tem de vir do corpo da API, e um
+          // valor fora do passo faria o navegador barrar o envio com texto dele.
+          noValidate
           onSubmit={(evento) => {
             evento.preventDefault();
             void enviar();
@@ -209,13 +212,8 @@ export function PropriedadesSecao() {
       {/* A recusa de uma exclusão fica junto da tabela, que é onde ela foi pedida. */}
       {recusaDaExclusao !== undefined && <p role="alert">{recusaDaExclusao}</p>}
 
-      {fatia.erro !== undefined && <p role="alert">{fatia.erro}</p>}
-      {fatia.carregando && <p role="status">Carregando as Propriedades…</p>}
-
-      {!fatia.carregando &&
-        (fatia.itens.length === 0 ? (
-          <p className="vazio">{VAZIO}</p>
-        ) : (
+      <Listagem pagina={pagina} carregando={CARREGANDO} vazio={VAZIO}>
+        {(propriedades) => (
           <table className="tabela">
             <thead>
               <tr>
@@ -227,7 +225,7 @@ export function PropriedadesSecao() {
               </tr>
             </thead>
             <tbody>
-              {fatia.itens.map((propriedade) => (
+              {propriedades.map((propriedade) => (
                 <tr key={propriedade.id}>
                   <td>{propriedade.nome}</td>
                   <td>{nomeDoProdutor(propriedade.produtorId)}</td>
@@ -256,9 +254,8 @@ export function PropriedadesSecao() {
               ))}
             </tbody>
           </table>
-        ))}
-
-      <Paginacao pagina={fatia.pagina} paginas={fatia.paginas} irPara={fatia.irPara} />
+        )}
+      </Listagem>
     </section>
   );
 }

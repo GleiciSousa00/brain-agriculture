@@ -1,5 +1,8 @@
 import { useId } from 'react';
 
+/** O valor de um campo de escolha enquanto ninguém escolheu nada. */
+export const NADA_ESCOLHIDO = '';
+
 /** Uma opção da lista: o que vai para a API e o que a operadora lê. */
 export interface Opcao {
   valor: string;
@@ -34,7 +37,7 @@ export function Escolha({ rotulo, valor, aoMudar, opcoes, vazia }: Props) {
           aoMudar(evento.target.value);
         }}
       >
-        <option value="">{vazia}</option>
+        <option value={NADA_ESCOLHIDO}>{vazia}</option>
         {opcoes.map((opcao) => (
           <option key={opcao.valor} value={opcao.valor}>
             {opcao.rotulo}

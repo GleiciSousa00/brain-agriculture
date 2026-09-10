@@ -14,7 +14,7 @@ export interface BaseFalsa {
 }
 
 /** Fatia a lista como a API a fatiaria, honrando a página e o tamanho pedidos. */
-export function fatiar<T>(itens: T[], url: URL) {
+export function paginar<T>(itens: T[], url: URL) {
   const pagina = Number(url.searchParams.get('pagina') ?? '1');
   const tamanho = Number(url.searchParams.get('tamanho') ?? '10');
   const inicio = (pagina - 1) * tamanho;
@@ -32,8 +32,8 @@ export function rotasDosCatalogos(base: Partial<BaseFalsa> = {}): Record<string,
   const { produtores = [], propriedades = [], culturas = [], safras = [] } = base;
 
   return {
-    'GET /api/produtores': ({ url }) => ({ corpo: fatiar(produtores, url) }),
-    'GET /api/propriedades': ({ url }) => ({ corpo: fatiar(propriedades, url) }),
+    'GET /api/produtores': ({ url }) => ({ corpo: paginar(produtores, url) }),
+    'GET /api/propriedades': ({ url }) => ({ corpo: paginar(propriedades, url) }),
     'GET /api/culturas': () => ({ corpo: culturas }),
     'GET /api/safras': () => ({ corpo: safras }),
   };

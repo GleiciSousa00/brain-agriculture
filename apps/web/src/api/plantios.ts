@@ -1,14 +1,14 @@
 import type { Plantio, RegistrarPlantio } from '@cadastro-rural/contracts';
 import { colher, colherVazio } from './chamada';
 import { api } from './cliente';
-import type { Fatia } from './pagina';
+import type { Pagina } from './pagina';
 
 /** Uma fatia dos Plantios de uma Propriedade. Sem nenhum, a fatia volta vazia. */
 export async function listarPlantiosDaPropriedade(
   propriedadeId: string,
   pagina: number,
   tamanho: number,
-): Promise<Fatia<Plantio>> {
+): Promise<Pagina<Plantio>> {
   return colher(() =>
     api.GET('/propriedades/{propriedadeId}/plantios', {
       params: { path: { propriedadeId }, query: { pagina, tamanho } },

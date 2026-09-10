@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 interface Props {
   /** O que o botão diz, com o registro dentro: "Excluir Ana Lima". */
@@ -14,9 +14,22 @@ interface Props {
  * A confirmação é escrita na própria linha, e não num diálogo do navegador, porque a
  * exclusão é física e não tem desfazer: excluir um Produtor leva junto as Propriedades e
  * os Plantios dele. Ver o registro de decisão 0003.
+ *
+ * A pergunta substitui o botão que a disparou, então o foco iria para o nada. Ele passa
+ * para o Confirmar, que aponta para a pergunta pelo `aria-describedby`: é assim que ela é
+ * lida em voz alta, e não como região viva, que nasce com texto e costuma não ser
+ * anunciada.
  */
 export function BotaoDeExclusao({ rotulo, pergunta, aoConfirmar }: Props) {
   const [perguntando, setPerguntando] = useState(false);
+  const confirmar = useRef<HTMLButtonElement>(null);
+  const perguntaId = useId();
+
+  useEffect(() => {
+    if (perguntando) {
+      confirmar.current?.focus();
+    }
+  }, [perguntando]);
 
   if (!perguntando) {
     return (
@@ -34,10 +47,12 @@ export function BotaoDeExclusao({ rotulo, pergunta, aoConfirmar }: Props) {
 
   return (
     <span className="confirmacao">
-      <span role="status">{pergunta}</span>
+      <span id={perguntaId}>{pergunta}</span>
       <button
+        ref={confirmar}
         type="button"
         className="perigo"
+        aria-describedby={perguntaId}
         onClick={() => {
           setPerguntando(false);
           aoConfirmar();

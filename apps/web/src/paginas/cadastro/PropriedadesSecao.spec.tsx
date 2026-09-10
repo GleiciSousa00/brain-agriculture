@@ -181,4 +181,17 @@ describe('a seção de Propriedades', () => {
     });
     expect(screen.queryByRole('button', { name: 'Registrar' })).toBeNull();
   });
+
+  it('não deixa o navegador barrar o envio no lugar da API', async () => {
+    servirCadastro({ produtores: [ANA], propriedades: [] });
+
+    renderizarNoCadastro(<PropriedadesSecao />);
+    await screen.findByText('Nenhuma Propriedade cadastrada ainda.');
+
+    // Uma área fora do passo de duas casas faria o navegador recusar o envio com um texto
+    // dele, e a recusa da API nunca chegaria à tela. O jsdom não faz conferência
+    // interativa, então quem se afirma é o atributo que a desliga.
+    const formulario = screen.getByRole('button', { name: 'Registrar' }).closest('form');
+    expect(formulario).toHaveAttribute('novalidate');
+  });
 });

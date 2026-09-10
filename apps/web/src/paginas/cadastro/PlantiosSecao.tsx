@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { mensagemDe } from '../../api/chamada';
-import { Escolha } from '../../componentes/Escolha';
+import { Escolha, NADA_ESCOLHIDO } from '../../componentes/Escolha';
 import { useCadastro } from './CadastroContexto';
 import { PlantiosDaPropriedade } from './PlantiosDaPropriedade';
 
@@ -17,9 +17,9 @@ const SEM_PROPRIEDADE = 'Registre uma Propriedade antes: todo Plantio acontece e
 export function PlantiosSecao() {
   const { propriedades, culturas, safras, registrarPlantio } = useCadastro();
 
-  const [propriedadeId, setPropriedadeId] = useState('');
-  const [culturaId, setCulturaId] = useState('');
-  const [safraId, setSafraId] = useState('');
+  const [propriedadeId, setPropriedadeId] = useState(NADA_ESCOLHIDO);
+  const [culturaId, setCulturaId] = useState(NADA_ESCOLHIDO);
+  const [safraId, setSafraId] = useState(NADA_ESCOLHIDO);
   const [recusa, setRecusa] = useState<string>();
   const tituloId = useId();
 
@@ -28,8 +28,8 @@ export function PlantiosSecao() {
 
     try {
       await registrarPlantio({ propriedadeId, culturaId, safraId });
-      setCulturaId('');
-      setSafraId('');
+      setCulturaId(NADA_ESCOLHIDO);
+      setSafraId(NADA_ESCOLHIDO);
     } catch (causa: unknown) {
       // A unicidade da trinca é regra da API. A tela repete o que ela respondeu.
       setRecusa(mensagemDe(causa));
@@ -64,8 +64,10 @@ export function PlantiosSecao() {
           }))}
         />
 
-        {propriedadeId !== '' && (
+        {propriedadeId !== NADA_ESCOLHIDO && (
           <form
+            // Sem a conferência do navegador: a recusa tem de vir do corpo da API.
+            noValidate
             onSubmit={(evento) => {
               evento.preventDefault();
               void enviar();
@@ -94,7 +96,7 @@ export function PlantiosSecao() {
         )}
       </div>
 
-      {propriedadeId === '' ? (
+      {propriedadeId === NADA_ESCOLHIDO ? (
         <p className="vazio">{SEM_PROPRIEDADE_ESCOLHIDA}</p>
       ) : (
         // A chave refaz a tabela ao trocar de Propriedade, e com ela a página em que se

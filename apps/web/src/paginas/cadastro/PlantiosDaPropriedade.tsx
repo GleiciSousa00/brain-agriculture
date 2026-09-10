@@ -3,12 +3,13 @@ import { mensagemDe } from '../../api/chamada';
 import { TAMANHO_DA_PAGINA } from '../../api/pagina';
 import { listarPlantiosDaPropriedade } from '../../api/plantios';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
-import { Paginacao } from '../../componentes/Paginacao';
 import { useCadastro } from './CadastroContexto';
-import { useFatia } from './useFatia';
+import { Listagem } from './Listagem';
+import { usePagina } from './usePagina';
 
+const CARREGANDO = 'Carregando os Plantios…';
 const VAZIO = 'Nenhum Plantio registrado nesta Propriedade ainda.';
-const DESCONHECIDO = '—';
+const FORA_DO_CATALOGO = '—';
 
 interface Props {
   propriedadeId: string;
@@ -30,17 +31,17 @@ export function PlantiosDaPropriedade({ propriedadeId }: Props) {
     (pagina: number) => listarPlantiosDaPropriedade(propriedadeId, pagina, TAMANHO_DA_PAGINA),
     [propriedadeId],
   );
-  const fatia = useFatia(buscar, versao);
+  const pagina = usePagina(buscar, versao);
   const [recusa, setRecusa] = useState<string>();
 
   function nomeDaCultura(culturaId: string): string {
-    return culturas.find((cultura) => cultura.id === culturaId)?.nome ?? DESCONHECIDO;
+    return culturas.find((cultura) => cultura.id === culturaId)?.nome ?? FORA_DO_CATALOGO;
   }
 
   function anoDaSafra(safraId: string): string {
     const safra = safras.find((candidata) => candidata.id === safraId);
 
-    return safra === undefined ? DESCONHECIDO : String(safra.ano);
+    return safra === undefined ? FORA_DO_CATALOGO : String(safra.ano);
   }
 
   async function excluir(id: string): Promise<void> {
@@ -53,53 +54,44 @@ export function PlantiosDaPropriedade({ propriedadeId }: Props) {
     }
   }
 
-  if (fatia.carregando) {
-    return <p role="status">Carregando os Plantios…</p>;
-  }
-
-  if (fatia.erro !== undefined) {
-    return <p role="alert">{fatia.erro}</p>;
-  }
-
   return (
     <>
       {recusa !== undefined && <p role="alert">{recusa}</p>}
-      {fatia.itens.length === 0 ? (
-        <p className="vazio">{VAZIO}</p>
-      ) : (
-        <table className="tabela">
-          <thead>
-            <tr>
-              <th scope="col">Cultura</th>
-              <th scope="col">Safra</th>
-              <th scope="col">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {fatia.itens.map((plantio) => {
-              const cultura = nomeDaCultura(plantio.culturaId);
-              const safra = anoDaSafra(plantio.safraId);
+      <Listagem pagina={pagina} carregando={CARREGANDO} vazio={VAZIO}>
+        {(plantios) => (
+          <table className="tabela">
+            <thead>
+              <tr>
+                <th scope="col">Cultura</th>
+                <th scope="col">Safra</th>
+                <th scope="col">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {plantios.map((plantio) => {
+                const cultura = nomeDaCultura(plantio.culturaId);
+                const safra = anoDaSafra(plantio.safraId);
 
-              return (
-                <tr key={plantio.id}>
-                  <td>{cultura}</td>
-                  <td>{safra}</td>
-                  <td className="acoes">
-                    <BotaoDeExclusao
-                      rotulo={`Excluir ${cultura} em ${safra}`}
-                      pergunta={`Excluir o Plantio de ${cultura} em ${safra}?`}
-                      aoConfirmar={() => {
-                        void excluir(plantio.id);
-                      }}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      )}
-      <Paginacao pagina={fatia.pagina} paginas={fatia.paginas} irPara={fatia.irPara} />
+                return (
+                  <tr key={plantio.id}>
+                    <td>{cultura}</td>
+                    <td>{safra}</td>
+                    <td className="acoes">
+                      <BotaoDeExclusao
+                        rotulo={`Excluir ${cultura} em ${safra}`}
+                        pergunta={`Excluir o Plantio de ${cultura} em ${safra}?`}
+                        aoConfirmar={() => {
+                          void excluir(plantio.id);
+                        }}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </Listagem>
     </>
   );
 }

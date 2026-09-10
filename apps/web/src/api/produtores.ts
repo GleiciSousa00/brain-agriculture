@@ -1,10 +1,10 @@
 import type { CriarProdutor, EditarProdutor, Produtor } from '@cadastro-rural/contracts';
 import { colher, colherVazio } from './chamada';
 import { api } from './cliente';
-import type { Fatia } from './pagina';
+import type { Pagina } from './pagina';
 
 /** Uma fatia de Produtores, ordenada por nome. */
-export async function listarProdutores(pagina: number, tamanho: number): Promise<Fatia<Produtor>> {
+export async function listarProdutores(pagina: number, tamanho: number): Promise<Pagina<Produtor>> {
   return colher(() => api.GET('/produtores', { params: { query: { pagina, tamanho } } }));
 }
 

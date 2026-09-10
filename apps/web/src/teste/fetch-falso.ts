@@ -73,6 +73,16 @@ export function respondaSemConteudo(): void {
 }
 
 /**
+ * Enfileira uma recusa sem corpo nenhum, como o 502 de um repassador.
+ *
+ * É o caso em que não há Problem Details que se pudesse citar, e o cliente gerado não
+ * produz `error` nenhum: quem tem de perceber a recusa é o status.
+ */
+export function respondaComRecusaSemCorpo(status: number): void {
+  fetchFalso.mockResolvedValueOnce(new Response(null, { status }));
+}
+
+/**
  * Casa um padrão com o caminho pedido, devolvendo o que os parâmetros pegaram.
  *
  * O padrão é o caminho com segmentos de parâmetro prefixados por dois-pontos, como

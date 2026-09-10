@@ -12,7 +12,9 @@ existir.
 
 **O estado compartilhado é um contexto só, `CadastroProvider`.** Ele guarda os quatro
 catálogos que os formulários consomem e é por onde toda escrita passa. Depois de uma
-escrita os quatro catálogos são buscados de novo, e não apenas o que mudou.
+escrita que mexa em catálogo, os quatro são buscados de novo, e não apenas o que mudou.
+A escrita de Plantio é a exceção, e não busca nenhum: ela não muda nem Produtor, nem
+Propriedade, nem Cultura, nem Safra.
 
 **A tabela de cada seção pagina na API, dez por vez; o campo de escolha pede cem.** São
 duas chamadas à mesma rota com tamanhos diferentes, de propósito. Culturas e Safras não
@@ -52,9 +54,14 @@ cliente faria a tela mentir sobre o tamanho da base.
 
 Entrar no cadastro custa quatro chamadas de catálogo mais a da tabela da seção, e visitar
 as quatro seções não repete as quatro: o provedor fica de pé por cima delas e só as busca
-de novo depois de uma escrita. Uma base com mais de cem Produtores passa a ter Produtor
-que o campo de escolha da Propriedade não oferece; é o teto da API, e resolvê-lo pede
-busca por texto na rota de listagem, que não existe.
+de novo depois de uma escrita.
+
+Passando de cem Produtores ou de cem Propriedades, o catálogo vem cortado, e o corte
+morde em dois lugares: o campo de escolha deixa de oferecer quem ficou de fora, e a coluna
+de Produtor da tabela de Propriedades mostra um travessão onde o nome não pôde ser
+resolvido. Resolvê-lo pede busca por texto na rota de listagem, que não existe. Enquanto
+não existir, a tela diz que está cortada, com o aviso do alto do cadastro: um número que
+não aparece é menos grave do que um número que aparece errado sem avisar.
 
 Nenhum campo é conferido na interface. O Documento inválido, a soma das áreas que não
 fecha e a trinca de Plantio repetida são recusados pela API, e a tela mostra o `detail` do
@@ -62,9 +69,21 @@ corpo Problem Details sem reescrevê-lo. É o critério de não duplicar texto d
 cliente, e o preço é que campo vazio vai para a API como nulo e volta recusado, em vez de
 ser barrado antes de sair.
 
+Por isso todo formulário do cadastro leva `noValidate`. Sem ele o navegador barraria o
+envio de uma área fora do passo de duas casas com um texto próprio, e a recusa da API
+nunca chegaria à tela: seria a duplicação de mensagem de erro entrando pela porta dos
+fundos, escrita por quem nem é o cliente.
+
+O status da resposta é conferido além do corpo de erro. Uma recusa sem corpo, como o 502
+de um repassador, não produz erro nenhum no cliente gerado, e sem essa conferência uma
+exclusão recusada passaria por bem-sucedida: a linha sumiria da tela sem ter sumido do
+banco.
+
 A exclusão pergunta na própria linha, com Confirmar e Cancelar, e não num diálogo do
 navegador. `confirm` bloquearia a automação da tela e não se afirma em teste; a pergunta
-escrita é onde a cascata do registro 0003 fica dita a quem clica.
+escrita é onde a cascata do registro 0003 fica dita a quem clica. Como a pergunta
+substitui o botão que a disparou, o foco vai para o Confirmar, que aponta para ela pelo
+`aria-describedby`: é assim que ela é lida em voz alta.
 
 O duplo de `fetch` da suíte passou a casar rota por método e por padrão de caminho, e não
 só pelo caminho: `POST /api/produtores` e `GET /api/produtores` respondem coisas

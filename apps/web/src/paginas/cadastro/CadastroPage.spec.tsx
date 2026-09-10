@@ -81,4 +81,33 @@ describe('a tela de cadastro', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('O banco não respondeu a tempo.');
     expect(screen.getByRole('heading', { name: 'Propriedades', level: 2 })).toBeInTheDocument();
   });
+
+  it('avisa quando o cadastro passa do teto de cem e o catálogo vem cortado', async () => {
+    const muitos = Array.from({ length: 100 }, (_, indice) => ({
+      ...ANA,
+      id: `produtor-${String(indice)}`,
+    }));
+    servirRotas({
+      // A API entrega cem e diz que existem cento e vinte: o que ficou de fora não tem
+      // como ser alcançado, porque a listagem não tem busca por texto.
+      'GET /api/produtores': () => ({ corpo: { itens: muitos, total: 120, pagina: 1, tamanho: 100 } }),
+      'GET /api/propriedades': () => ({ corpo: { itens: [], total: 0, pagina: 1, tamanho: 100 } }),
+      'GET /api/culturas': () => ({ corpo: [] }),
+      'GET /api/safras': () => ({ corpo: [] }),
+      'GET /api/painel': () => ({ corpo: PAINEL_VAZIO }),
+    });
+
+    abrirEm('/cadastro/propriedades');
+
+    expect(await screen.findByText(/mostram só os cem primeiros/)).toBeInTheDocument();
+  });
+
+  it('cala sobre o teto quando o cadastro cabe nele', async () => {
+    servirCadastro(BASE, { 'GET /api/painel': () => ({ corpo: PAINEL_VAZIO }) });
+
+    abrirEm('/cadastro/propriedades');
+    await screen.findByRole('heading', { name: 'Propriedades', level: 2 });
+
+    expect(screen.queryByText(/mostram só os cem primeiros/)).toBeNull();
+  });
 });

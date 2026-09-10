@@ -1,8 +1,11 @@
 import type { ProblemDetails } from '@cadastro-rural/contracts';
 
 /**
- * O que a tela mostra quando a resposta nem chega. É o único texto de erro escrito
- * aqui: havendo resposta, quem fala é o corpo Problem Details da API.
+ * O que a tela mostra quando a resposta nem chega.
+ *
+ * Este e os outros textos deste arquivo são os únicos escritos na interface, e todos
+ * valem só para o caso em que não há corpo Problem Details que se pudesse citar. Havendo
+ * um, quem fala é ele.
  */
 const SEM_RESPOSTA = 'Não foi possível falar com a API. Verifique se ela está de pé.';
 
@@ -38,14 +41,26 @@ export function mensagemDe(causa: unknown): string {
   return causa instanceof ErroDaApi ? causa.message : FALHA_SEM_NOME;
 }
 
-/** O que o cliente gerado devolve: o corpo de sucesso ou o corpo de erro, nunca os dois. */
-type Resultado<T> = { data?: T; error?: ProblemDetails };
+/**
+ * O que a tela mostra quando o pedido foi recusado e não veio Problem Details que se
+ * pudesse citar, como no 502 de um repassador que a API nem chegou a ver.
+ */
+function recusaSemTexto(resposta: Response): string {
+  return `A API recusou o pedido com o status ${String(resposta.status)}.`;
+}
+
+/** O que o cliente gerado devolve: o corpo de sucesso ou o corpo de erro, e a resposta. */
+type Resultado<T> = { data?: T; error?: ProblemDetails; response: Response };
 
 /**
  * Faz a chamada e levanta `ErroDaApi` se ela não deu certo.
  *
  * Toda chamada à API passa por aqui, para que exista um lugar só onde a resposta vira
  * valor ou erro.
+ *
+ * O status é conferido além do corpo de erro porque uma recusa sem corpo não produz
+ * `error` nenhum no cliente gerado: sem esta conferência, uma exclusão recusada com 502
+ * passaria por bem-sucedida e a linha sumiria da tela sem ter sumido do banco.
  */
 async function tentar<T>(chamada: () => Promise<Resultado<T>>): Promise<Resultado<T>> {
   let resultado: Resultado<T>;
@@ -59,7 +74,14 @@ async function tentar<T>(chamada: () => Promise<Resultado<T>>): Promise<Resultad
   if (resultado.error !== undefined) {
     const problema = resultado.error;
 
-    throw new ErroDaApi(problema.detail ?? problema.title, problema.codigo);
+    throw new ErroDaApi(
+      problema.detail ?? problema.title ?? recusaSemTexto(resultado.response),
+      problema.codigo,
+    );
+  }
+
+  if (!resultado.response.ok) {
+    throw new ErroDaApi(recusaSemTexto(resultado.response));
   }
 
   return resultado;

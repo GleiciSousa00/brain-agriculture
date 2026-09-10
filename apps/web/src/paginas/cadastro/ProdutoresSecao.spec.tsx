@@ -2,9 +2,9 @@ import type { Produtor } from '@cadastro-rural/contracts';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { renderizarNoCadastro, servirCadastro } from '../../teste/cadastro-falso';
+import { paginar, renderizarNoCadastro, servirCadastro } from '../../teste/cadastro-falso';
 import { AGRO_BETO, ANA } from '../../teste/exemplos';
-import { corpoEnviadoPara } from '../../teste/fetch-falso';
+import { corpoEnviadoPara, servirRotas } from '../../teste/fetch-falso';
 import { ProdutoresSecao } from './ProdutoresSecao';
 
 /** A linha da tabela em que o nome dado aparece. */
@@ -222,5 +222,60 @@ describe('a seção de Produtores', () => {
       'Não existe Produtor com esse identificador.',
     );
     expect(within(linhaDe('Agro Beto')).getByText('Agro Beto')).toBeInTheDocument();
+  });
+  it('cancelar a edição leva embora a recusa que o formulário tinha recebido', async () => {
+    servirCadastro(
+      { produtores: [ANA] },
+      {
+        'PATCH /api/produtores/:id': () => ({
+          problema: { status: 400, title: 'Bad Request', detail: 'O nome não pode ser vazio.' },
+        }),
+      },
+    );
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Ana Lima');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Editar Ana Lima' }));
+    await preencher('Nome', 'x');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    await screen.findByRole('alert');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar edição' }));
+
+    // A recusa era do que se mandou. Deixá-la sobre o formulário vazio de novo Produtor
+    // seria acusar de recusado o que ninguém mandou.
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('tira a tabela da tela quando a listagem falha, em vez de deixar linha velha', async () => {
+    const produtores = [{ ...ANA }];
+    let listagemQuebrada = false;
+    servirRotas({
+      'GET /api/produtores': ({ url }) =>
+        listagemQuebrada
+          ? { problema: { status: 500, title: 'Internal Server Error', detail: 'O banco caiu.' } }
+          : { corpo: paginar(produtores, url) },
+      'GET /api/propriedades': ({ url }) => ({ corpo: paginar([], url) }),
+      'GET /api/culturas': () => ({ corpo: [] }),
+      'GET /api/safras': () => ({ corpo: [] }),
+      'DELETE /api/produtores/:id': () => {
+        produtores.length = 0;
+        listagemQuebrada = true;
+
+        return { semConteudo: true };
+      },
+    });
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Ana Lima');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Excluir Ana Lima' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('O banco caiu.');
+    expect(screen.queryByRole('table')).toBeNull();
+    // E nem por isso a tela diz que a base está vazia, que seria a outra mentira.
+    expect(screen.queryByText('Nenhum Produtor cadastrado ainda.')).toBeNull();
   });
 });

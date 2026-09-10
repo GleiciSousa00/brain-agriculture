@@ -4,7 +4,7 @@
  * O formato é o mesmo em Produtor, Propriedade e Plantio, então a interface o escreve
  * uma vez só. `total` é quanto existe ao todo, e não quanto veio nesta fatia.
  */
-export interface Fatia<T> {
+export interface Pagina<T> {
   itens: T[];
   total: number;
   pagina: number;
@@ -26,6 +26,6 @@ export const TAMANHO_DA_PAGINA = 10;
 export const TAMANHO_DO_CATALOGO = 100;
 
 /** Quantas páginas o total ocupa. Uma base vazia continua tendo uma página. */
-export function quantasPaginas({ total, tamanho }: Pick<Fatia<unknown>, 'total' | 'tamanho'>): number {
+export function quantasPaginas({ total, tamanho }: Pick<Pagina<unknown>, 'total' | 'tamanho'>): number {
   return Math.max(1, Math.ceil(total / tamanho));
 }

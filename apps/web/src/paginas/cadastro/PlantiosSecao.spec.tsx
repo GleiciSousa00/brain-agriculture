@@ -2,7 +2,7 @@ import type { Plantio } from '@cadastro-rural/contracts';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { fatiar, plantioDe, renderizarNoCadastro, servirCadastro } from '../../teste/cadastro-falso';
+import { paginar, plantioDe, renderizarNoCadastro, servirCadastro } from '../../teste/cadastro-falso';
 import {
   ANA,
   BOA_VISTA,
@@ -27,7 +27,7 @@ const BASE = {
 function rotaDosPlantios(plantios: Plantio[]): Record<string, RotaFalsa> {
   return {
     'GET /api/propriedades/:propriedadeId/plantios': ({ url, parametros }) => ({
-      corpo: fatiar(
+      corpo: paginar(
         plantios.filter((plantio) => plantio.propriedadeId === parametros.propriedadeId),
         url,
       ),

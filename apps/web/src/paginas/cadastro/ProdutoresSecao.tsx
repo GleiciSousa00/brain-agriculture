@@ -5,16 +5,17 @@ import { TAMANHO_DA_PAGINA } from '../../api/pagina';
 import { listarProdutores } from '../../api/produtores';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { Campo } from '../../componentes/Campo';
-import { Paginacao } from '../../componentes/Paginacao';
 import { useCadastro } from './CadastroContexto';
-import { useFatia } from './useFatia';
+import { Listagem } from './Listagem';
+import { usePagina } from './usePagina';
 
+const CARREGANDO = 'Carregando os Produtores…';
 const VAZIO = 'Nenhum Produtor cadastrado ainda.';
 
 export function ProdutoresSecao() {
   const { criarProdutor, editarProdutor, excluirProdutor, versao } = useCadastro();
   const buscar = useCallback((pagina: number) => listarProdutores(pagina, TAMANHO_DA_PAGINA), []);
-  const fatia = useFatia(buscar, versao);
+  const pagina = usePagina(buscar, versao);
 
   const [emEdicao, setEmEdicao] = useState<Produtor>();
   const [nome, setNome] = useState('');
@@ -27,6 +28,9 @@ export function ProdutoresSecao() {
     setEmEdicao(undefined);
     setNome('');
     setDocumento('');
+    // A recusa some com o formulário que a recebeu. Deixá-la sobre um formulário vazio
+    // seria acusar de recusado o que ninguém mandou.
+    setRecusaDoFormulario(undefined);
   }
 
   function comecarAEditar(produtor: Produtor): void {
@@ -69,6 +73,9 @@ export function ProdutoresSecao() {
 
       <form
         className="cartao formulario"
+        // A conferência do navegador fica de fora de propósito: ela barraria o envio com
+        // um texto que não é o da API, e o critério é que a recusa venha do corpo dela.
+        noValidate
         onSubmit={(evento) => {
           evento.preventDefault();
           void enviar();
@@ -81,7 +88,7 @@ export function ProdutoresSecao() {
             rotulo="Documento"
             valor={documento}
             aoMudar={setDocumento}
-            ajuda="CPF ou CNPJ, com ou sem máscara."
+            ajuda="Com ou sem máscara."
           />
         ) : (
           // O Documento não é editável, e mostrá-lo desabilitado só convidaria a tentar.
@@ -105,13 +112,8 @@ export function ProdutoresSecao() {
       {/* A recusa de uma exclusão fica junto da tabela, que é onde ela foi pedida. */}
       {recusaDaExclusao !== undefined && <p role="alert">{recusaDaExclusao}</p>}
 
-      {fatia.erro !== undefined && <p role="alert">{fatia.erro}</p>}
-      {fatia.carregando && <p role="status">Carregando os Produtores…</p>}
-
-      {!fatia.carregando &&
-        (fatia.itens.length === 0 ? (
-          <p className="vazio">{VAZIO}</p>
-        ) : (
+      <Listagem pagina={pagina} carregando={CARREGANDO} vazio={VAZIO}>
+        {(produtores) => (
           <table className="tabela">
             <thead>
               <tr>
@@ -121,7 +123,7 @@ export function ProdutoresSecao() {
               </tr>
             </thead>
             <tbody>
-              {fatia.itens.map((produtor) => (
+              {produtores.map((produtor) => (
                 <tr key={produtor.id}>
                   <td>{produtor.nome}</td>
                   {/* Mascarado é como a API o entrega. A tela não o formata de novo. */}
@@ -147,9 +149,8 @@ export function ProdutoresSecao() {
               ))}
             </tbody>
           </table>
-        ))}
-
-      <Paginacao pagina={fatia.pagina} paginas={fatia.paginas} irPara={fatia.irPara} />
+        )}
+      </Listagem>
     </section>
   );
 }

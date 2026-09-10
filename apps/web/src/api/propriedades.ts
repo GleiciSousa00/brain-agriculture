@@ -1,13 +1,13 @@
 import type { CriarPropriedade, EditarPropriedade, Propriedade } from '@cadastro-rural/contracts';
 import { colher, colherVazio } from './chamada';
 import { api } from './cliente';
-import type { Fatia } from './pagina';
+import type { Pagina } from './pagina';
 
 /** Uma fatia de Propriedades, ordenada por nome. */
 export async function listarPropriedades(
   pagina: number,
   tamanho: number,
-): Promise<Fatia<Propriedade>> {
+): Promise<Pagina<Propriedade>> {
   return colher(() => api.GET('/propriedades', { params: { query: { pagina, tamanho } } }));
 }
 

@@ -40,6 +40,14 @@ export interface Catalogos {
   propriedades: Propriedade[];
   culturas: Cultura[];
   safras: Safra[];
+  /**
+   * O cadastro passou do teto de cem e o catálogo veio cortado.
+   *
+   * A API não tem busca por texto, então não há como alcançar o que ficou de fora. Quem
+   * opera precisa saber disso, porque é o que explica o campo de escolha sem o Produtor
+   * que existe e a coluna de Produtor sem nome.
+   */
+  cortado: boolean;
 }
 
 const CATALOGOS_VAZIOS: Catalogos = {
@@ -47,6 +55,7 @@ const CATALOGOS_VAZIOS: Catalogos = {
   propriedades: [],
   culturas: [],
   safras: [],
+  cortado: false,
 };
 
 export interface Cadastro extends Catalogos {
@@ -73,7 +82,7 @@ export interface Cadastro extends Catalogos {
 
 const CadastroContexto = createContext<Cadastro | undefined>(undefined);
 
-/** Os quatro catálogos numa ida só à API. */
+/** Os quatro catálogos, pedidos em paralelo e esperados de uma vez. */
 async function buscarCatalogos(): Promise<Catalogos> {
   const [produtores, propriedades, culturas, safras] = await Promise.all([
     listarProdutores(PRIMEIRA_PAGINA, TAMANHO_DO_CATALOGO),
@@ -82,7 +91,16 @@ async function buscarCatalogos(): Promise<Catalogos> {
     listarSafras(),
   ]);
 
-  return { produtores: produtores.itens, propriedades: propriedades.itens, culturas, safras };
+  return {
+    produtores: produtores.itens,
+    propriedades: propriedades.itens,
+    culturas,
+    safras,
+    // Os dois totais dizem quanto existe, não quanto veio. Passando do teto, o que não
+    // veio não tem como ser alcançado, e a tela precisa dizê-lo.
+    cortado:
+      produtores.total > TAMANHO_DO_CATALOGO || propriedades.total > TAMANHO_DO_CATALOGO,
+  };
 }
 
 interface Props {
@@ -152,8 +170,8 @@ export function CadastroProvider({ children }: Props) {
   }, []);
 
   /**
-   * Escrita de Plantio: nenhum catálogo muda com ela, então só as tabelas se refazem.
-   * A lista de Plantios de uma Propriedade não é catálogo de ninguém.
+   * Escrita de Plantio: nenhum dos quatro catálogos muda com ela, então só as tabelas se
+   * refazem. A lista de Plantios de uma Propriedade não é catálogo de ninguém.
    */
   const escreverPlantio = useCallback(async (acao: () => Promise<unknown>): Promise<void> => {
     await acao();
