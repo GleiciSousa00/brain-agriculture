@@ -60,6 +60,30 @@ export class Documento {
     );
   }
 
+  /**
+   * Um Documento que já existe e está voltando da persistência.
+   *
+   * O tipo sai só do comprimento, e a validação da Receita não roda de novo: um Documento
+   * gravado sob a regra de ontem continua legível sob a regra de hoje, mesmo que a regra
+   * tenha apertado no meio do caminho. Comprimento fora de onze ou catorze é outra coisa:
+   * é dado corrompido, porque não existe tipo possível para ele. Recebe o valor sem
+   * máscara, como `paraLinha` gravou: com máscara o CPF chega a catorze caracteres e cairia
+   * calado no ramo do CNPJ.
+   */
+  static restaurar(valor: string): Documento {
+    if (valor.length === CPF_COMPRIMENTO) {
+      return new Documento(valor, 'CPF');
+    }
+
+    if (valor.length === CNPJ_COMPRIMENTO) {
+      return new Documento(valor, 'CNPJ');
+    }
+
+    throw new DocumentoInvalido(
+      'O Documento gravado não tem onze caracteres, do CPF, nem catorze, do CNPJ.',
+    );
+  }
+
   /** A forma que a API devolve: só os dois últimos grupos aparecem. */
   mascarado(): string {
     return this.tipo === 'CPF'

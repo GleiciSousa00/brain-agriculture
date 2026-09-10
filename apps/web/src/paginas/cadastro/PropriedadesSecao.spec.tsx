@@ -40,6 +40,21 @@ describe('a seção de Propriedades', () => {
     expect(screen.getByRole('row', { name: /Sítio do Meio/ })).toBeInTheDocument();
   });
 
+  it('mostra um travessão quando o Produtor da Propriedade ficou fora do catálogo', async () => {
+    // Passando de cem Produtores o catálogo vem cortado, e o dono desta Propriedade é um
+    // dos que ficaram de fora. Quem explica o travessão é o aviso do alto do cadastro.
+    servirCadastro({
+      produtores: [AGRO_BETO],
+      propriedades: [BOA_VISTA],
+    });
+
+    renderizarNoCadastro(<PropriedadesSecao />);
+
+    const linha = await screen.findByRole('row', { name: /Fazenda Boa Vista/ });
+    expect(within(linha).getByText('—')).toBeInTheDocument();
+    expect(within(linha).queryByText('Ana Lima')).toBeNull();
+  });
+
   it('escolhe o Produtor numa lista, e não em campo de texto livre', async () => {
     servirCadastro({ produtores: [ANA, AGRO_BETO], propriedades: [] });
 

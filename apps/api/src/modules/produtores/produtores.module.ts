@@ -39,10 +39,10 @@ import { IndexaNomeDeProdutor1789065000000 } from './infrastructure/migrations/1
       provide: DocumentoCrypto,
       inject: [ConfigService],
       useFactory: (config: ConfigService) =>
-        new DocumentoCrypto(
-          segredo(config, 'DOCUMENTO_ENCRYPTION_KEY'),
-          segredo(config, 'DOCUMENTO_FINGERPRINT_SECRET'),
-        ),
+        new DocumentoCrypto({
+          chaveDeCifra: segredo(config, 'DOCUMENTO_ENCRYPTION_KEY'),
+          segredoDaImpressao: segredo(config, 'DOCUMENTO_FINGERPRINT_SECRET'),
+        }),
     },
     {
       provide: ProdutorMapper,
@@ -79,15 +79,9 @@ import { IndexaNomeDeProdutor1789065000000 } from './infrastructure/migrations/1
       useFactory: (produtores: ProdutorRepository) => new EditarProdutorUseCase(produtores),
     },
     {
-      // Quem fornece a segunda porta é o módulo de Propriedade: a cascata do registro 0003
-      // atravessa o limite do módulo, e o registro 0005 manda que ela atravesse por uma
-      // porta declarada aqui e implementada lá.
       provide: ExcluirProdutorUseCase,
-      inject: [PRODUTOR_REPOSITORY, PROPRIEDADES_DO_PRODUTOR_REPOSITORY],
-      useFactory: (
-        produtores: ProdutorRepository,
-        propriedades: PropriedadesDoProdutorRepository,
-      ) => new ExcluirProdutorUseCase(produtores, propriedades),
+      inject: [PRODUTOR_REPOSITORY],
+      useFactory: (produtores: ProdutorRepository) => new ExcluirProdutorUseCase(produtores),
     },
   ],
 })

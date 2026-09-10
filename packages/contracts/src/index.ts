@@ -2,8 +2,9 @@
  * Pacote de contratos.
  *
  * Tudo aqui sai da especificação OpenAPI da API, gerada por `pnpm openapi` na raiz. Nada é
- * escrito à mão: rota, corpo, resposta e formato de erro vêm dos esquemas que a própria API
- * publica, então uma mudança de contrato quebra na checagem de tipos e não em produção.
+ * escrito à mão além de uma derivação de tipo: rota, corpo, resposta e formato de erro vêm
+ * dos esquemas que a própria API publica, então uma mudança de contrato quebra na checagem
+ * de tipos e não em produção.
  */
 
 export {
@@ -15,6 +16,7 @@ export {
   type Cultura,
   type EditarProdutor,
   type EditarPropriedade,
+  type Pagina,
   type Painel,
   type Plantio,
   type ProblemDetails,

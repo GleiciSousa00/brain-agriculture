@@ -34,6 +34,9 @@ export type CriarSafra = components['schemas']['CriarSafraDto'];
 /** O formato único de erro da API, conforme a RFC 9457. */
 export type ProblemDetails = components['schemas']['ProblemDetailsDto'];
 
+/** Os três invólucros gerados têm o mesmo formato por contrato; este serve de molde. */
+export type Pagina<T> = Omit<components['schemas']['ProdutoresPaginaDto'], 'itens'> & { itens: T[] };
+
 /** Os números do painel: os dois totais e as três distribuições. */
 export type Painel = components['schemas']['PainelDto'];
 

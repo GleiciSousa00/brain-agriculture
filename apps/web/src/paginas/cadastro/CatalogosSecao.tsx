@@ -1,8 +1,8 @@
 import { useId, useState } from 'react';
-import { mensagemDe } from '../../api/chamada';
 import { Campo } from '../../componentes/Campo';
 import { comoNumero } from '../../formato';
 import { useCadastro } from './CadastroContexto';
+import { useTentativa } from './useTentativa';
 
 const SEM_CULTURA = 'Nenhuma Cultura no catálogo ainda.';
 const SEM_SAFRA = 'Nenhuma Safra registrada ainda.';
@@ -23,32 +23,22 @@ export function CatalogosSecao() {
 
   const [nomeDaCultura, setNomeDaCultura] = useState('');
   const [anoDaSafra, setAnoDaSafra] = useState('');
-  const [recusaDaCultura, setRecusaDaCultura] = useState<string>();
-  const [recusaDaSafra, setRecusaDaSafra] = useState<string>();
+  const tentativaDaCultura = useTentativa();
+  const tentativaDaSafra = useTentativa();
   const tituloId = useId();
   const culturasId = useId();
   const safrasId = useId();
 
   async function enviarCultura(): Promise<void> {
-    setRecusaDaCultura(undefined);
-
-    try {
-      await acrescentarCultura({ nome: nomeDaCultura });
+    if (await tentativaDaCultura.tentar(() => acrescentarCultura({ nome: nomeDaCultura }))) {
       setNomeDaCultura('');
-    } catch (causa: unknown) {
-      setRecusaDaCultura(mensagemDe(causa));
     }
   }
 
   async function enviarSafra(): Promise<void> {
-    setRecusaDaSafra(undefined);
-
-    try {
-      // O campo devolve texto; a API espera o ano como número.
-      await criarSafra({ ano: comoNumero(anoDaSafra) });
+    // O campo devolve texto; a API espera o ano como número.
+    if (await tentativaDaSafra.tentar(() => criarSafra({ ano: comoNumero(anoDaSafra) }))) {
       setAnoDaSafra('');
-    } catch (causa: unknown) {
-      setRecusaDaSafra(mensagemDe(causa));
     }
   }
 
@@ -76,7 +66,9 @@ export function CatalogosSecao() {
             <p className="acoes">
               <button type="submit">Acrescentar</button>
             </p>
-            {recusaDaCultura !== undefined && <p role="alert">{recusaDaCultura}</p>}
+            {tentativaDaCultura.recusa !== undefined && (
+              <p role="alert">{tentativaDaCultura.recusa}</p>
+            )}
           </form>
           {culturas.length === 0 ? (
             <p className="vazio">{SEM_CULTURA}</p>
@@ -110,7 +102,9 @@ export function CatalogosSecao() {
             <p className="acoes">
               <button type="submit">Registrar</button>
             </p>
-            {recusaDaSafra !== undefined && <p role="alert">{recusaDaSafra}</p>}
+            {tentativaDaSafra.recusa !== undefined && (
+              <p role="alert">{tentativaDaSafra.recusa}</p>
+            )}
           </form>
           {safras.length === 0 ? (
             <p className="vazio">{SEM_SAFRA}</p>

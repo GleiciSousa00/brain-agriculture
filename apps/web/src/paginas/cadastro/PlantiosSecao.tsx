@@ -1,8 +1,8 @@
 import { useId, useState } from 'react';
-import { mensagemDe } from '../../api/chamada';
 import { Escolha, NADA_ESCOLHIDO } from '../../componentes/Escolha';
 import { useCadastro } from './CadastroContexto';
 import { PlantiosDaPropriedade } from './PlantiosDaPropriedade';
+import { useTentativa } from './useTentativa';
 
 const SEM_PROPRIEDADE_ESCOLHIDA = 'Escolha uma Propriedade para ver e registrar os Plantios dela.';
 const SEM_PROPRIEDADE = 'Registre uma Propriedade antes: todo Plantio acontece em uma.';
@@ -20,19 +20,14 @@ export function PlantiosSecao() {
   const [propriedadeId, setPropriedadeId] = useState(NADA_ESCOLHIDO);
   const [culturaId, setCulturaId] = useState(NADA_ESCOLHIDO);
   const [safraId, setSafraId] = useState(NADA_ESCOLHIDO);
-  const [recusa, setRecusa] = useState<string>();
+  const { recusa, tentar, limpar } = useTentativa();
   const tituloId = useId();
 
+  /** A unicidade da trinca é regra da API. A tela repete o que ela respondeu. */
   async function enviar(): Promise<void> {
-    setRecusa(undefined);
-
-    try {
-      await registrarPlantio({ propriedadeId, culturaId, safraId });
+    if (await tentar(() => registrarPlantio({ propriedadeId, culturaId, safraId }))) {
       setCulturaId(NADA_ESCOLHIDO);
       setSafraId(NADA_ESCOLHIDO);
-    } catch (causa: unknown) {
-      // A unicidade da trinca é regra da API. A tela repete o que ela respondeu.
-      setRecusa(mensagemDe(causa));
     }
   }
 
@@ -55,7 +50,8 @@ export function PlantiosSecao() {
           valor={propriedadeId}
           aoMudar={(valor) => {
             setPropriedadeId(valor);
-            setRecusa(undefined);
+            // A recusa era do que se mandou para a Propriedade anterior, e não para esta.
+            limpar();
           }}
           vazia="Escolha uma Propriedade"
           opcoes={propriedades.map((propriedade) => ({

@@ -1,15 +1,11 @@
-import { useCallback, useState } from 'react';
-import { mensagemDe } from '../../api/chamada';
-import { TAMANHO_DA_PAGINA } from '../../api/pagina';
 import { listarPlantiosDaPropriedade } from '../../api/plantios';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { useCadastro } from './CadastroContexto';
 import { Listagem } from './Listagem';
-import { usePagina } from './usePagina';
+import { useTentativa } from './useTentativa';
 
 const CARREGANDO = 'Carregando os Plantios…';
 const VAZIO = 'Nenhum Plantio registrado nesta Propriedade ainda.';
-const FORA_DO_CATALOGO = '—';
 
 interface Props {
   propriedadeId: string;
@@ -26,38 +22,21 @@ interface Props {
  * do contexto, que já está em memória para os campos de escolha.
  */
 export function PlantiosDaPropriedade({ propriedadeId }: Props) {
-  const { culturas, safras, excluirPlantio, versao } = useCadastro();
-  const buscar = useCallback(
-    (pagina: number) => listarPlantiosDaPropriedade(propriedadeId, pagina, TAMANHO_DA_PAGINA),
-    [propriedadeId],
-  );
-  const pagina = usePagina(buscar, versao);
-  const [recusa, setRecusa] = useState<string>();
-
-  function nomeDaCultura(culturaId: string): string {
-    return culturas.find((cultura) => cultura.id === culturaId)?.nome ?? FORA_DO_CATALOGO;
-  }
-
-  function anoDaSafra(safraId: string): string {
-    const safra = safras.find((candidata) => candidata.id === safraId);
-
-    return safra === undefined ? FORA_DO_CATALOGO : String(safra.ano);
-  }
+  const { nomeDaCultura, anoDaSafra, excluirPlantio } = useCadastro();
+  const { recusa, tentar } = useTentativa();
 
   async function excluir(id: string): Promise<void> {
-    setRecusa(undefined);
-
-    try {
-      await excluirPlantio(id);
-    } catch (causa: unknown) {
-      setRecusa(mensagemDe(causa));
-    }
+    await tentar(() => excluirPlantio(id));
   }
 
   return (
     <>
       {recusa !== undefined && <p role="alert">{recusa}</p>}
-      <Listagem pagina={pagina} carregando={CARREGANDO} vazio={VAZIO}>
+      <Listagem
+        listar={(pagina, tamanho) => listarPlantiosDaPropriedade(propriedadeId, pagina, tamanho)}
+        carregando={CARREGANDO}
+        vazio={VAZIO}
+      >
         {(plantios) => (
           <table className="tabela">
             <thead>
