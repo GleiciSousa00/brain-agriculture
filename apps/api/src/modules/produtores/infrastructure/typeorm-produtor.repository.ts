@@ -1,13 +1,10 @@
 import type { Repository } from 'typeorm';
+import type { Recorte, Recortados } from '../../../shared/domain/recorte';
 import { violouUnicidade } from '../../../shared/infrastructure/postgres-errors';
 import type { Documento } from '../domain/documento';
 import type { Produtor } from '../domain/produtor';
 import { ProdutorDuplicado } from '../domain/produtor.errors';
-import type {
-  ProdutorRepository,
-  ProdutoresRecortados,
-  RecorteDeProdutores,
-} from '../domain/produtor.repository';
+import type { ProdutorRepository } from '../domain/produtor.repository';
 import type { ProdutorMapper } from './produtor.mapper';
 import { ProdutorOrmEntity } from './produtor.orm-entity';
 
@@ -62,7 +59,7 @@ export class TypeormProdutorRepository implements ProdutorRepository {
     return linha === null ? null : this.mapper.paraDominio(linha);
   }
 
-  async list({ deslocamento, limite }: RecorteDeProdutores): Promise<ProdutoresRecortados> {
+  async list({ deslocamento, limite }: Recorte): Promise<Recortados<Produtor>> {
     // O identificador desempata homônimos: sem critério estável, duas páginas seguidas
     // poderiam trazer o mesmo Produtor e esconder outro.
     const [linhas, total] = await this.linhas.findAndCount({
