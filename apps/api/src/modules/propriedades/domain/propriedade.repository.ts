@@ -26,8 +26,8 @@ export interface PropriedadeRepository {
    * Remove a Propriedade e, com ela, seus Plantios.
    *
    * A remoção do Plantio é física e vem da chave estrangeira que a migração de Plantio
-   * declara, conforme o registro 0003. Enquanto o módulo de Plantio não existe, não há o
-   * que remover junto.
+   * declara, conforme o registro 0003. Este módulo não a enxerga, e não precisa: o banco
+   * leva os Plantios junto sozinho.
    */
   delete(id: string): Promise<void>;
   /** Lista em ordem de cidade, com o identificador desempatando homônimas. */

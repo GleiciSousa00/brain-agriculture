@@ -132,6 +132,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/plantios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Liga uma Cultura a uma Propriedade em uma Safra. */
+        post: operations["PlantiosController_registrar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plantios/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Exclui um Plantio. */
+        delete: operations["PlantiosController_excluir"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/propriedades/{propriedadeId}/plantios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista os Plantios de uma Propriedade, em páginas. */
+        get: operations["PlantiosDaPropriedadeController_listar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -296,6 +347,49 @@ export interface components {
             id: string;
             nome: string;
         }[];
+        RegistrarPlantioDto: {
+            /**
+             * Format: uuid
+             * @description A Propriedade onde se plantou.
+             */
+            propriedadeId: string;
+            /**
+             * Format: uuid
+             * @description A Cultura do catálogo que foi plantada.
+             */
+            culturaId: string;
+            /**
+             * Format: uuid
+             * @description A Safra em que se plantou.
+             */
+            safraId: string;
+        };
+        PlantioDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            propriedadeId: string;
+            /** Format: uuid */
+            culturaId: string;
+            /** Format: uuid */
+            safraId: string;
+        };
+        PlantiosPaginaDto: {
+            itens: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                propriedadeId: string;
+                /** Format: uuid */
+                culturaId: string;
+                /** Format: uuid */
+                safraId: string;
+            }[];
+            /** @description Quantos registros existem ao todo. */
+            total: number;
+            pagina: number;
+            tamanho: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -852,6 +946,112 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+        };
+    };
+    PlantiosController_registrar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrarPlantioDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlantioDto"];
+                };
+            };
+            /** @description A entrada não é válida. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A Cultura, a Propriedade ou a Safra informada não existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description Essa Propriedade já tem essa Cultura registrada nessa Safra. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+        };
+    };
+    PlantiosController_excluir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O Plantio foi excluído. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Não existe Plantio com esse identificador. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+        };
+    };
+    PlantiosDaPropriedadeController_listar: {
+        parameters: {
+            query?: {
+                /** @description A página pedida. A primeira é a de número um. */
+                pagina?: number;
+                /** @description Quantos registros por página, no máximo 100. */
+                tamanho?: number;
+            };
+            header?: never;
+            path: {
+                propriedadeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A fatia pedida. Uma Propriedade sem nenhum Plantio devolve a fatia vazia. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlantiosPaginaDto"];
                 };
             };
         };

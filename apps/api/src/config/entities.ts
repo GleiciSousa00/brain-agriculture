@@ -1,4 +1,5 @@
 import { CULTURAS_ENTIDADES, CULTURAS_MIGRACOES } from '../modules/culturas/culturas.module';
+import { PLANTIOS_ENTIDADES, PLANTIOS_MIGRACOES } from '../modules/plantios/plantios.module';
 import { PRODUTORES_ENTIDADES, PRODUTORES_MIGRACOES } from '../modules/produtores/produtores.module';
 import {
   PROPRIEDADES_ENTIDADES,
@@ -29,6 +30,7 @@ export const ORM_ENTITIES = [
   ...PROPRIEDADES_ENTIDADES,
   ...SAFRAS_ENTIDADES,
   ...CULTURAS_ENTIDADES,
+  ...PLANTIOS_ENTIDADES,
 ];
 
 export const ORM_MIGRATIONS = [
@@ -36,4 +38,5 @@ export const ORM_MIGRATIONS = [
   ...PROPRIEDADES_MIGRACOES,
   ...SAFRAS_MIGRACOES,
   ...CULTURAS_MIGRACOES,
+  ...PLANTIOS_MIGRACOES,
 ];

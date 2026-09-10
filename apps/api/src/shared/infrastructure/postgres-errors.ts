@@ -26,6 +26,19 @@ export function violouChaveEstrangeira(erro: unknown): boolean {
   return codigoDe(erro) === CHAVE_ESTRANGEIRA_VIOLADA;
 }
 
+/**
+ * O nome da restrição que a falha violou, quando o banco o informa.
+ *
+ * Três chaves estrangeiras na mesma tabela dão a mesma violação, e só o nome da restrição
+ * diz qual delas foi. Reconhecer o nome é comum; decidir o que ele significa continua
+ * sendo do repositório, que é quem batizou a restrição na migração.
+ */
+export function restricaoViolada(erro: unknown): string | undefined {
+  return erro instanceof QueryFailedError
+    ? (erro.driverError as { constraint?: string } | undefined)?.constraint
+    : undefined;
+}
+
 function codigoDe(erro: unknown): string | undefined {
   return erro instanceof QueryFailedError
     ? (erro.driverError as { code?: string } | undefined)?.code
