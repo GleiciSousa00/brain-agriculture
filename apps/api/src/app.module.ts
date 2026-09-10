@@ -16,7 +16,10 @@ import { LoggingModule } from './shared/logging/logging.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    // O `.env` é procurado ao lado desta aplicação e, depois, na raiz do repositório. Os
+    // comandos rodam com a pasta corrente em `apps/api`, então sem o segundo caminho um
+    // `.env` na raiz, que é onde o `.env.example` está, seria ignorado em silêncio.
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '../../.env'] }),
     LoggingModule,
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
