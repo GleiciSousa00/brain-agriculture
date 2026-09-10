@@ -19,12 +19,12 @@ export function paraResposta(produtor: Produtor): ProdutorResposta {
   };
 }
 
-/** A mesma resposta, com as Propriedades em nome do Produtor. */
+/** A mesma resposta, com a fatia das Propriedades em nome do Produtor. */
 export function paraRespostaDetalhada({
   produtor,
   propriedades,
 }: ProdutorComPropriedades): ProdutorDetalhadoResposta {
-  return { ...paraResposta(produtor), propriedades: propriedades.map(paraPropriedade) };
+  return { ...paraResposta(produtor), propriedades: paginaPara(propriedades, paraPropriedade) };
 }
 
 function paraPropriedade(propriedade: Propriedade) {

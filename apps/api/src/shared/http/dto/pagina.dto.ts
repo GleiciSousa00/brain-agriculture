@@ -8,6 +8,16 @@ export const TAMANHO_PADRAO = 20;
 export const TAMANHO_MAXIMO = 100;
 
 /**
+ * Até onde a paginação vai fundo.
+ *
+ * Pular linhas custa: para entregar a página cinco mil, o banco percorre e descarta tudo o
+ * que vem antes dela, e o custo cresce com a profundidade. Com o teto de tamanho acima, a
+ * página mais funda começa no registro cinquenta mil, o que já é mais do que alguém lê.
+ * Quem precisa do cadastro inteiro precisa de outra ferramenta, e não da página cinco mil.
+ */
+export const PAGINA_MAXIMA = 500;
+
+/**
  * Os parâmetros de paginação, iguais em toda listagem da API.
  *
  * O esquema confere a forma e aplica os valores padrão. Ele não sabe quantos registros
@@ -18,8 +28,9 @@ export const parametrosDePaginaSchema = z.object({
     .number()
     .int()
     .min(1)
+    .max(PAGINA_MAXIMA)
     .default(PAGINA_PADRAO)
-    .describe('A página pedida. A primeira é a de número um.'),
+    .describe(`A página pedida. A primeira é a de número um, e a última é a ${PAGINA_MAXIMA}.`),
   tamanho: z.coerce
     .number()
     .int()

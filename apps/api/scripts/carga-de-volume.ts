@@ -1,4 +1,4 @@
-import { DataSource } from 'typeorm';
+import { DataSource, type QueryRunner } from 'typeorm';
 import { comAplicacao, rodarComando } from './aplicacao';
 import { contarLinhas } from './contagem';
 import { UNIDADES_FEDERATIVAS } from '../src/modules/propriedades/propriedades.module';
@@ -50,11 +50,13 @@ rodarComando(async () => {
     const culturas = await quantasCulturas(dataSource);
     const propriedadesNovas = Math.ceil(PLANTIOS_ALVO / (culturas * ANOS_DE_VOLUME.length));
 
-    await inserir(dataSource, propriedadesNovas, produtores);
+    await emConexaoSemTeto(dataSource, async (conexao) => {
+      await inserir(conexao, propriedadesNovas, produtores);
 
-    // Sem estatística nova o Postgres continua planejando para a tabela pequena que ele
-    // conhecia, e a medição do plano mediria uma ficção.
-    await dataSource.query('VACUUM ANALYZE');
+      // Sem estatística nova o Postgres continua planejando para a tabela pequena que ele
+      // conhecia, e a medição do plano mediria uma ficção.
+      await conexao.query('VACUUM ANALYZE');
+    });
 
     const depois = await contarLinhas(dataSource);
 
@@ -76,11 +78,11 @@ rodarComando(async () => {
  * Plantios pode esbarrar na unicidade da trinca, e a conta fecha exata.
  */
 async function inserir(
-  dataSource: DataSource,
+  conexao: QueryRunner,
   propriedades: number,
   produtores: string[],
 ): Promise<void> {
-  await dataSource.query(
+  await conexao.query(
     `
       WITH novas AS (
         INSERT INTO propriedades (
@@ -106,6 +108,29 @@ async function inserir(
     `,
     [propriedades, produtores, [...UNIDADES_FEDERATIVAS], ANOS_DE_VOLUME],
   );
+}
+
+/**
+ * Empresta uma conexão só para a carga, com o tempo limite de consulta levantado.
+ *
+ * A aplicação corta em quinze segundos qualquer consulta, porque uma requisição que passa
+ * disso já perdeu. Uma carga não é uma requisição: ela grava cem mil linhas e depois pede
+ * um `VACUUM ANALYZE`, e as duas coisas podem levar mais que isso. O teto sai só nesta
+ * conexão, e a das requisições continua como está.
+ */
+async function emConexaoSemTeto(
+  dataSource: DataSource,
+  usar: (conexao: QueryRunner) => Promise<void>,
+): Promise<void> {
+  const conexao = dataSource.createQueryRunner();
+  await conexao.connect();
+
+  try {
+    await conexao.query('SET statement_timeout = 0');
+    await usar(conexao);
+  } finally {
+    await conexao.release();
+  }
 }
 
 /** As Safras da carga de volume, sem repetir as que a carga de exemplo já criou. */

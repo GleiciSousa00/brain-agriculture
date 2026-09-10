@@ -86,12 +86,15 @@ export class ProdutoresController {
   @Get(':id')
   @ZodSerializerDto(ProdutorDetalhadoDto)
   @ApiOperation({
-    summary: 'Recupera um Produtor e suas Propriedades, com o Documento mascarado.',
+    summary: 'Recupera um Produtor e uma fatia das Propriedades dele, com o Documento mascarado.',
   })
   @ApiOkResponse({ type: ProdutorDetalhadoDto })
   @ApiNotFoundResponse({ description: NAO_ENCONTRADO, type: ProblemDetailsDto })
-  async buscar(@Param('id', ParseUUIDPipe) id: string): Promise<ProdutorDetalhadoResposta> {
-    return paraRespostaDetalhada(await this.buscarProdutor.execute(id));
+  async buscar(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() parametros: ParametrosDePaginaDto,
+  ): Promise<ProdutorDetalhadoResposta> {
+    return paraRespostaDetalhada(await this.buscarProdutor.execute(id, parametros));
   }
 
   @Patch(':id')

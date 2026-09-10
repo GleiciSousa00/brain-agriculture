@@ -1,6 +1,10 @@
 import type { Repository } from 'typeorm';
+import type { Recortados } from '../../../shared/domain/recorte';
 import type { Propriedade } from '../domain/propriedade';
-import type { PropriedadesDoProdutorRepository } from '../../produtores/domain/propriedades-do-produtor.repository';
+import type {
+  PropriedadesDoProdutorRepository,
+  RecorteDePropriedadesDoProdutor,
+} from '../../produtores/domain/propriedades-do-produtor.repository';
 import { propriedadeParaDominio } from './propriedade.mapper';
 import { PropriedadeOrmEntity } from './propriedade.orm-entity';
 
@@ -13,13 +17,22 @@ import { PropriedadeOrmEntity } from './propriedade.orm-entity';
 export class TypeormPropriedadesDoProdutorRepository implements PropriedadesDoProdutorRepository {
   constructor(private readonly linhas: Repository<PropriedadeOrmEntity>) {}
 
-  async listByProdutor(produtorId: string): Promise<Propriedade[]> {
-    const encontradas = await this.linhas.find({
+  async listByProdutor({
+    produtorId,
+    deslocamento,
+    limite,
+  }: RecorteDePropriedadesDoProdutor): Promise<Recortados<Propriedade>> {
+    // A contagem vem na mesma ida ao banco que a fatia, e é a do Produtor inteiro. O filtro
+    // é servido por `ix_propriedades_produtor`, e a ordem é a mesma da listagem do cadastro,
+    // para a Propriedade não trocar de lugar conforme a tela por onde se olha.
+    const [linhas, total] = await this.linhas.findAndCount({
       where: { produtorId },
-      order: { criadoEm: 'DESC', id: 'ASC' },
+      order: { cidade: 'ASC', id: 'ASC' },
+      skip: deslocamento,
+      take: limite,
     });
 
-    return encontradas.map(propriedadeParaDominio);
+    return { itens: linhas.map(propriedadeParaDominio), total };
   }
 
   async deleteByProdutor(produtorId: string): Promise<void> {

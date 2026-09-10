@@ -61,7 +61,7 @@ describe('ExcluirProdutorUseCase', () => {
 
     await useCase.execute(maria.id);
 
-    await expect(propriedades.listByProdutor(maria.id)).resolves.toEqual([]);
+    await expect(todasDe(propriedades, maria.id)).resolves.toEqual([]);
   });
 
   it('não encosta no que é de outro Produtor', async () => {
@@ -70,7 +70,7 @@ describe('ExcluirProdutorUseCase', () => {
     await useCase.execute(maria.id);
 
     await expect(produtores.findById(joao.id)).resolves.not.toBeNull();
-    const restantes = await propriedades.listByProdutor(joao.id);
+    const restantes = await todasDe(propriedades, joao.id);
     expect(restantes.map((propriedade) => propriedade.cidade)).toEqual(['Bagé']);
   });
 
@@ -84,6 +84,20 @@ describe('ExcluirProdutorUseCase', () => {
     const { useCase, propriedades, maria } = await cenario();
 
     await expect(useCase.execute(INEXISTENTE)).rejects.toThrow(ProdutorNaoEncontrado);
-    await expect(propriedades.listByProdutor(maria.id)).resolves.toHaveLength(2);
+    await expect(todasDe(propriedades, maria.id)).resolves.toHaveLength(2);
   });
 });
+
+/** As Propriedades do Produtor, sem recorte, que é o que estas asserções precisam ver. */
+async function todasDe(
+  propriedades: PropriedadesDoProdutorEmMemoria,
+  produtorId: string,
+): Promise<Propriedade[]> {
+  const { itens } = await propriedades.listByProdutor({
+    produtorId,
+    deslocamento: 0,
+    limite: 100,
+  });
+
+  return itens;
+}
