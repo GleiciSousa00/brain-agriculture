@@ -40,9 +40,5 @@ export class PropriedadesDoProdutorEmMemoria implements PropriedadesDoProdutorRe
 }
 
 function porNome(uma: Propriedade, outra: Propriedade): number {
-  if (uma.nome !== outra.nome) {
-    return uma.nome < outra.nome ? -1 : 1;
-  }
-
-  return uma.id < outra.id ? -1 : 1;
+  return uma.nome.localeCompare(outra.nome) || uma.id.localeCompare(outra.id);
 }

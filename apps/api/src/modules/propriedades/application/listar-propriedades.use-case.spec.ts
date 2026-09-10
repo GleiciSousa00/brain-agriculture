@@ -73,6 +73,20 @@ describe('ListarPropriedadesUseCase', () => {
     ]);
   });
 
+  it('desempata homônimas pelo identificador', async () => {
+    // Duas Propriedades com o mesmo nome são a razão de o identificador estar na ordem e
+    // no índice. Sem o desempate, a fatia de uma página poderia repetir ou pular uma delas.
+    const { repository, useCase } = await cenarioCom(0);
+    const uma = propriedadeChamada('Fazenda Boa Vista');
+    const outra = propriedadeChamada('Fazenda Boa Vista');
+    await repository.save(uma);
+    await repository.save(outra);
+
+    const pagina = await useCase.execute({ pagina: 1, tamanho: 10 });
+
+    expect(pagina.itens.map((propriedade) => propriedade.id)).toEqual([uma.id, outra.id].sort());
+  });
+
   it('a página além do fim vem vazia, e não em erro', async () => {
     const { useCase } = await cenarioCom(5);
 

@@ -7,7 +7,7 @@ import {
   NomeDePropriedadeInvalido,
 } from './propriedade.errors';
 
-/** O mesmo teto do nome do Produtor: os dois são nome próprio digitado por quem cadastra. */
+/** O teto do nome. Cada módulo declara o seu: constante não atravessa fronteira de módulo. */
 export const NOME_TAMANHO_MAXIMO = 200;
 
 export const CIDADE_TAMANHO_MAXIMO = 120;

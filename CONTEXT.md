@@ -25,8 +25,8 @@ _Avoid_: CPF, CNPJ, Identificador Fiscal, Documento Fiscal, Número do Documento
 ### Onde se produz
 
 **Propriedade**:
-A unidade de terra registrada em nome de um Produtor, situada em uma cidade e um
-estado. É o que o painel conta como fazenda.
+A unidade de terra registrada em nome de um Produtor, com nome próprio e situada
+em uma cidade e um estado. É o que o painel conta como fazenda.
 _Avoid_: Fazenda, Sítio, Imóvel Rural, Farm, Property
 
 **Nome da Propriedade**:

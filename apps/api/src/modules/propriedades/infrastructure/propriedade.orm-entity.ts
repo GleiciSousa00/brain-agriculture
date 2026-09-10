@@ -20,6 +20,7 @@ export class PropriedadeOrmEntity {
   @Column({ name: 'produtor_id', type: 'uuid' })
   produtorId!: string;
 
+  /** A listagem ordena por esta coluna. O índice que a serve vem da migração. */
   @Column({ type: 'varchar', length: 200 })
   nome!: string;
 
