@@ -1,5 +1,9 @@
 import { NavLink, Navigate, Route, Routes } from 'react-router';
 import { CadastroPage } from './paginas/cadastro/CadastroPage';
+import { CatalogosSecao } from './paginas/cadastro/CatalogosSecao';
+import { PlantiosSecao } from './paginas/cadastro/PlantiosSecao';
+import { ProdutoresSecao } from './paginas/cadastro/ProdutoresSecao';
+import { PropriedadesSecao } from './paginas/cadastro/PropriedadesSecao';
 import { PainelPage } from './paginas/painel/PainelPage';
 
 export function App() {
@@ -15,7 +19,15 @@ export function App() {
       <main>
         <Routes>
           <Route path="/painel" element={<PainelPage />} />
-          <Route path="/cadastro" element={<CadastroPage />} />
+          <Route path="/cadastro" element={<CadastroPage />}>
+            {/* Entrar no cadastro é entrar em alguma seção dele. O Produtor vem primeiro
+                porque Propriedade e Plantio dependem dele para existir. */}
+            <Route index element={<Navigate to="produtores" replace />} />
+            <Route path="produtores" element={<ProdutoresSecao />} />
+            <Route path="propriedades" element={<PropriedadesSecao />} />
+            <Route path="plantios" element={<PlantiosSecao />} />
+            <Route path="catalogos" element={<CatalogosSecao />} />
+          </Route>
           {/* A raiz e qualquer endereço desconhecido caem no painel, que é a tela de entrada. */}
           <Route path="*" element={<Navigate to="/painel" replace />} />
         </Routes>
