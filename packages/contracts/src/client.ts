@@ -1,5 +1,5 @@
 import createClient, { type Client } from 'openapi-fetch';
-import type { components, paths } from './generated/api';
+import type { components, paths } from './generated/api.js';
 
 /** O Produtor como a API o devolve, com o Documento mascarado. */
 export type Produtor = components['schemas']['ProdutorDto'];
@@ -9,6 +9,9 @@ export type CriarProdutor = components['schemas']['CriarProdutorDto'];
 
 /** O formato único de erro da API, conforme a RFC 9457. */
 export type ProblemDetails = components['schemas']['ProblemDetailsDto'];
+
+/** Os números do painel: os dois totais e as três distribuições. */
+export type Painel = components['schemas']['PainelDto'];
 
 /** O ciclo agrícola, compartilhado por todas as Propriedades. */
 export type Safra = components['schemas']['SafraDto'];

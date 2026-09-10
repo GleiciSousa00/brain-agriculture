@@ -8,7 +8,7 @@
     "jsx": "react-jsx",
     "noEmit": true,
     "declaration": false,
-    "types": ["vite/client"]
+    "types": ["vite/client", "vitest/globals"]
   },
   "include": ["src/**/*", "vite.config.ts"]
 }
