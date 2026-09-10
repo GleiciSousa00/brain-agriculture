@@ -18,6 +18,15 @@ export const problemDetailsSchema = z.object({
     .string()
     .optional()
     .describe('Código do erro de regra de negócio, quando a falha veio do domínio.'),
+  erros: z
+    .array(
+      z.object({
+        campo: z.string().describe('O caminho do campo recusado, como `areaTotal`.'),
+        mensagem: z.string(),
+      }),
+    )
+    .optional()
+    .describe('Os campos recusados pelo esquema de entrada. Só existe na recusa de esquema.'),
 });
 
 export class ProblemDetailsDto extends createZodDto(problemDetailsSchema) {}
