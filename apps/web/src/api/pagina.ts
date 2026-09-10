@@ -1,15 +1,7 @@
-/**
- * O invólucro que toda listagem da API devolve.
- *
- * O formato é o mesmo em Produtor, Propriedade e Plantio, então a interface o escreve
- * uma vez só. `total` é quanto existe ao todo, e não quanto veio nesta fatia.
- */
-export interface Pagina<T> {
-  itens: T[];
-  total: number;
-  pagina: number;
-  tamanho: number;
-}
+import type { Pagina } from '@cadastro-rural/contracts';
+
+/** O invólucro que toda listagem da API devolve, com o formato vindo do contrato. */
+export type { Pagina };
 
 /** A primeira página é a de número um, e não a de número zero. */
 export const PRIMEIRA_PAGINA = 1;
