@@ -74,7 +74,7 @@ próprio: `/cadastro/produtores`, `/cadastro/propriedades`, `/cadastro/plantios`
 Propriedade e Plantio dependem dele para existir.
 
 O navegador nunca chama a porta da API direto. A interface fala com ela pela própria
-origem, sob `/api`, e quem repassa é o servidor que entrega a tela: o nginx no Docker e o
+origem, sob `/api`, e quem repassa é o servidor que entrega a tela: o Caddy no Docker e o
 Vite em desenvolvimento. Nas duas pontas o prefixo é cortado, então `/api/painel` chega na
 API como `/painel`. As duas telas estão nos registros
 [`0009`](docs/adr/0009-interface-web-roteador-grafico-e-mesma-origem.md) e
@@ -293,6 +293,13 @@ variáveis de `POSTGRES_*` para outro banco.
 `pnpm dev` compila o pacote de contratos antes de subir a API e a interface, porque a
 interface o importa pelo `dist`. Sem essa compilação a tela sobe em branco.
 
+## Colocar no ar
+
+O sistema sobe numa VPS com os mesmos três containers da composição de desenvolvimento,
+puxando as imagens que o CI publica a cada push na `main`. O Caddy que entrega a interface
+é o único proxy: termina o TLS, protege tudo com basic auth e repassa `/api`. O runbook, o
+que ficou de fora e por quê estão em [`deploy/README.md`](deploy/README.md).
+
 ## Como rodar os testes
 
 São três tipos, e **só um deles precisa de Docker**.
@@ -381,9 +388,10 @@ Os mesmos comandos que a pipeline roda, e o requisito a que cada um responde:
 | Auditoria, relatório | `pnpm audit:report` | lista o que é moderado, e nunca reprova: é relatório, não portão |
 | Build | `pnpm build` | os três pacotes compilam |
 | Imagem da API | `docker build` | o Dockerfile de produção continua construindo |
-| Imagem da interface web | `docker build` e `nginx -t` | o único portão que o `nginx.conf` tem: nenhum teste de unidade o alcança |
+| Imagem da interface web | `docker build` e `caddy validate` | o portão sintático dos dois Caddyfiles, o da imagem e o de `deploy/`: nenhum teste de unidade os alcança |
+| Composição de produção | `docker compose config` | toda variável que `deploy/docker-compose.yml` exige está no `.env.example` |
 | Integração | `pnpm test:integration` | o esquema, a cifra, a unicidade, a cascata e o painel contra um Postgres de verdade |
-| Composição | `docker compose up` e a rota de saúde | um clone recém-feito sobe com um comando |
+| Composição | `docker compose up` e a rota de saúde pela web | um clone recém-feito sobe com um comando, e o Caddy corta `/api` e devolve o index para rota de tela |
 | Medição do painel | `pnpm medir:painel` | o recorte por Safra continua usando o índice do registro `0004` |
 
 O portão de cobertura vale só em `domain` e em `application`, dos módulos e de `shared`,

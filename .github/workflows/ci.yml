@@ -78,18 +78,21 @@ jobs:
           echo 'a imagem da API não foi construída em três tentativas'
           exit 1
 
-      # A imagem da web carrega o `nginx.conf` que entrega o estático e repassa `/api`.
-      # Construí-la e mandar o próprio nginx conferir a configuração é o único portão que
-      # esse arquivo tem: nenhum teste de unidade o alcança.
-      #
-      # A nova tentativa envolve só a construção. O `nginx -t` roda uma vez, no ramo de
-      # sucesso, porque ele reprova por configuração inválida, que não é falha de registro e
-      # não melhora com tentativa nova.
+      # O `caddy validate` fica fora do laço: configuração inválida não melhora com tentativa nova.
       - name: Imagem Docker da interface web
         run: |
           for tentativa in 1 2 3; do
             if docker build --file apps/web/Dockerfile --tag cadastro-rural-web:${{ github.sha }} .; then
-              docker run --rm cadastro-rural-web:${{ github.sha }} nginx -t
+              docker run --rm cadastro-rural-web:${{ github.sha }} \
+                caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+              hash="$(docker run --rm cadastro-rural-web:${{ github.sha }} caddy hash-password --plaintext exemplo)"
+              docker run --rm \
+                --volume "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+                --env DOMAIN=exemplo.duckdns.org \
+                --env BASIC_AUTH_USER=exemplo \
+                --env BASIC_AUTH_HASH="$hash" \
+                cadastro-rural-web:${{ github.sha }} \
+                caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
               exit 0
             fi
             echo "a construção falhou na tentativa $tentativa"
@@ -97,6 +100,11 @@ jobs:
           done
           echo 'a imagem da interface web não foi construída em três tentativas'
           exit 1
+
+      - name: Composição de produção interpola
+        run: |
+          sed 's/=$/=exemplo/' deploy/.env.example > deploy/.env.ci
+          docker compose --file deploy/docker-compose.yml --env-file deploy/.env.ci config --quiet
 
   # Trabalho lento: reservado aos testes de integração, que sobem dependência de verdade.
   integration:
@@ -124,18 +132,19 @@ jobs:
       - name: Testes de integração
         run: pnpm test:integration
 
-      # A composição é conferida aqui porque este é o trabalho que pode gastar tempo.
+      # A composição é conferida aqui porque este é o trabalho que pode gastar tempo. A rota
+      # de saúde é pedida pela porta da web, o caminho do navegador.
       #
       # Os dois laços deste passo contam coisas diferentes, e por isso não repetem o nome
       # da variável. O de `subida` é nova tentativa contra a falha de registro descrita
       # acima, e desiste na terceira. O de `tentativa` não é nova tentativa: é a espera
       # pela API terminar de arrancar, e esgotá-la reprova o passo. É esse segundo laço que
       # pega uma API que não sobe, e é por isso que ele fica exatamente como estava.
-      - name: Subir a composição e conferir a rota de saúde
+      - name: Subir a composição e conferir a rota de saúde pela web
         run: |
           subiu=nao
           for subida in 1 2 3; do
-            if docker compose up --build --detach postgres api; then
+            if docker compose up --build --detach postgres api web; then
               subiu=sim
               break
             fi
@@ -149,16 +158,19 @@ jobs:
           fi
 
           for tentativa in $(seq 1 30); do
-            if curl --fail --silent http://localhost:3000/health; then
+            if curl --fail --silent http://localhost:5173/api/health; then
               echo
-              echo "a rota de saúde respondeu na tentativa $tentativa"
+              echo "a rota de saúde respondeu pela web na tentativa $tentativa"
               exit 0
             fi
             sleep 2
           done
-          echo 'a rota de saúde não respondeu'
+          echo 'a rota de saúde não respondeu pela web'
           docker compose logs
           exit 1
+
+      - name: Conferir que uma rota de tela devolve o index
+        run: curl --fail --silent http://localhost:5173/cadastro/produtores | grep --quiet '<div id="root">'
 
       # A carga e a medição falam com o Postgres da composição, que já está de pé, e sobem a
       # aplicação em processo. A medição é portão: ela falha se a consulta recortada por
@@ -189,3 +201,40 @@ jobs:
       - name: Derrubar a composição
         if: always()
         run: docker compose down --volumes
+
+  publish:
+    name: publish
+    needs: [fast, integration]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Entrar no registro
+        run: echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io --username '${{ github.actor }}' --password-stdin
+
+      - name: Construir e publicar as imagens
+        run: |
+          registro="ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          for imagem in api web; do
+            nome="$registro/cadastro-rural-$imagem"
+            construiu=nao
+            for tentativa in 1 2 3; do
+              if docker build --file "apps/$imagem/Dockerfile" \
+                --label "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+                --tag "$nome:${{ github.sha }}" --tag "$nome:latest" .; then
+                construiu=sim
+                break
+              fi
+              echo "a construção de $imagem falhou na tentativa $tentativa"
+              [ "$tentativa" = 3 ] || sleep 15
+            done
+            if [ "$construiu" = nao ]; then
+              echo "a imagem de $imagem não foi construída em três tentativas"
+              exit 1
+            fi
+            docker push --all-tags "$nome"
+          done

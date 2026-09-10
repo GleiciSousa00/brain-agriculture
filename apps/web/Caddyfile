@@ -1,0 +1,15 @@
+# Em produção, deploy/Caddyfile é montado por cima deste.
+
+:80 {
+	root * /srv
+	encode gzip
+
+	handle_path /api/* {
+		reverse_proxy api:3000
+	}
+
+	handle {
+		try_files {path} /index.html
+		file_server
+	}
+}
