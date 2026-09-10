@@ -30,6 +30,17 @@ export class Produtor {
   }
 
   /**
+   * O mesmo Produtor com outro nome.
+   *
+   * Devolve um Produtor novo em vez de mexer neste porque a entidade é imutável. O
+   * Documento atravessa intacto: ele identifica o Produtor, e trocá-lo seria cadastrar
+   * outro, não corrigir este.
+   */
+  renomear(nome: string): Produtor {
+    return new Produtor(this.id, this.documento, conferirNome(nome));
+  }
+
+  /**
    * Um Produtor que já existe e está voltando da persistência.
    *
    * O nome não passa pela conferência de novo. Ele foi conferido quando entrou, e apertar

@@ -4,6 +4,9 @@ import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import type { Repository } from 'typeorm';
 import { BuscarProdutorUseCase } from './application/buscar-produtor.use-case';
 import { CriarProdutorUseCase } from './application/criar-produtor.use-case';
+import { EditarProdutorUseCase } from './application/editar-produtor.use-case';
+import { ExcluirProdutorUseCase } from './application/excluir-produtor.use-case';
+import { ListarProdutoresUseCase } from './application/listar-produtores.use-case';
 import { PRODUTOR_REPOSITORY, type ProdutorRepository } from './domain/produtor.repository';
 import {
   PROPRIEDADES_DO_PRODUTOR_REPOSITORY,
@@ -17,6 +20,7 @@ import { ProdutorOrmEntity } from './infrastructure/produtor.orm-entity';
 import { TypeormProdutorRepository } from './infrastructure/typeorm-produtor.repository';
 import { ProdutoresController } from './http/produtores.controller';
 import { CriaProdutores1789040000000 } from './infrastructure/migrations/1789040000000-cria-produtores';
+import { IndexaNomeDeProdutor1789065000000 } from './infrastructure/migrations/1789065000000-indexa-nome-de-produtor';
 
 /**
  * O único arquivo autorizado a enxergar as quatro camadas.
@@ -64,6 +68,27 @@ import { CriaProdutores1789040000000 } from './infrastructure/migrations/1789040
         propriedades: PropriedadesDoProdutorRepository,
       ) => new BuscarProdutorUseCase(produtores, propriedades),
     },
+    {
+      provide: ListarProdutoresUseCase,
+      inject: [PRODUTOR_REPOSITORY],
+      useFactory: (produtores: ProdutorRepository) => new ListarProdutoresUseCase(produtores),
+    },
+    {
+      provide: EditarProdutorUseCase,
+      inject: [PRODUTOR_REPOSITORY],
+      useFactory: (produtores: ProdutorRepository) => new EditarProdutorUseCase(produtores),
+    },
+    {
+      // Quem fornece a segunda porta é o módulo de Propriedade: a cascata do registro 0003
+      // atravessa o limite do módulo, e o registro 0005 manda que ela atravesse por uma
+      // porta declarada aqui e implementada lá.
+      provide: ExcluirProdutorUseCase,
+      inject: [PRODUTOR_REPOSITORY, PROPRIEDADES_DO_PRODUTOR_REPOSITORY],
+      useFactory: (
+        produtores: ProdutorRepository,
+        propriedades: PropriedadesDoProdutorRepository,
+      ) => new ExcluirProdutorUseCase(produtores, propriedades),
+    },
   ],
 })
 export class ProdutoresModule {}
@@ -71,7 +96,7 @@ export class ProdutoresModule {}
 /** O que o módulo publica para a raiz de composição montar o catálogo do ORM. */
 export const PRODUTORES_ENTIDADES = [ProdutorOrmEntity];
 
-export const PRODUTORES_MIGRACOES = [CriaProdutores1789040000000];
+export const PRODUTORES_MIGRACOES = [CriaProdutores1789040000000, IndexaNomeDeProdutor1789065000000];
 
 /** A chave e o segredo chegam em base64 e não têm valor padrão: perder um é perder dado. */
 function segredo(config: ConfigService, variavel: string): Buffer {

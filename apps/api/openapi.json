@@ -219,6 +219,61 @@
         "tags": [
           "Produtores"
         ]
+      },
+      "get": {
+        "operationId": "ProdutoresController_listar",
+        "parameters": [
+          {
+            "name": "pagina",
+            "required": false,
+            "in": "query",
+            "description": "A página pedida. A primeira é a de número um.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 9007199254740991,
+              "default": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "tamanho",
+            "required": false,
+            "in": "query",
+            "description": "Quantos registros por página, no máximo 100.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdutoresPaginaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A página ou o tamanho pedido não é válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Lista Produtores por nome, em páginas, com o Documento mascarado.",
+        "tags": [
+          "Produtores"
+        ]
       }
     },
     "/produtores/{id}": {
@@ -257,6 +312,98 @@
           }
         },
         "summary": "Recupera um Produtor e suas Propriedades, com o Documento mascarado.",
+        "tags": [
+          "Produtores"
+        ]
+      },
+      "patch": {
+        "operationId": "ProdutoresController_editar",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditarProdutorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdutorDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "O nome informado não é válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Não existe Produtor com esse identificador.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Corrige o nome de um Produtor. O Documento não é editável.",
+        "tags": [
+          "Produtores"
+        ]
+      },
+      "delete": {
+        "description": "A exclusão é física e não tem desfazer, conforme o registro de decisão 0003 sobre o direito à eliminação.",
+        "operationId": "ProdutoresController_excluir",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "O Produtor foi excluído."
+          },
+          "404": {
+            "description": "Não existe Produtor com esse identificador.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Exclui um Produtor, e com ele suas Propriedades e seus Plantios.",
         "tags": [
           "Produtores"
         ]
@@ -695,6 +842,66 @@
           "status"
         ]
       },
+      "ProdutoresPaginaDto": {
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "nome": {
+                  "type": "string"
+                },
+                "documento": {
+                  "type": "string",
+                  "description": "Mascarado. Os dois últimos grupos aparecem, o resto não."
+                },
+                "tipoDeDocumento": {
+                  "type": "string",
+                  "enum": [
+                    "CPF",
+                    "CNPJ"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "nome",
+                "documento",
+                "tipoDeDocumento"
+              ]
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Quantos registros existem ao todo."
+          },
+          "pagina": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "tamanho": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "itens",
+          "total",
+          "pagina",
+          "tamanho"
+        ]
+      },
       "ProdutorDetalhadoDto": {
         "type": "object",
         "properties": {
@@ -764,6 +971,20 @@
           "documento",
           "tipoDeDocumento",
           "propriedades"
+        ]
+      },
+      "EditarProdutorDto": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Nome do Produtor."
+          }
+        },
+        "required": [
+          "nome"
         ]
       },
       "CriarPropriedadeDto": {
