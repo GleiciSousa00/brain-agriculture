@@ -1,7 +1,8 @@
 # As camadas se isolam por uma regra de dependência verificada na pipeline
 
-Cada módulo do domínio (`produtores`, `propriedades`, `safras`, `culturas`, `painel`)
-se divide em quatro camadas, e as dependências entre elas apontam sempre para dentro:
+Cada módulo do domínio (`produtores`, `propriedades`, `plantios`, `safras`, `culturas`,
+`painel`) se divide em quatro camadas, e as dependências entre elas apontam sempre para
+dentro:
 
 - `domain` guarda entidades, objetos de valor, erros de domínio e as **portas**, que são
   as interfaces de repositório. É TypeScript puro, sem framework e sem biblioteca.
