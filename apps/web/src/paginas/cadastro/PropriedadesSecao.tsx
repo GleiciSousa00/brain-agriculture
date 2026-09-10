@@ -1,6 +1,5 @@
 import type { Propriedade } from '@cadastro-rural/contracts';
 import { useId, useState } from 'react';
-import { mensagemDe } from '../../api/chamada';
 import { listarPropriedades } from '../../api/propriedades';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { Campo } from '../../componentes/Campo';
@@ -8,6 +7,7 @@ import { Escolha } from '../../componentes/Escolha';
 import { comoNumero, formatarHectares } from '../../formato';
 import { useCadastro } from './CadastroContexto';
 import { Listagem } from './Listagem';
+import { useTentativa } from './useTentativa';
 
 const CARREGANDO = 'Carregando as Propriedades…';
 const VAZIO = 'Nenhuma Propriedade cadastrada ainda.';
@@ -64,8 +64,8 @@ export function PropriedadesSecao() {
 
   const [emEdicao, setEmEdicao] = useState<Propriedade>();
   const [rascunho, setRascunho] = useState<Rascunho>(RASCUNHO_LIMPO);
-  const [recusaDoFormulario, setRecusaDoFormulario] = useState<string>();
-  const [recusaDaExclusao, setRecusaDaExclusao] = useState<string>();
+  const tentativaDoFormulario = useTentativa();
+  const tentativaDaExclusao = useTentativa();
   const tituloId = useId();
 
   const campo = (chave: keyof Rascunho) => (valor: string) => {
@@ -75,40 +75,32 @@ export function PropriedadesSecao() {
   function limpar(): void {
     setEmEdicao(undefined);
     setRascunho(RASCUNHO_LIMPO);
-    setRecusaDoFormulario(undefined);
+    tentativaDoFormulario.limpar();
   }
 
   function comecarAEditar(propriedade: Propriedade): void {
     setEmEdicao(propriedade);
     setRascunho(rascunhoDe(propriedade));
-    setRecusaDoFormulario(undefined);
+    tentativaDoFormulario.limpar();
   }
 
   /** A regra das áreas mora na API. Aqui só se mostra a recusa que ela mandou. */
   async function enviar(): Promise<void> {
-    setRecusaDoFormulario(undefined);
-
-    try {
+    const passou = await tentativaDoFormulario.tentar(async () => {
       if (emEdicao === undefined) {
         await criarPropriedade({ produtorId: rascunho.produtorId, ...corpoDe(rascunho) });
       } else {
         await editarPropriedade(emEdicao.id, corpoDe(rascunho));
       }
+    });
 
+    if (passou) {
       limpar();
-    } catch (causa: unknown) {
-      setRecusaDoFormulario(mensagemDe(causa));
     }
   }
 
   async function excluir(id: string): Promise<void> {
-    setRecusaDaExclusao(undefined);
-
-    try {
-      await excluirPropriedade(id);
-    } catch (causa: unknown) {
-      setRecusaDaExclusao(mensagemDe(causa));
-    }
+    await tentativaDaExclusao.tentar(() => excluirPropriedade(id));
   }
 
   // Sem Produtor no cadastro não há em nome de quem registrar, e um formulário que só
@@ -187,14 +179,18 @@ export function PropriedadesSecao() {
               </button>
             )}
           </p>
-          {recusaDoFormulario !== undefined && <p role="alert">{recusaDoFormulario}</p>}
+          {tentativaDoFormulario.recusa !== undefined && (
+            <p role="alert">{tentativaDoFormulario.recusa}</p>
+          )}
         </form>
       ) : (
         <p className="cartao vazio">{SEM_PRODUTOR}</p>
       )}
 
       {/* A recusa de uma exclusão fica junto da tabela, que é onde ela foi pedida. */}
-      {recusaDaExclusao !== undefined && <p role="alert">{recusaDaExclusao}</p>}
+      {tentativaDaExclusao.recusa !== undefined && (
+        <p role="alert">{tentativaDaExclusao.recusa}</p>
+      )}
 
       <Listagem listar={listarPropriedades} carregando={CARREGANDO} vazio={VAZIO}>
         {(propriedades) => (

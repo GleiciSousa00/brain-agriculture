@@ -1,9 +1,8 @@
-import { useState } from 'react';
-import { mensagemDe } from '../../api/chamada';
 import { listarPlantiosDaPropriedade } from '../../api/plantios';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { useCadastro } from './CadastroContexto';
 import { Listagem } from './Listagem';
+import { useTentativa } from './useTentativa';
 
 const CARREGANDO = 'Carregando os Plantios…';
 const VAZIO = 'Nenhum Plantio registrado nesta Propriedade ainda.';
@@ -24,16 +23,10 @@ interface Props {
  */
 export function PlantiosDaPropriedade({ propriedadeId }: Props) {
   const { nomeDaCultura, anoDaSafra, excluirPlantio } = useCadastro();
-  const [recusa, setRecusa] = useState<string>();
+  const { recusa, tentar } = useTentativa();
 
   async function excluir(id: string): Promise<void> {
-    setRecusa(undefined);
-
-    try {
-      await excluirPlantio(id);
-    } catch (causa: unknown) {
-      setRecusa(mensagemDe(causa));
-    }
+    await tentar(() => excluirPlantio(id));
   }
 
   return (
