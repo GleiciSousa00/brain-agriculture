@@ -67,7 +67,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lista as Propriedades por cidade, em páginas. */
+        /** Lista as Propriedades por nome, em páginas. */
         get: operations["PropriedadesController_listar"];
         put?: never;
         /** Registra uma Propriedade em nome de um Produtor. */
@@ -86,7 +86,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Atualiza a localização e as áreas de uma Propriedade. */
+        /** Atualiza o nome, a localização e as áreas de uma Propriedade. */
         put: operations["PropriedadesController_editar"];
         post?: never;
         /** Exclui uma Propriedade, e com ela seus Plantios. */
@@ -259,6 +259,7 @@ export interface components {
                 itens: {
                     /** Format: uuid */
                     id: string;
+                    nome: string;
                     cidade: string;
                     /** @description A sigla da unidade federativa. */
                     estado: string;
@@ -285,6 +286,8 @@ export interface components {
              * @description O Produtor em nome de quem a Propriedade é registrada.
              */
             produtorId: string;
+            /** @description Como quem opera encontra a Propriedade. Duas na mesma cidade se distinguem por ele. */
+            nome: string;
             cidade: string;
             /** @description A sigla da unidade federativa. */
             estado: string;
@@ -300,6 +303,7 @@ export interface components {
             id: string;
             /** Format: uuid */
             produtorId: string;
+            nome: string;
             cidade: string;
             /** @description A sigla da unidade federativa. */
             estado: string;
@@ -316,6 +320,7 @@ export interface components {
                 id: string;
                 /** Format: uuid */
                 produtorId: string;
+                nome: string;
                 cidade: string;
                 /** @description A sigla da unidade federativa. */
                 estado: string;
@@ -332,6 +337,8 @@ export interface components {
             tamanho: number;
         };
         EditarPropriedadeDto: {
+            /** @description Como quem opera encontra a Propriedade. Duas na mesma cidade se distinguem por ele. */
+            nome: string;
             cidade: string;
             /** @description A sigla da unidade federativa. */
             estado: string;

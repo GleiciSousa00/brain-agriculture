@@ -524,7 +524,7 @@
             }
           }
         },
-        "summary": "Lista as Propriedades por cidade, em páginas.",
+        "summary": "Lista as Propriedades por nome, em páginas.",
         "tags": [
           "Propriedades"
         ]
@@ -585,7 +585,7 @@
             }
           }
         },
-        "summary": "Atualiza a localização e as áreas de uma Propriedade.",
+        "summary": "Atualiza o nome, a localização e as áreas de uma Propriedade.",
         "tags": [
           "Propriedades"
         ]
@@ -1166,6 +1166,9 @@
                       "format": "uuid",
                       "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                     },
+                    "nome": {
+                      "type": "string"
+                    },
                     "cidade": {
                       "type": "string"
                     },
@@ -1188,6 +1191,7 @@
                   },
                   "required": [
                     "id",
+                    "nome",
                     "cidade",
                     "estado",
                     "areaTotal",
@@ -1252,6 +1256,12 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
             "description": "O Produtor em nome de quem a Propriedade é registrada."
           },
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Como quem opera encontra a Propriedade. Duas na mesma cidade se distinguem por ele."
+          },
           "cidade": {
             "type": "string",
             "minLength": 1,
@@ -1281,6 +1291,7 @@
         },
         "required": [
           "produtorId",
+          "nome",
           "cidade",
           "estado",
           "areaTotal",
@@ -1300,6 +1311,9 @@
             "type": "string",
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "nome": {
+            "type": "string"
           },
           "cidade": {
             "type": "string"
@@ -1324,6 +1338,7 @@
         "required": [
           "id",
           "produtorId",
+          "nome",
           "cidade",
           "estado",
           "areaTotal",
@@ -1349,6 +1364,9 @@
                   "format": "uuid",
                   "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                 },
+                "nome": {
+                  "type": "string"
+                },
                 "cidade": {
                   "type": "string"
                 },
@@ -1372,6 +1390,7 @@
               "required": [
                 "id",
                 "produtorId",
+                "nome",
                 "cidade",
                 "estado",
                 "areaTotal",
@@ -1407,6 +1426,12 @@
       "EditarPropriedadeDto": {
         "type": "object",
         "properties": {
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Como quem opera encontra a Propriedade. Duas na mesma cidade se distinguem por ele."
+          },
           "cidade": {
             "type": "string",
             "minLength": 1,
@@ -1435,6 +1460,7 @@
           }
         },
         "required": [
+          "nome",
           "cidade",
           "estado",
           "areaTotal",

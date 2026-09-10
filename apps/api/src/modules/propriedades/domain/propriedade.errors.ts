@@ -6,6 +6,12 @@ export class AreaInvalida extends DomainError {
   readonly natureza: NaturezaDaFalha = 'entrada-invalida';
 }
 
+/** O nome informado para a Propriedade não serve. */
+export class NomeDePropriedadeInvalido extends DomainError {
+  readonly codigo = 'nome-de-propriedade-invalido';
+  readonly natureza: NaturezaDaFalha = 'entrada-invalida';
+}
+
 /** A cidade informada não serve. */
 export class CidadeInvalida extends DomainError {
   readonly codigo = 'cidade-invalida';

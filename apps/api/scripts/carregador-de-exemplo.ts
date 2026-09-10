@@ -117,6 +117,7 @@ async function carregarPropriedade(
       .post('/propriedades')
       .send({
         produtorId,
+        nome: propriedade.nome,
         cidade: propriedade.cidade,
         estado: propriedade.estado,
         areaTotal: propriedade.areaTotal,
@@ -124,7 +125,7 @@ async function carregarPropriedade(
         areaDeVegetacao: propriedade.areaDeVegetacao,
       }),
     201,
-    `a Propriedade em ${propriedade.cidade}`,
+    `a Propriedade ${propriedade.nome}`,
   );
 
   for (const plantio of propriedade.plantios) {
@@ -135,7 +136,7 @@ async function carregarPropriedade(
         safraId: identificadorDe(safras, plantio.ano, 'Safra'),
       }),
       201,
-      `o Plantio de ${plantio.cultura} em ${propriedade.cidade}`,
+      `o Plantio de ${plantio.cultura} na ${propriedade.nome}`,
     );
   }
 

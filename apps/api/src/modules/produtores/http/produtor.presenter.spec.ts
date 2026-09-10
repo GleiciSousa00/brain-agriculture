@@ -48,6 +48,7 @@ describe('paraRespostaDetalhada', () => {
   function propriedade() {
     return Propriedade.criar({
       produtorId: produtor.id,
+      nome: 'Fazenda Boa Vista',
       cidade: 'Sorriso',
       estado: 'MT',
       areaTotal: Area.criar(100.5),
@@ -60,6 +61,7 @@ describe('paraRespostaDetalhada', () => {
     const resposta = paraRespostaDetalhada({ produtor, propriedades: fatiaCom(propriedade()) });
 
     expect(resposta.propriedades.itens[0]).toMatchObject({
+      nome: 'Fazenda Boa Vista',
       cidade: 'Sorriso',
       estado: 'MT',
       areaTotal: 100.5,
