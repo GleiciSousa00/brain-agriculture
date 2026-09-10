@@ -6,6 +6,7 @@ import { paginaSchema } from '../../../../shared/http/dto/pagina.dto';
 export const propriedadeSchema = z.object({
   id: z.uuid(),
   produtorId: z.uuid(),
+  nome: z.string(),
   cidade: z.string(),
   estado: z.string().describe('A sigla da unidade federativa.'),
   areaTotal: z.number().describe('Em hectares.'),

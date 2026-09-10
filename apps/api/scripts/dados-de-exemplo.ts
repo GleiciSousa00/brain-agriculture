@@ -9,7 +9,8 @@
  * O conjunto é pequeno e escolhido a dedo para que os três gráficos digam algo:
  *
  * - Cinco Propriedades em quatro estados, com Mato Grosso aparecendo duas vezes, para a
- *   distribuição por estado não sair com todas as fatias iguais.
+ *   distribuição por estado não sair com todas as fatias iguais. Os cinco nomes são
+ *   distintos, e a listagem sai em ordem deles.
  * - Quatro Culturas com contagens diferentes entre si, e diferentes de novo quando a Safra
  *   de 2024 é o recorte. Contagens empatadas seriam desempatadas pelo identificador da
  *   Cultura, que é sorteado na carga, e a ordem do gráfico deixaria de ser previsível.
@@ -32,6 +33,7 @@ export interface PlantioDeExemplo {
 }
 
 export interface PropriedadeDeExemplo {
+  nome: string;
   cidade: string;
   estado: string;
   areaTotal: number;
@@ -55,6 +57,7 @@ export const PRODUTORES_DE_EXEMPLO: ProdutorDeExemplo[] = [
     nome: 'Maria Aparecida Nogueira',
     propriedades: [
       {
+        nome: 'Fazenda Boa Esperança',
         cidade: 'Sorriso',
         estado: 'MT',
         areaTotal: 1200,
@@ -67,6 +70,7 @@ export const PRODUTORES_DE_EXEMPLO: ProdutorDeExemplo[] = [
         ],
       },
       {
+        nome: 'Fazenda Santa Helena',
         cidade: 'Rio Verde',
         estado: 'GO',
         areaTotal: 800,
@@ -84,6 +88,7 @@ export const PRODUTORES_DE_EXEMPLO: ProdutorDeExemplo[] = [
     nome: 'João Batista Ferreira',
     propriedades: [
       {
+        nome: 'Fazenda Serra do Café',
         cidade: 'Uberaba',
         estado: 'MG',
         areaTotal: 450,
@@ -95,6 +100,7 @@ export const PRODUTORES_DE_EXEMPLO: ProdutorDeExemplo[] = [
         ],
       },
       {
+        nome: 'Fazenda Rio Teles',
         cidade: 'Sinop',
         estado: 'MT',
         areaTotal: 300,
@@ -112,6 +118,7 @@ export const PRODUTORES_DE_EXEMPLO: ProdutorDeExemplo[] = [
     nome: 'Agropecuária Vale Verde Ltda',
     propriedades: [
       {
+        nome: 'Fazenda Vale do São Francisco',
         cidade: 'Petrolina',
         estado: 'PE',
         areaTotal: 250,

@@ -25,7 +25,7 @@ export class PropriedadeRepositoryEmMemoria implements PropriedadeRepository {
     // A mesma ordem que o repositório de verdade promete. Um substituto que ordena
     // diferente faz o teste de paginação passar por acidente.
     const ordenadas = [...this.propriedades.values()].sort(
-      (uma, outra) => uma.cidade.localeCompare(outra.cidade) || uma.id.localeCompare(outra.id),
+      (uma, outra) => uma.nome.localeCompare(outra.nome) || uma.id.localeCompare(outra.id),
     );
 
     return {

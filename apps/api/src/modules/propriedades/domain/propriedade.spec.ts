@@ -1,12 +1,18 @@
 import { Area } from './area';
 import { Propriedade } from './propriedade';
-import { AreasNaoFecham, CidadeInvalida, EstadoInvalido } from './propriedade.errors';
+import {
+  AreasNaoFecham,
+  CidadeInvalida,
+  EstadoInvalido,
+  NomeDePropriedadeInvalido,
+} from './propriedade.errors';
 
 const PRODUTOR_ID = '3f2f0c8e-6a1e-4a2b-9f0e-0f0a1b2c3d4e';
 
 function dados(areas: { total: number; agricultavel: number; vegetacao: number }) {
   return {
     produtorId: PRODUTOR_ID,
+    nome: 'Fazenda Boa Vista',
     cidade: 'Sorriso',
     estado: 'MT',
     areaTotal: Area.criar(areas.total),
@@ -16,10 +22,11 @@ function dados(areas: { total: number; agricultavel: number; vegetacao: number }
 }
 
 describe('Propriedade', () => {
-  it('registra a Propriedade em nome de um Produtor, com cidade, estado e as três áreas', () => {
+  it('registra a Propriedade em nome de um Produtor, com nome, cidade, estado e as três áreas', () => {
     const propriedade = Propriedade.criar(dados({ total: 100, agricultavel: 60, vegetacao: 30 }));
 
     expect(propriedade.produtorId).toBe(PRODUTOR_ID);
+    expect(propriedade.nome).toBe('Fazenda Boa Vista');
     expect(propriedade.cidade).toBe('Sorriso');
     expect(propriedade.estado).toBe('MT');
     expect(propriedade.areaTotal.hectares).toBe(100);
@@ -49,10 +56,44 @@ describe('Propriedade', () => {
     expect(() => Propriedade.criar(dados({ total: 0.3, agricultavel: 0.1, vegetacao: 0.2 }))).not.toThrow();
   });
 
+  it('descarta espaço em volta do nome', () => {
+    const propriedade = Propriedade.criar({
+      ...dados({ total: 1, agricultavel: 0, vegetacao: 0 }),
+      nome: '  Fazenda Boa Vista  ',
+    });
+
+    expect(propriedade.nome).toBe('Fazenda Boa Vista');
+  });
+
+  it('recusa nome longo demais', () => {
+    const nome = 'a'.repeat(201);
+
+    expect(() =>
+      Propriedade.criar({ ...dados({ total: 1, agricultavel: 0, vegetacao: 0 }), nome }),
+    ).toThrow(NomeDePropriedadeInvalido);
+  });
+
+  it.each([
+    ['vazio', ''],
+    ['só espaço', '   '],
+  ])('recusa nome %s', (_caso, nome) => {
+    expect(() =>
+      Propriedade.criar({ ...dados({ total: 1, agricultavel: 0, vegetacao: 0 }), nome }),
+    ).toThrow(NomeDePropriedadeInvalido);
+  });
+
   it('recusa cidade em branco', () => {
     expect(() => Propriedade.criar({ ...dados({ total: 1, agricultavel: 0, vegetacao: 0 }), cidade: '  ' })).toThrow(
       CidadeInvalida,
     );
+  });
+
+  it('recusa cidade longa demais', () => {
+    const cidade = 'a'.repeat(121);
+
+    expect(() =>
+      Propriedade.criar({ ...dados({ total: 1, agricultavel: 0, vegetacao: 0 }), cidade }),
+    ).toThrow(CidadeInvalida);
   });
 
   it('recusa estado que não é unidade federativa', () => {
@@ -75,6 +116,7 @@ describe('Propriedade', () => {
 
     expect(() =>
       propriedade.editar({
+        nome: 'Fazenda Boa Vista',
         cidade: 'Sorriso',
         estado: 'MT',
         areaTotal: Area.criar(100),
@@ -88,6 +130,7 @@ describe('Propriedade', () => {
     const propriedade = Propriedade.criar(dados({ total: 100, agricultavel: 60, vegetacao: 30 }));
 
     const editada = propriedade.editar({
+      nome: 'Fazenda Santa Rita',
       cidade: 'Lucas do Rio Verde',
       estado: 'MT',
       areaTotal: Area.criar(200),
@@ -97,8 +140,24 @@ describe('Propriedade', () => {
 
     expect(editada.id).toBe(propriedade.id);
     expect(editada.produtorId).toBe(PRODUTOR_ID);
+    expect(editada.nome).toBe('Fazenda Santa Rita');
     expect(editada.cidade).toBe('Lucas do Rio Verde');
     expect(editada.areaAgricultavel.hectares).toBe(150);
+  });
+
+  it('confere o nome de novo ao editar', () => {
+    const propriedade = Propriedade.criar(dados({ total: 100, agricultavel: 60, vegetacao: 30 }));
+
+    expect(() =>
+      propriedade.editar({
+        nome: '   ',
+        cidade: 'Sorriso',
+        estado: 'MT',
+        areaTotal: Area.criar(100),
+        areaAgricultavel: Area.criar(60),
+        areaDeVegetacao: Area.criar(30),
+      }),
+    ).toThrow(NomeDePropriedadeInvalido);
   });
 
   it('volta da persistência sem reaplicar a regra da soma', () => {
@@ -111,5 +170,17 @@ describe('Propriedade', () => {
     });
 
     expect(propriedade.areaAgricultavel.hectares).toBe(90);
+  });
+
+  it('volta da persistência com o nome gravado, sem conferi-lo de novo', () => {
+    // O nome foi conferido quando entrou. Apertar a regra depois tornaria ilegível a linha
+    // já gravada, em vez de editável.
+    const propriedade = Propriedade.restaurar({
+      id: '9c1e0f2a-2b3c-4d5e-8f90-a1b2c3d4e5f6',
+      ...dados({ total: 100, agricultavel: 60, vegetacao: 30 }),
+      nome: '  Fazenda gravada sob a regra antiga  ',
+    });
+
+    expect(propriedade.nome).toBe('  Fazenda gravada sob a regra antiga  ');
   });
 });

@@ -11,6 +11,7 @@ async function cenario() {
   const repository = new PropriedadeRepositoryEmMemoria();
   const propriedade = Propriedade.criar({
     produtorId: PRODUTOR_ID,
+    nome: 'Fazenda Boa Vista',
     cidade: 'Sorriso',
     estado: 'MT',
     areaTotal: Area.criar(100),
@@ -29,6 +30,7 @@ describe('EditarPropriedadeUseCase', () => {
     const { useCase, repository, propriedade } = await cenario();
 
     const editada = await useCase.execute(propriedade.id, {
+      nome: 'Fazenda Boa Vista',
       cidade: 'Sorriso',
       estado: 'MT',
       ...areasNovas,
@@ -44,6 +46,7 @@ describe('EditarPropriedadeUseCase', () => {
 
     await expect(
       useCase.execute(propriedade.id, {
+        nome: 'Fazenda Boa Vista',
         cidade: 'Sorriso',
         estado: 'MT',
         areaTotal: 100,
@@ -58,7 +61,26 @@ describe('EditarPropriedadeUseCase', () => {
     const { useCase } = await cenario();
 
     await expect(
-      useCase.execute(AUSENTE, { cidade: 'Sorriso', estado: 'MT', ...areasNovas }),
+      useCase.execute(AUSENTE, {
+        nome: 'Fazenda Boa Vista',
+        cidade: 'Sorriso',
+        estado: 'MT',
+        ...areasNovas,
+      }),
     ).rejects.toThrow(PropriedadeNaoEncontrada);
+  });
+
+  it('grava o nome novo', async () => {
+    const { useCase, repository, propriedade } = await cenario();
+
+    const editada = await useCase.execute(propriedade.id, {
+      nome: 'Fazenda Santa Rita',
+      cidade: 'Sorriso',
+      estado: 'MT',
+      ...areasNovas,
+    });
+
+    expect(editada.nome).toBe('Fazenda Santa Rita');
+    await expect(repository.findById(propriedade.id)).resolves.toBe(editada);
   });
 });

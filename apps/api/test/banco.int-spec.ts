@@ -115,8 +115,8 @@ describe('A aplicação contra um Postgres de verdade', () => {
     expect(indices.map((indice) => indice.indexname)).toEqual([
       'ix_plantios_cultura',
       'ix_plantios_safra_cultura',
-      'ix_propriedades_cidade',
       'ix_propriedades_estado',
+      'ix_propriedades_nome',
       'ix_propriedades_produtor',
     ]);
     expect(catalogo.map((cultura) => cultura.nome)).toEqual(
@@ -315,6 +315,7 @@ describe('A aplicação contra um Postgres de verdade', () => {
       .post('/propriedades')
       .send({
         produtorId: produtor.body.id,
+        nome: 'Fazenda Boa Vista',
         cidade: 'Sorriso',
         estado: 'MT',
         areaTotal: 100,

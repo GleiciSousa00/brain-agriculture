@@ -13,7 +13,7 @@ export interface PropriedadeRepository {
    * leva os Plantios junto sozinho.
    */
   delete(id: string): Promise<void>;
-  /** Lista em ordem de cidade, com o identificador desempatando homônimas. */
+  /** Lista em ordem de nome, com o identificador desempatando homônimas. */
   list(recorte: Recorte): Promise<Recortados<Propriedade>>;
 }
 

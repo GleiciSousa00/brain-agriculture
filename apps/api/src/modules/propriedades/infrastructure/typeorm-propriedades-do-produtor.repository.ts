@@ -27,7 +27,7 @@ export class TypeormPropriedadesDoProdutorRepository implements PropriedadesDoPr
     // para a Propriedade não trocar de lugar conforme a tela por onde se olha.
     const [linhas, total] = await this.linhas.findAndCount({
       where: { produtorId },
-      order: { cidade: 'ASC', id: 'ASC' },
+      order: { nome: 'ASC', id: 'ASC' },
       skip: deslocamento,
       take: limite,
     });

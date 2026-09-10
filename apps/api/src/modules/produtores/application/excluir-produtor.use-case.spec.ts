@@ -9,10 +9,11 @@ import { ProdutorRepositoryEmMemoria } from './__fakes__/produtor-repository-em-
 
 const INEXISTENTE = '0b8b6f3a-1c2d-4e5f-8a9b-0c1d2e3f4a5b';
 
-function propriedadeDe(produtorId: string, cidade: string): Propriedade {
+function propriedadeDe(produtorId: string, nome: string): Propriedade {
   return Propriedade.criar({
     produtorId,
-    cidade,
+    nome,
+    cidade: 'Sorriso',
     estado: 'MT',
     areaTotal: Area.criar(100),
     areaAgricultavel: Area.criar(60),
@@ -33,9 +34,9 @@ async function cenario() {
   await produtores.save(joao);
 
   propriedades.acrescentar(
-    propriedadeDe(maria.id, 'Sorriso'),
-    propriedadeDe(maria.id, 'Sinop'),
-    propriedadeDe(joao.id, 'Bagé'),
+    propriedadeDe(maria.id, 'Fazenda Boa Vista'),
+    propriedadeDe(maria.id, 'Fazenda Santa Rita'),
+    propriedadeDe(joao.id, 'Fazenda Cana Brava'),
   );
 
   return {
@@ -71,7 +72,7 @@ describe('ExcluirProdutorUseCase', () => {
 
     await expect(produtores.findById(joao.id)).resolves.not.toBeNull();
     const restantes = await todasDe(propriedades, joao.id);
-    expect(restantes.map((propriedade) => propriedade.cidade)).toEqual(['Bagé']);
+    expect(restantes.map((propriedade) => propriedade.nome)).toEqual(['Fazenda Cana Brava']);
   });
 
   it('recusa excluir Produtor que não existe', async () => {

@@ -27,10 +27,11 @@ async function cenario() {
 
 const PRIMEIRA_PAGINA: PedidoDePagina = { pagina: 1, tamanho: 20 };
 
-function propriedadeDe(produtorId: string, cidade: string): Propriedade {
+function propriedadeDe(produtorId: string, nome: string): Propriedade {
   return Propriedade.criar({
     produtorId,
-    cidade,
+    nome,
+    cidade: 'Sorriso',
     estado: 'MT',
     areaTotal: Area.criar(100),
     areaAgricultavel: Area.criar(60),
@@ -47,12 +48,12 @@ describe('BuscarProdutorUseCase', () => {
 
   it('devolve as Propriedades do Produtor junto', async () => {
     const { useCase, produtor, propriedades } = await cenario();
-    propriedades.acrescentar(propriedadeDe(produtor.id, 'Sorriso'));
+    propriedades.acrescentar(propriedadeDe(produtor.id, 'Fazenda Boa Vista'));
 
     const encontrado = await useCase.execute(produtor.id, PRIMEIRA_PAGINA);
 
-    expect(encontrado.propriedades.itens.map((propriedade) => propriedade.cidade)).toEqual([
-      'Sorriso',
+    expect(encontrado.propriedades.itens.map((propriedade) => propriedade.nome)).toEqual([
+      'Fazenda Boa Vista',
     ]);
     expect(encontrado.propriedades).toMatchObject({ total: 1, pagina: 1, tamanho: 20 });
   });
@@ -67,7 +68,7 @@ describe('BuscarProdutorUseCase', () => {
 
   it('não devolve Propriedade de outro Produtor', async () => {
     const { useCase, produtor, propriedades } = await cenario();
-    propriedades.acrescentar(propriedadeDe('7a6b5c4d-3e2f-4a1b-8c9d-0e1f2a3b4c5d', 'Bagé'));
+    propriedades.acrescentar(propriedadeDe('7a6b5c4d-3e2f-4a1b-8c9d-0e1f2a3b4c5d', 'Fazenda Cana Brava'));
 
     const encontrado = await useCase.execute(produtor.id, PRIMEIRA_PAGINA);
 
@@ -77,16 +78,16 @@ describe('BuscarProdutorUseCase', () => {
   it('recorta a fatia pedida e conta o total do Produtor, não o da fatia', async () => {
     const { useCase, produtor, propriedades } = await cenario();
     propriedades.acrescentar(
-      propriedadeDe(produtor.id, 'Sorriso'),
-      propriedadeDe(produtor.id, 'Bagé'),
-      propriedadeDe(produtor.id, 'Cuiabá'),
+      propriedadeDe(produtor.id, 'Fazenda Santa Rita'),
+      propriedadeDe(produtor.id, 'Fazenda Boa Vista'),
+      propriedadeDe(produtor.id, 'Fazenda Cana Brava'),
     );
 
     const encontrado = await useCase.execute(produtor.id, { pagina: 2, tamanho: 2 });
 
-    // Em ordem de cidade, a segunda página de duas em duas traz só Sorriso.
-    expect(encontrado.propriedades.itens.map((propriedade) => propriedade.cidade)).toEqual([
-      'Sorriso',
+    // Em ordem de nome, a segunda página de duas em duas traz só a Santa Rita.
+    expect(encontrado.propriedades.itens.map((propriedade) => propriedade.nome)).toEqual([
+      'Fazenda Santa Rita',
     ]);
     expect(encontrado.propriedades).toMatchObject({ total: 3, pagina: 2, tamanho: 2 });
   });
