@@ -22,7 +22,6 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    globals: true,
     setupFiles: ['./src/teste/preparo.ts'],
     css: false,
   },

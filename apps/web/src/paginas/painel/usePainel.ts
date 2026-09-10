@@ -1,6 +1,7 @@
 import type { Painel, Safra } from '@cadastro-rural/contracts';
 import { useEffect, useRef, useState } from 'react';
-import { ErroDaApi, buscarPainel, buscarSafras } from '../../api/painel';
+import { ErroDaApi } from '../../api/chamada';
+import { buscarPainel, buscarSafras } from '../../api/painel';
 
 /** O valor do controle quando nenhuma Safra recorta a distribuição por Cultura. */
 export const TODAS_AS_SAFRAS = '';
@@ -14,12 +15,17 @@ function mensagemDe(causa: unknown): string {
 
 export interface PainelEmTela {
   painel?: Painel;
-  /** A distribuição por Cultura já recortada pela Safra escolhida. */
-  porCultura: Painel['plantiosPorCultura'];
+  /**
+   * A distribuição por Cultura já recortada pela Safra escolhida. Fica indefinida
+   * enquanto o recorte não volta, e continua indefinida se ele falhar.
+   */
+  porCultura?: Painel['plantiosPorCultura'];
   safras: Safra[];
   safraId: string;
   escolherSafra: (safraId: string) => void;
   carregando: boolean;
+  /** Um recorte está em voo, e o número anterior já saiu da tela. */
+  recortando: boolean;
   /** Falha da primeira carga: não há o que mostrar. */
   erro?: string;
   /** Falha de um recorte ou do catálogo de Safras: o resto da tela continua de pé. */
@@ -35,18 +41,22 @@ export interface PainelEmTela {
  */
 export function usePainel(): PainelEmTela {
   const [painel, setPainel] = useState<Painel>();
-  const [porCultura, setPorCultura] = useState<Painel['plantiosPorCultura']>([]);
+  const [porCultura, setPorCultura] = useState<Painel['plantiosPorCultura']>();
   const [safras, setSafras] = useState<Safra[]>([]);
   const [safraId, setSafraId] = useState(TODAS_AS_SAFRAS);
   const [erro, setErro] = useState<string>();
   const [erroDoRecorte, setErroDoRecorte] = useState<string>();
 
-  // Espelha `painel` para que a resposta saiba se é a primeira sem depender do estado.
+  // Diz se a resposta que chegar é a primeira, sem depender do estado e sem redisparar
+  // o efeito. Sobrevive à montagem dupla do StrictMode.
   const jaVeioOPainel = useRef(false);
 
   useEffect(() => {
     let cancelado = false;
     setErroDoRecorte(undefined);
+    // O número da Safra anterior sai da tela agora. Deixá-lo sob o rótulo da Safra nova
+    // seria mostrar um dado e dizer que ele é outro.
+    setPorCultura(undefined);
 
     buscarPainel(safraId === TODAS_AS_SAFRAS ? undefined : safraId)
       .then((resposta) => {
@@ -105,6 +115,7 @@ export function usePainel(): PainelEmTela {
     safraId,
     escolherSafra: setSafraId,
     carregando: painel === undefined && erro === undefined,
+    recortando: porCultura === undefined && erroDoRecorte === undefined,
     erro,
     erroDoRecorte,
   };

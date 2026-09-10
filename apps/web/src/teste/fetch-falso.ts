@@ -18,27 +18,38 @@ export interface Problema {
   codigo?: string;
 }
 
-function respostaDe(corpo: unknown, status: number, tipo: string): Response {
+/** O que uma rota do duplo devolve: um corpo de sucesso ou um problema. */
+export type RespostaFalsa = { corpo: unknown } | { problema: Problema };
+
+function respostaDeSucesso(corpo: unknown): Response {
   return new Response(JSON.stringify(corpo), {
-    status,
-    headers: { 'content-type': tipo },
+    status: 200,
+    headers: { 'content-type': 'application/json' },
   });
+}
+
+function respostaDeProblema(problema: Problema): Response {
+  return new Response(JSON.stringify({ type: 'about:blank', ...problema }), {
+    status: problema.status,
+    headers: { 'content-type': 'application/problem+json' },
+  });
+}
+
+function respostaDe(resposta: RespostaFalsa): Response {
+  return 'problema' in resposta
+    ? respostaDeProblema(resposta.problema)
+    : respostaDeSucesso(resposta.corpo);
 }
 
 /** Enfileira uma resposta de sucesso com o corpo dado. */
 export function respondaCom(corpo: unknown): void {
-  fetchFalso.mockResolvedValueOnce(respostaDe(corpo, 200, 'application/json'));
+  fetchFalso.mockResolvedValueOnce(respostaDeSucesso(corpo));
 }
 
 /** Enfileira uma resposta de erro no formato Problem Details. */
 export function respondaComProblema(problema: Problema): void {
-  fetchFalso.mockResolvedValueOnce(
-    respostaDe({ type: 'about:blank', ...problema }, problema.status, 'application/problem+json'),
-  );
+  fetchFalso.mockResolvedValueOnce(respostaDeProblema(problema));
 }
-
-/** O que uma rota do duplo devolve: um corpo de sucesso ou um problema. */
-export type RespostaFalsa = { corpo: unknown } | { problema: Problema };
 
 /**
  * Atende por caminho, e não por ordem de chegada.
@@ -46,37 +57,31 @@ export type RespostaFalsa = { corpo: unknown } | { problema: Problema };
  * A tela pede o painel e o catálogo de Safras no mesmo instante; casar resposta com
  * pedido pela ordem das chamadas amarraria o teste à ordem de declaração dos efeitos.
  */
-export function servirRotas(rotas: Record<string, (url: URL) => RespostaFalsa>): void {
+export function servirRotas(
+  rotas: Record<string, (url: URL) => RespostaFalsa | Promise<RespostaFalsa>>,
+): void {
   fetchFalso.mockImplementation((entrada) => {
     const url = new URL((entrada as Request).url);
     const rota = rotas[url.pathname];
 
     if (rota === undefined) {
       return Promise.resolve(
-        respostaDe(
-          { type: 'about:blank', title: 'Not Found', status: 404, detail: `Rota ${url.pathname} não foi servida no teste.` },
-          404,
-          'application/problem+json',
-        ),
+        respostaDeProblema({
+          status: 404,
+          title: 'Not Found',
+          detail: `Rota ${url.pathname} não foi servida no teste.`,
+        }),
       );
     }
 
-    const resposta = rota(url);
-
-    return Promise.resolve(
-      'problema' in resposta
-        ? respostaDe(
-            { type: 'about:blank', ...resposta.problema },
-            resposta.problema.status,
-            'application/problem+json',
-          )
-        : respostaDe(resposta.corpo, 200, 'application/json'),
-    );
+    // A rota pode devolver uma promessa, e é assim que um teste segura a resposta no ar
+    // para afirmar o que a tela mostra enquanto ela não chega.
+    return Promise.resolve(rota(url)).then(respostaDe);
   });
 }
 
 /** O endereço de cada chamada feita até agora, na ordem. */
-export function enderecosChamados(): string[] {
+function enderecosChamados(): string[] {
   return fetchFalso.mock.calls.map(([pedido]) => (pedido as Request).url);
 }
 
@@ -94,4 +99,9 @@ export function enderecoDaChamada(indice = 0): URL {
 /** Quantas vezes o caminho dado foi chamado. */
 export function chamadasPara(caminho: string): number {
   return enderecosChamados().filter((endereco) => new URL(endereco).pathname === caminho).length;
+}
+
+/** Quantas chamadas houve ao todo, em qualquer caminho. */
+export function totalDeChamadas(): number {
+  return fetchFalso.mock.calls.length;
 }

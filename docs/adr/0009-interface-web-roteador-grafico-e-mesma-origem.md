@@ -11,10 +11,19 @@ endereço desconhecido caem no painel.
 **Gráfico: `recharts`.** Os três gráficos de pizza usam `PieChart` com tamanho fixo. A
 legenda com os números não é a do Recharts: é uma lista escrita à mão, ao lado do desenho.
 
+**Teste: a interface web ganha Vitest com Testing Library.** Ela não tinha runner
+nenhum: o script `test` era um `echo`. O portão de cobertura da issue 20 continua valendo
+só em `domain` e `application` da API, e a interface não ganha barra de cobertura, porque
+a regra de negócio não mora nela. O que os testes provam é o comportamento da tela.
+
 **Endereço da API: a própria origem, sob `/api`.** O navegador nunca chama a porta da API
 direto. Quem repassa é o servidor que entrega a tela: o nginx no Docker, por
 `apps/web/nginx.conf`, e o Vite em desenvolvimento, por `server.proxy`. Nas duas pontas a
 barra final do destino corta o prefixo, então `/api/painel` chega na API como `/painel`.
+
+A tela de cadastro existe como andaime desde já, com uma frase e nada mais. Ela é da
+issue 11, mas o menu precisa de dois destinos para que a navegação seja navegação, e um
+item de menu que não leva a lugar nenhum mente para quem clica.
 
 ## Considered Options
 
@@ -26,6 +35,11 @@ ou compartilhar o link do cadastro deixaria de funcionar.
 a outra candidata. O canvas do Chart.js foi rejeitado por ser opaco para teste e para
 leitor de tela. O SVG à mão foi rejeitado porque rótulo, cor e proporção viram trabalho
 manual em três lugares.
+
+**Nenhum teste na interface** foi considerado: a issue 12 não os pede nos critérios, e a
+barra de cobertura não alcança `apps/web`. Foi rejeitado porque as regras que a tela tem
+de cumprir, como o recorte por Safra tocar um gráfico só e a base vazia não render gráfico
+em branco, não se provam em lugar nenhum senão nela.
 
 **Variável de build do Vite**, um `VITE_API_URL` lido em tempo de compilação, é o caminho
 mais comum e foi rejeitado por dois motivos. O primeiro é que a API não habilita CORS:

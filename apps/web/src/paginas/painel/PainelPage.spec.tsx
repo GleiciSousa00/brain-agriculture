@@ -1,43 +1,31 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { chamadasPara, servirRotas } from '../../teste/fetch-falso';
+import {
+  PAINEL_COM_DADOS,
+  PAINEL_VAZIO,
+  SAFRA_DE_2024,
+  SAFRA_DE_2025,
+} from '../../teste/exemplos';
+import { chamadasPara, servirRotas, totalDeChamadas } from '../../teste/fetch-falso';
 import { PainelPage } from './PainelPage';
-
-const SAFRA_DE_2025 = { id: 'safra-2025', ano: 2025 };
-const SAFRA_DE_2024 = { id: 'safra-2024', ano: 2024 };
-
-const PAINEL_COM_DADOS = {
-  totais: { propriedades: 4, areaTotal: 1234.5 },
-  usoDoSolo: { areaAgricultavel: 800, areaDeVegetacao: 434.5 },
-  propriedadesPorEstado: [
-    { estado: 'MG', propriedades: 3 },
-    { estado: 'SP', propriedades: 1 },
-  ],
-  plantiosPorCultura: [
-    { culturaId: 'c1', cultura: 'Soja', plantios: 4 },
-    { culturaId: 'c2', cultura: 'Milho', plantios: 1 },
-  ],
-};
-
-const PAINEL_VAZIO = {
-  totais: { propriedades: 0, areaTotal: 0 },
-  usoDoSolo: { areaAgricultavel: 0, areaDeVegetacao: 0 },
-  propriedadesPorEstado: [],
-  plantiosPorCultura: [],
-};
 
 /** O cartão de um gráfico, achado pelo próprio título. */
 function cartaoDe(titulo: string): HTMLElement {
   return screen.getByRole('region', { name: titulo });
 }
 
+/** O caso comum: o painel responde sempre a mesma coisa, e há duas Safras no catálogo. */
+function painelEstavel(): void {
+  servirRotas({
+    '/api/painel': () => ({ corpo: PAINEL_COM_DADOS }),
+    '/api/safras': () => ({ corpo: [SAFRA_DE_2025, SAFRA_DE_2024] }),
+  });
+}
+
 describe('a tela do painel', () => {
   it('mostra a contagem de Propriedades e a soma de hectares', async () => {
-    servirRotas({
-      '/api/painel': () => ({ corpo: PAINEL_COM_DADOS }),
-      '/api/safras': () => ({ corpo: [SAFRA_DE_2025] }),
-    });
+    painelEstavel();
 
     render(<PainelPage />);
 
@@ -46,10 +34,7 @@ describe('a tela do painel', () => {
   });
 
   it('desenha as três distribuições, cada uma com seus números', async () => {
-    servirRotas({
-      '/api/painel': () => ({ corpo: PAINEL_COM_DADOS }),
-      '/api/safras': () => ({ corpo: [SAFRA_DE_2025] }),
-    });
+    painelEstavel();
 
     render(<PainelPage />);
 
@@ -67,22 +52,18 @@ describe('a tela do painel', () => {
   });
 
   it('busca o painel uma vez só, e não um pedido por gráfico', async () => {
-    servirRotas({
-      '/api/painel': () => ({ corpo: PAINEL_COM_DADOS }),
-      '/api/safras': () => ({ corpo: [SAFRA_DE_2025] }),
-    });
+    painelEstavel();
 
     render(<PainelPage />);
     await screen.findByRole('region', { name: 'Uso do solo' });
 
     expect(chamadasPara('/api/painel')).toBe(1);
+    // A outra é o catálogo de Safras, que alimenta o controle e não sai do painel.
+    expect(totalDeChamadas()).toBe(2);
   });
 
   it('põe o controle de Safra dentro do cartão da Cultura, e não no topo da tela', async () => {
-    servirRotas({
-      '/api/painel': () => ({ corpo: PAINEL_COM_DADOS }),
-      '/api/safras': () => ({ corpo: [SAFRA_DE_2025, SAFRA_DE_2024] }),
-    });
+    painelEstavel();
 
     render(<PainelPage />);
     await screen.findByRole('region', { name: 'Plantios por Cultura' });
@@ -172,30 +153,83 @@ describe('a tela do painel', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('O banco não respondeu a tempo.');
   });
 
-  it('falha de recorte não derruba a tela: o aviso fica no cartão da Cultura', async () => {
+  describe('quando o recorte por Safra falha', () => {
+    function painelQueRecusaORecorte(): void {
+      servirRotas({
+        '/api/painel': (url) =>
+          url.searchParams.get('safraId') === null
+            ? { corpo: PAINEL_COM_DADOS }
+            : {
+                problema: {
+                  status: 400,
+                  title: 'Bad Request',
+                  detail: 'O filtro de Safra não é um identificador válido.',
+                },
+              },
+        '/api/safras': () => ({ corpo: [SAFRA_DE_2025] }),
+      });
+    }
+
+    async function escolher2025(): Promise<void> {
+      render(<PainelPage />);
+      await screen.findByRole('option', { name: '2025' });
+      await userEvent.selectOptions(screen.getByLabelText('Safra'), SAFRA_DE_2025.id);
+    }
+
+    it('avisa dentro do cartão da Cultura, sem derrubar o resto da tela', async () => {
+      painelQueRecusaORecorte();
+
+      await escolher2025();
+
+      const porCultura = within(cartaoDe('Plantios por Cultura'));
+      expect(await porCultura.findByRole('status')).toHaveTextContent(
+        'O filtro de Safra não é um identificador válido.',
+      );
+      expect(screen.getByText('1.234,5 ha')).toBeInTheDocument();
+    });
+
+    it('tira da tela a distribuição da Safra anterior, em vez de rotulá-la com a nova', async () => {
+      painelQueRecusaORecorte();
+
+      await escolher2025();
+
+      const porCultura = within(cartaoDe('Plantios por Cultura'));
+      await porCultura.findByRole('status');
+      expect(porCultura.queryByText('Soja')).toBeNull();
+      expect(porCultura.queryByText('4 (80%)')).toBeNull();
+      expect(porCultura.getByText('Sem distribuição para mostrar.')).toBeInTheDocument();
+    });
+  });
+
+  it('enquanto o recorte não volta, tira o número anterior da tela', async () => {
+    let liberarORecorte = () => {};
+    const recorteLiberado = new Promise<void>((resolva) => {
+      liberarORecorte = resolva;
+    });
+
     servirRotas({
       '/api/painel': (url) =>
         url.searchParams.get('safraId') === null
           ? { corpo: PAINEL_COM_DADOS }
-          : {
-              problema: {
-                status: 400,
-                title: 'Bad Request',
-                detail: 'O filtro de Safra não é um identificador válido.',
+          : recorteLiberado.then(() => ({
+              corpo: {
+                ...PAINEL_COM_DADOS,
+                plantiosPorCultura: [{ culturaId: 'c2', cultura: 'Milho', plantios: 7 }],
               },
-            },
+            })),
       '/api/safras': () => ({ corpo: [SAFRA_DE_2025] }),
     });
 
     render(<PainelPage />);
     await screen.findByRole('option', { name: '2025' });
-
     await userEvent.selectOptions(screen.getByLabelText('Safra'), SAFRA_DE_2025.id);
 
     const porCultura = within(cartaoDe('Plantios por Cultura'));
-    expect(await porCultura.findByRole('status')).toHaveTextContent(
-      'O filtro de Safra não é um identificador válido.',
-    );
-    expect(screen.getByText('1.234,5 ha')).toBeInTheDocument();
+    expect(await porCultura.findByText('Recortando pela Safra…')).toBeInTheDocument();
+    expect(porCultura.queryByText('Soja')).toBeNull();
+
+    liberarORecorte();
+
+    expect(await porCultura.findByText('Milho')).toBeInTheDocument();
   });
 });

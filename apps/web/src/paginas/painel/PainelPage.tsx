@@ -8,10 +8,45 @@ const SEM_PROPRIEDADE = 'Nenhuma Propriedade cadastrada ainda.';
 const SEM_PLANTIO = 'Nenhum Plantio registrado ainda.';
 const SEM_PLANTIO_NA_SAFRA = 'Nenhum Plantio registrado nesta Safra.';
 const SEM_AREA = 'Nenhuma área informada ainda.';
+const RECORTANDO = 'Recortando pela Safra…';
+const RECORTE_NAO_VEIO = 'Sem distribuição para mostrar.';
+
+interface EstadoDaCultura {
+  recortando: boolean;
+  falhou: boolean;
+  safraId: string;
+}
+
+/**
+ * O que o cartão da Cultura diz quando não há pizza.
+ *
+ * São quatro situações diferentes, e nenhuma delas pode virar gráfico em branco: o
+ * recorte em voo, o recorte que falhou, a base sem Plantio nenhum, e a Safra sem Plantio.
+ */
+function textoVazioDaCultura({ recortando, falhou, safraId }: EstadoDaCultura): string {
+  if (recortando) {
+    return RECORTANDO;
+  }
+
+  if (falhou) {
+    return RECORTE_NAO_VEIO;
+  }
+
+  return safraId === TODAS_AS_SAFRAS ? SEM_PLANTIO : SEM_PLANTIO_NA_SAFRA;
+}
 
 export function PainelPage() {
-  const { painel, porCultura, safras, safraId, escolherSafra, carregando, erro, erroDoRecorte } =
-    usePainel();
+  const {
+    painel,
+    porCultura,
+    safras,
+    safraId,
+    escolherSafra,
+    carregando,
+    recortando,
+    erro,
+    erroDoRecorte,
+  } = usePainel();
 
   if (carregando) {
     return <p role="status">Carregando o painel…</p>;
@@ -36,8 +71,15 @@ export function PainelPage() {
         />
         <GraficoDePizza
           titulo="Plantios por Cultura"
-          fatias={porCultura.map((linha) => ({ nome: linha.cultura, valor: linha.plantios }))}
-          vazio={safraId === TODAS_AS_SAFRAS ? SEM_PLANTIO : SEM_PLANTIO_NA_SAFRA}
+          fatias={(porCultura ?? []).map((linha) => ({
+            nome: linha.cultura,
+            valor: linha.plantios,
+          }))}
+          vazio={textoVazioDaCultura({
+            recortando,
+            falhou: erroDoRecorte !== undefined,
+            safraId,
+          })}
           controle={
             <ControleDeSafra safras={safras} safraId={safraId} aoEscolher={escolherSafra} />
           }

@@ -3,14 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { App } from './App';
+import { PAINEL_VAZIO } from './teste/exemplos';
 import { servirRotas } from './teste/fetch-falso';
-
-const PAINEL_VAZIO = {
-  totais: { propriedades: 0, areaTotal: 0 },
-  usoDoSolo: { areaAgricultavel: 0, areaDeVegetacao: 0 },
-  propriedadesPorEstado: [],
-  plantiosPorCultura: [],
-};
 
 function abrirEm(endereco: string) {
   servirRotas({

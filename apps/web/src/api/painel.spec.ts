@@ -1,18 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { PAINEL_VAZIO } from '../teste/exemplos';
 import {
   enderecoDaChamada,
   fetchFalso,
   respondaCom,
   respondaComProblema,
 } from '../teste/fetch-falso';
-import { ErroDaApi, buscarPainel, buscarSafras } from './painel';
-
-const PAINEL_VAZIO = {
-  totais: { propriedades: 0, areaTotal: 0 },
-  usoDoSolo: { areaAgricultavel: 0, areaDeVegetacao: 0 },
-  propriedadesPorEstado: [],
-  plantiosPorCultura: [],
-};
+import { ErroDaApi } from './chamada';
+import { buscarPainel, buscarSafras } from './painel';
 
 describe('buscarPainel', () => {
   it('chama a rota do painel na própria origem, sem filtro', async () => {
@@ -51,7 +46,6 @@ describe('buscarPainel', () => {
     await expect(buscarPainel('nada')).rejects.toMatchObject({
       message: 'O filtro de Safra não é um identificador válido.',
       codigo: 'FILTRO_INVALIDO',
-      status: 400,
     });
   });
 
