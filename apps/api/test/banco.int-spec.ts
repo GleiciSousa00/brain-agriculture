@@ -251,13 +251,22 @@ describe('A aplicação contra um Postgres de verdade', () => {
     expect(recortado.body.usoDoSolo).toEqual(inteiro.body.usoDoSolo);
     expect(recortado.body.propriedadesPorEstado).toEqual(inteiro.body.propriedadesPorEstado);
 
-    const semPlantio = await request(app.getHttpServer())
+    const daOutraSafra = await request(app.getHttpServer())
       .get('/painel')
       .query({ safraId: outraSafraId })
       .expect(200);
-    expect(semPlantio.body.plantiosPorCultura).toEqual([
+    expect(daOutraSafra.body.plantiosPorCultura).toEqual([
       { culturaId: milho.id, cultura: milho.nome, plantios: 1 },
     ]);
+
+    // Uma Safra sem nenhum Plantio devolve a fatia vazia, e não erro. Contra o Postgres
+    // porque é aqui que o agrupamento filtrado devolve zero linha de verdade.
+    const semPlantio = await request(app.getHttpServer())
+      .get('/painel')
+      .query({ safraId: randomUUID() })
+      .expect(200);
+    expect(semPlantio.body.plantiosPorCultura).toEqual([]);
+    expect(semPlantio.body.totais).toEqual(inteiro.body.totais);
   });
 
   /**

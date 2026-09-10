@@ -67,6 +67,10 @@ export class MontarPainelUseCase {
  * A chave estrangeira do Plantio para a Cultura é `ON DELETE RESTRICT`, então toda Cultura
  * contada existe no catálogo. Ficar sem nome aqui é banco inconsistente, e falhar alto,
  * com o rastro no log, é melhor do que desenhar uma fatia sem rótulo.
+ *
+ * Não é um erro de domínio, e por isso o painel não tem arquivo de erros: as três naturezas
+ * de `DomainError` viram 400, 404 e 409, que são respostas sobre o que quem chamou pode
+ * corrigir. Não há o que corrigir na requisição, então o certo é o 500 genérico.
  */
 function nomeDe(nomes: Map<string, string>, culturaId: string): string {
   const nome = nomes.get(culturaId);

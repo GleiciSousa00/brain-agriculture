@@ -1,5 +1,8 @@
 import { Area } from '../../../propriedades/domain/area';
-import type { Propriedade } from '../../../propriedades/domain/propriedade';
+import type {
+  Propriedade,
+  UnidadeFederativa,
+} from '../../../propriedades/domain/propriedade';
 import type { PropriedadesPorEstado } from '../../domain/painel';
 import type {
   PropriedadesDoPainelRepository,
@@ -30,7 +33,7 @@ export class PropriedadesDoPainelEmMemoria implements PropriedadesDoPainelReposi
   }
 
   async contarPorEstado(): Promise<PropriedadesPorEstado[]> {
-    const contagem = new Map<string, number>();
+    const contagem = new Map<UnidadeFederativa, number>();
 
     for (const propriedade of this.propriedades) {
       contagem.set(propriedade.estado, (contagem.get(propriedade.estado) ?? 0) + 1);

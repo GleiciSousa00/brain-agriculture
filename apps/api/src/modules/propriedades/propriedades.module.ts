@@ -21,10 +21,10 @@ import { TypeormPropriedadesDoProdutorRepository } from './infrastructure/typeor
  * O único arquivo do módulo autorizado a enxergar as quatro camadas.
  *
  * Ele também exporta as implementações das portas que outros módulos declaram: a de
- * Produtor, para alcançar as Propriedades dele, a de Plantio, para saber se uma
- * Propriedade existe, e a do painel, para os números agregados. São esses provedores, e só eles, que os outros módulos recebem: eles
- * se falam por portas declaradas em `domain`, e nenhum alcança camada interna do outro.
- * Ver o registro 0005.
+ * Produtor, para alcançar as Propriedades dele, a de Plantio, para saber se uma Propriedade
+ * existe, e a do painel, para os números agregados. São esses provedores, e só eles, que os
+ * outros módulos recebem: eles se falam por portas declaradas em `domain`, e nenhum alcança
+ * camada interna do outro. Ver o registro 0005.
  */
 @Module({
   imports: [TypeOrmModule.forFeature([PropriedadeOrmEntity])],

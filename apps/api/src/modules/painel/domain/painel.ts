@@ -1,4 +1,5 @@
 import type { Area } from '../../propriedades/domain/area';
+import type { UnidadeFederativa } from '../../propriedades/domain/propriedade';
 
 /**
  * Os dois totais que descrevem o tamanho da base.
@@ -19,8 +20,7 @@ export interface UsoDoSolo {
 
 /** Uma fatia do gráfico por estado. */
 export interface PropriedadesPorEstado {
-  /** A sigla como está gravada. Ler não é hora de reaplicar a regra de escrita. */
-  estado: string;
+  estado: UnidadeFederativa;
   propriedades: number;
 }
 

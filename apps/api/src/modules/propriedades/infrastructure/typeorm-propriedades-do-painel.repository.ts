@@ -5,6 +5,7 @@ import type {
   ResumoDasPropriedades,
 } from '../../painel/domain/propriedades-do-painel.repository';
 import { Area } from '../domain/area';
+import type { UnidadeFederativa } from '../domain/propriedade';
 import { PropriedadeOrmEntity } from './propriedade.orm-entity';
 
 /** O que o banco devolve. Contagem e soma vêm como texto, e é aqui que viram medida. */
@@ -32,6 +33,14 @@ interface LinhaPorEstado {
 export class TypeormPropriedadesDoPainelRepository implements PropriedadesDoPainelRepository {
   constructor(private readonly linhas: Repository<PropriedadeOrmEntity>) {}
 
+  /**
+   * A soma volta do banco como texto e vira medida aqui.
+   *
+   * A Área guarda metros quadrados num inteiro justamente para a soma não acumular resíduo,
+   * e este é o único ponto em que uma soma já feita pelo banco entra por fora. Ela cabe: o
+   * teto da Área é um bilhão de hectares, e mesmo o cadastro inteiro nesse teto fica três
+   * ordens de grandeza abaixo do maior inteiro exato de um número em JavaScript.
+   */
   async resumir(): Promise<ResumoDasPropriedades> {
     // Os quatro números saem da mesma varredura: são uma agregação só, sem agrupamento.
     // `COALESCE` porque `SUM` sobre tabela vazia devolve nulo, e o painel precisa devolver
@@ -75,7 +84,9 @@ export class TypeormPropriedadesDoPainelRepository implements PropriedadesDoPain
       .getRawMany<LinhaPorEstado>();
 
     return linhas.map((linha) => ({
-      estado: linha.estado,
+      // A mesma política de 'restaurar': a sigla foi conferida quando entrou, e conferi-la
+      // de novo tornaria o painel ilegível por causa de uma linha antiga.
+      estado: linha.estado as UnidadeFederativa,
       propriedades: Number(linha.propriedades),
     }));
   }
