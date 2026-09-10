@@ -29,6 +29,11 @@ A unidade de terra registrada em nome de um Produtor, situada em uma cidade e um
 estado. É o que o painel conta como fazenda.
 _Avoid_: Fazenda, Sítio, Imóvel Rural, Farm, Property
 
+**Nome da Propriedade**:
+Como quem opera chama uma Propriedade e a encontra. É obrigatório, e é o que
+distingue duas Propriedades situadas na mesma cidade.
+_Avoid_: Apelido, Denominação, Título, Razão Social, Nome da Fazenda
+
 **Área Total**:
 A extensão da Propriedade em hectares.
 _Avoid_: Área da Fazenda, Tamanho

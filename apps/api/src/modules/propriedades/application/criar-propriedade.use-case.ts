@@ -4,6 +4,7 @@ import type { PropriedadeRepository } from '../domain/propriedade.repository';
 
 export interface CriarPropriedadeEntrada {
   produtorId: string;
+  nome: string;
   cidade: string;
   estado: string;
   /** As três áreas chegam em hectares, e viram objeto de valor antes da regra. */
@@ -25,6 +26,7 @@ export class CriarPropriedadeUseCase {
   async execute(entrada: CriarPropriedadeEntrada): Promise<Propriedade> {
     const propriedade = Propriedade.criar({
       produtorId: entrada.produtorId,
+      nome: entrada.nome,
       cidade: entrada.cidade,
       estado: entrada.estado,
       areaTotal: Area.criar(entrada.areaTotal),

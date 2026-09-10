@@ -65,7 +65,7 @@ export class PropriedadesController {
 
   @Get()
   @ZodSerializerDto(PropriedadesPaginaDto)
-  @ApiOperation({ summary: 'Lista as Propriedades por cidade, em páginas.' })
+  @ApiOperation({ summary: 'Lista as Propriedades por nome, em páginas.' })
   @ApiOkResponse({ type: PropriedadesPaginaDto })
   async listar(@Query() pagina: ParametrosDePaginaDto): Promise<PropriedadesPaginaResposta> {
     return paraPagina(await this.listarPropriedades.execute(pagina));
@@ -73,7 +73,7 @@ export class PropriedadesController {
 
   @Put(':id')
   @ZodSerializerDto(PropriedadeDto)
-  @ApiOperation({ summary: 'Atualiza a localização e as áreas de uma Propriedade.' })
+  @ApiOperation({ summary: 'Atualiza o nome, a localização e as áreas de uma Propriedade.' })
   @ApiOkResponse({ type: PropriedadeDto })
   @ApiBadRequestResponse({ description: AREAS_NAO_FECHAM, type: ProblemDetailsDto })
   @ApiNotFoundResponse({

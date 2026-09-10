@@ -8,6 +8,7 @@ export function paraResposta(propriedade: Propriedade): PropriedadeResposta {
   return {
     id: propriedade.id,
     produtorId: propriedade.produtorId,
+    nome: propriedade.nome,
     cidade: propriedade.cidade,
     estado: propriedade.estado,
     areaTotal: propriedade.areaTotal.hectares,

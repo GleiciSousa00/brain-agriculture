@@ -5,6 +5,18 @@ import { PropriedadeRepositoryEmMemoria } from './__fakes__/propriedade-reposito
 
 const PRODUTOR_ID = '3f2f0c8e-6a1e-4a2b-9f0e-0f0a1b2c3d4e';
 
+function propriedadeChamada(nome: string): Propriedade {
+  return Propriedade.criar({
+    produtorId: PRODUTOR_ID,
+    nome,
+    cidade: 'Sorriso',
+    estado: 'MT',
+    areaTotal: Area.criar(10),
+    areaAgricultavel: Area.criar(5),
+    areaDeVegetacao: Area.criar(5),
+  });
+}
+
 async function cenarioCom(quantas: number) {
   const repository = new PropriedadeRepositoryEmMemoria();
 
@@ -12,7 +24,8 @@ async function cenarioCom(quantas: number) {
     await repository.save(
       Propriedade.criar({
         produtorId: PRODUTOR_ID,
-        cidade: `Cidade ${indice}`,
+        nome: `Fazenda ${indice}`,
+        cidade: 'Sorriso',
         estado: 'MT',
         areaTotal: Area.criar(10),
         areaAgricultavel: Area.criar(5),
@@ -43,6 +56,21 @@ describe('ListarPropriedadesUseCase', () => {
     const segunda = await useCase.execute({ pagina: 2, tamanho: 2 });
 
     expect(segunda.itens.map((item) => item.id)).not.toEqual(primeira.itens.map((item) => item.id));
+  });
+
+  it('lista em ordem de nome, que é a ordem que o repositório promete', async () => {
+    const { repository, useCase } = await cenarioCom(0);
+    await repository.save(propriedadeChamada('Fazenda Santa Rita'));
+    await repository.save(propriedadeChamada('Fazenda Boa Vista'));
+    await repository.save(propriedadeChamada('Fazenda Cana Brava'));
+
+    const pagina = await useCase.execute({ pagina: 1, tamanho: 10 });
+
+    expect(pagina.itens.map((propriedade) => propriedade.nome)).toEqual([
+      'Fazenda Boa Vista',
+      'Fazenda Cana Brava',
+      'Fazenda Santa Rita',
+    ]);
   });
 
   it('a página além do fim vem vazia, e não em erro', async () => {

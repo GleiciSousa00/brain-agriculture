@@ -6,6 +6,7 @@ export function propriedadeParaLinha(propriedade: Propriedade): PropriedadeOrmEn
   const linha = new PropriedadeOrmEntity();
   linha.id = propriedade.id;
   linha.produtorId = propriedade.produtorId;
+  linha.nome = propriedade.nome;
   linha.cidade = propriedade.cidade;
   linha.estado = propriedade.estado;
   linha.areaTotal = String(propriedade.areaTotal.hectares);
@@ -20,6 +21,7 @@ export function propriedadeParaDominio(linha: PropriedadeOrmEntity): Propriedade
   return Propriedade.restaurar({
     id: linha.id,
     produtorId: linha.produtorId,
+    nome: linha.nome,
     cidade: linha.cidade,
     estado: linha.estado,
     areaTotal: Area.restaurar(Number(linha.areaTotal)),

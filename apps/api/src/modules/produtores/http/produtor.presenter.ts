@@ -30,6 +30,7 @@ export function paraRespostaDetalhada({
 function paraPropriedade(propriedade: Propriedade) {
   return {
     id: propriedade.id,
+    nome: propriedade.nome,
     cidade: propriedade.cidade,
     estado: propriedade.estado,
     areaTotal: propriedade.areaTotal.hectares,

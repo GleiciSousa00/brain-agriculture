@@ -1,6 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import type { Area } from './area';
-import { AreasNaoFecham, CidadeInvalida, EstadoInvalido } from './propriedade.errors';
+import {
+  AreasNaoFecham,
+  CidadeInvalida,
+  EstadoInvalido,
+  NomeDePropriedadeInvalido,
+} from './propriedade.errors';
+
+/** O mesmo teto do nome do Produtor: os dois são nome próprio digitado por quem cadastra. */
+export const NOME_TAMANHO_MAXIMO = 200;
 
 export const CIDADE_TAMANHO_MAXIMO = 120;
 
@@ -23,7 +31,12 @@ interface Areas {
   areaDeVegetacao: Area;
 }
 
-interface DadosDeCriacao extends Localizacao, Areas {
+/** O que a operadora informa, e o que ela pode corrigir depois. O Produtor não está aqui. */
+interface DadosEditaveis extends Localizacao, Areas {
+  nome: string;
+}
+
+interface DadosDeCriacao extends DadosEditaveis {
   produtorId: string;
 }
 
@@ -44,6 +57,7 @@ export class Propriedade {
   private constructor(
     readonly id: string,
     readonly produtorId: string,
+    readonly nome: string,
     readonly cidade: string,
     readonly estado: UnidadeFederativa,
     readonly areaTotal: Area,
@@ -57,6 +71,7 @@ export class Propriedade {
     return new Propriedade(
       randomUUID(),
       dados.produtorId,
+      conferirNome(dados.nome),
       conferirCidade(dados.cidade),
       conferirEstado(dados.estado),
       dados.areaTotal,
@@ -76,6 +91,7 @@ export class Propriedade {
     return new Propriedade(
       dados.id,
       dados.produtorId,
+      dados.nome,
       dados.cidade,
       // A conversão é a política do 'restaurar': a sigla foi conferida quando entrou, e
       // conferi-la de novo tornaria ilegível a linha gravada em vez de editável.
@@ -86,13 +102,17 @@ export class Propriedade {
     );
   }
 
-  /** A mesma Propriedade com localização e áreas novas, com a regra da soma conferida de novo. */
-  editar(dados: Localizacao & Areas): Propriedade {
+  /**
+   * A mesma Propriedade com nome, localização e áreas novos, com a regra da soma conferida
+   * de novo.
+   */
+  editar(dados: DadosEditaveis): Propriedade {
     conferirAreas(dados);
 
     return new Propriedade(
       this.id,
       this.produtorId,
+      conferirNome(dados.nome),
       conferirCidade(dados.cidade),
       conferirEstado(dados.estado),
       dados.areaTotal,
@@ -108,6 +128,22 @@ function conferirAreas({ areaTotal, areaAgricultavel, areaDeVegetacao }: Areas):
   if (soma.maiorQue(areaTotal)) {
     throw new AreasNaoFecham(soma.escritaEmHectares(), areaTotal.escritaEmHectares());
   }
+}
+
+function conferirNome(nome: string): string {
+  const limpo = (nome ?? '').trim();
+
+  if (limpo.length === 0) {
+    throw new NomeDePropriedadeInvalido('O nome da Propriedade não pode ficar em branco.');
+  }
+
+  if (limpo.length > NOME_TAMANHO_MAXIMO) {
+    throw new NomeDePropriedadeInvalido(
+      `O nome da Propriedade passa de ${NOME_TAMANHO_MAXIMO} caracteres.`,
+    );
+  }
+
+  return limpo;
 }
 
 function conferirCidade(cidade: string): string {

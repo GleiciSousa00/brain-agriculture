@@ -37,7 +37,7 @@ export class TypeormPropriedadeRepository implements PropriedadeRepository {
   async list({ deslocamento, limite }: Recorte): Promise<Recortados<Propriedade>> {
     // A contagem vem na mesma ida ao banco que a fatia, e é a do cadastro inteiro.
     const [linhas, total] = await this.linhas.findAndCount({
-      order: { cidade: 'ASC', id: 'ASC' },
+      order: { nome: 'ASC', id: 'ASC' },
       skip: deslocamento,
       take: limite,
     });

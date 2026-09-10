@@ -4,6 +4,7 @@ import { PropriedadeNaoEncontrada } from '../domain/propriedade.errors';
 import type { PropriedadeRepository } from '../domain/propriedade.repository';
 
 export interface EditarPropriedadeEntrada {
+  nome: string;
   cidade: string;
   estado: string;
   areaTotal: number;
@@ -12,7 +13,7 @@ export interface EditarPropriedadeEntrada {
 }
 
 /**
- * Atualiza a localização e as áreas de uma Propriedade.
+ * Atualiza o nome, a localização e as áreas de uma Propriedade.
  *
  * A regra da soma é conferida de novo pela entidade: editar é tão capaz de quebrá-la
  * quanto cadastrar, e uma edição que não revalidasse deixaria entrar pela porta dos fundos
@@ -29,6 +30,7 @@ export class EditarPropriedadeUseCase {
     }
 
     const editada = propriedade.editar({
+      nome: entrada.nome,
       cidade: entrada.cidade,
       estado: entrada.estado,
       areaTotal: Area.criar(entrada.areaTotal),

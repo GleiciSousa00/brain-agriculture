@@ -1,4 +1,8 @@
-import { AreasNaoFecham, EstadoInvalido } from '../domain/propriedade.errors';
+import {
+  AreasNaoFecham,
+  EstadoInvalido,
+  NomeDePropriedadeInvalido,
+} from '../domain/propriedade.errors';
 import { CriarPropriedadeUseCase } from './criar-propriedade.use-case';
 import { PropriedadeRepositoryEmMemoria } from './__fakes__/propriedade-repository-em-memoria';
 
@@ -12,6 +16,7 @@ function cenario() {
 
 const entrada = {
   produtorId: PRODUTOR_ID,
+  nome: 'Fazenda Boa Vista',
   cidade: 'Sorriso',
   estado: 'MT',
   areaTotal: 100,
@@ -25,6 +30,7 @@ describe('CriarPropriedadeUseCase', () => {
 
     const propriedade = await useCase.execute(entrada);
 
+    expect(propriedade.nome).toBe('Fazenda Boa Vista');
     expect(propriedade.cidade).toBe('Sorriso');
     expect(propriedade.produtorId).toBe(PRODUTOR_ID);
     await expect(repository.findById(propriedade.id)).resolves.toBe(propriedade);
@@ -52,5 +58,15 @@ describe('CriarPropriedadeUseCase', () => {
     const { useCase } = cenario();
 
     await expect(useCase.execute({ ...entrada, estado: 'XX' })).rejects.toThrow(EstadoInvalido);
+  });
+
+  it('recusa nome em branco, sem tocar no repositório', async () => {
+    const { useCase, repository } = cenario();
+    const save = jest.spyOn(repository, 'save');
+
+    await expect(useCase.execute({ ...entrada, nome: '   ' })).rejects.toThrow(
+      NomeDePropriedadeInvalido,
+    );
+    expect(save).not.toHaveBeenCalled();
   });
 });
