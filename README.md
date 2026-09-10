@@ -90,6 +90,16 @@ mesmo de o campo existir.
 tipo de conteúdo `application/problem+json` e o identificador de correlação no corpo.
 Erro não previsto vira 500 com detalhe genérico: o rastro fica no log, não na resposta.
 
+## O catálogo de Cultura
+
+A Cultura vive num catálogo editável, com carga inicial das espécies mais comuns. Além do
+nome como a operadora digitou, cada Cultura carrega uma chave de comparação: o nome sem
+acento, sem caixa e sem espaço sobrando. É sobre ela que a unicidade é declarada, e é ela
+que impede "Café", "cafe" e "CAFÉ" de virarem três linhas do catálogo.
+
+A Safra é identificada por um ano e é compartilhada por todas as Propriedades. Ela não
+guarda referência a Propriedade nem a Produtor: quem liga os três é o Plantio.
+
 ## Portões de qualidade
 
 Os mesmos comandos que a pipeline roda:

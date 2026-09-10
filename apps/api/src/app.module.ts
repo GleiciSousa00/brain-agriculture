@@ -4,8 +4,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 import { databaseOptions } from './config/database.config';
+import { CulturasModule } from './modules/culturas/culturas.module';
 import { HealthModule } from './health/health.module';
 import { ProdutoresModule } from './modules/produtores/produtores.module';
+import { SafrasModule } from './modules/safras/safras.module';
 import { ProblemDetailsFilter } from './shared/http/problem-details.filter';
 import { LoggingModule } from './shared/logging/logging.module';
 
@@ -19,6 +21,8 @@ import { LoggingModule } from './shared/logging/logging.module';
     }),
     HealthModule,
     ProdutoresModule,
+    SafrasModule,
+    CulturasModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },

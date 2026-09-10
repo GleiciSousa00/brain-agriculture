@@ -6,6 +6,12 @@
  * publica, então uma mudança de contrato quebra na checagem de tipos e não em produção.
  */
 
-export { createApiClient, type CriarProdutor, type Produtor } from './client';
+export {
+  createApiClient,
+  type CriarProdutor,
+  type Cultura,
+  type ProblemDetails,
+  type Produtor,
+  type Safra,
+} from './client';
 export type { components, operations, paths } from './generated/api';
-export type { ProblemDetails } from './client';
