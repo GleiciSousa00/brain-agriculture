@@ -10,8 +10,9 @@ export {
   createApiClient,
   type CriarProdutor,
   type Cultura,
+  type Painel,
   type ProblemDetails,
   type Produtor,
   type Safra,
-} from './client';
-export type { components, operations, paths } from './generated/api';
+} from './client.js';
+export type { components, operations, paths } from './generated/api.js';

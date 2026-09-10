@@ -63,6 +63,14 @@ jobs:
       - name: Imagem Docker da API
         run: docker build --file apps/api/Dockerfile --tag cadastro-rural-api:${{ github.sha }} .
 
+      # A imagem da web carrega o `nginx.conf` que entrega o estático e repassa `/api`.
+      # Construí-la e mandar o próprio nginx conferir a configuração é o único portão que
+      # esse arquivo tem: nenhum teste de unidade o alcança.
+      - name: Imagem Docker da interface web
+        run: |
+          docker build --file apps/web/Dockerfile --tag cadastro-rural-web:${{ github.sha }} .
+          docker run --rm cadastro-rural-web:${{ github.sha }} nginx -t
+
   # Trabalho lento: reservado aos testes de integração, que sobem dependência de verdade.
   integration:
     name: integration
