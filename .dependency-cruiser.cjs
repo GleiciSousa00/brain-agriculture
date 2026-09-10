@@ -82,7 +82,7 @@ module.exports = {
       name: 'so-o-modulo-enxerga-as-proprias-camadas',
       severity: 'error',
       comment:
-        'De fora, um módulo se apresenta pelo arquivo de módulo. As quatro camadas são internas a ele.',
+        'De fora, um módulo se apresenta pelo arquivo de módulo. As quatro camadas são internas a ele. A regra vale para o código que vai para a imagem; `apps/api/test` está de fora dela de propósito, porque teste alcança o que precisa afirmar.',
       from: { path: '^apps/api/src/', pathNot: '^apps/api/src/modules/' },
       to: { path: '^apps/api/src/modules/[^/]+/(domain|application|infrastructure|http)/' },
     },

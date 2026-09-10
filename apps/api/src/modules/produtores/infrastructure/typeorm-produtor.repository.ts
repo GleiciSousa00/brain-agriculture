@@ -1,13 +1,11 @@
-import { QueryFailedError, type Repository } from 'typeorm';
+import type { Repository } from 'typeorm';
+import { violouUnicidade } from '../../../shared/infrastructure/postgres-errors';
 import type { Documento } from '../domain/documento';
 import type { Produtor } from '../domain/produtor';
 import { ProdutorDuplicado } from '../domain/produtor.errors';
 import type { ProdutorRepository } from '../domain/produtor.repository';
 import type { ProdutorMapper } from './produtor.mapper';
 import { ProdutorOrmEntity } from './produtor.orm-entity';
-
-/** Código do Postgres para violação de restrição de unicidade. */
-const UNICIDADE_VIOLADA = '23505';
 
 export class TypeormProdutorRepository implements ProdutorRepository {
   constructor(
@@ -43,11 +41,4 @@ export class TypeormProdutorRepository implements ProdutorRepository {
 
     return linha === null ? null : this.mapper.paraDominio(linha);
   }
-}
-
-function violouUnicidade(erro: unknown): boolean {
-  return (
-    erro instanceof QueryFailedError &&
-    (erro.driverError as { code?: string } | undefined)?.code === UNICIDADE_VIOLADA
-  );
 }
