@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Pacotes autorizados a rodar script de instalação. Sem esta lista o pnpm pergunta,
+# e a pipeline não tem a quem perguntar.
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - esbuild
+  - unrs-resolver

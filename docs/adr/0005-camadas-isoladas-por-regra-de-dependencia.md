@@ -31,8 +31,16 @@ Isolar as camadas hoje custa pouco e evita que qualquer uma dessas três coisas 
 | `application` | `domain`, `shared/domain`, `shared/application` | `infrastructure`, `http`, e as mesmas bibliotecas acima |
 | `infrastructure` | `domain`, `application`, `typeorm`, `pg`, `@nestjs/*` | `http` |
 | `http` | `application`, `domain`, `@nestjs/*`, `zod`, `nestjs-zod` | `infrastructure` |
+| `shared/<camada>` | o que a camada de mesmo nome pode | o que ela não pode, mais qualquer módulo |
+| `shared/logging` | `@nestjs/*`, `pino` | qualquer módulo |
 | `<modulo>.module.ts` | tudo | nada |
 | `apps/web` | `packages/contracts` | `apps/api` |
+
+`shared` repete as mesmas quatro camadas e obedece às mesmas restrições: `shared/domain`
+é TypeScript puro, `shared/http` não enxerga infraestrutura, e assim por diante. Fora
+delas mora o que atravessa a aplicação inteira sem pertencer a camada nenhuma, hoje só
+`shared/logging`. A seta aponta num sentido só: os módulos usam `shared`, e `shared` não
+conhece módulo algum.
 
 Entre módulos, só `domain` é território comum. Um módulo nunca importa a `application`,
 a `infrastructure` ou o `http` de outro. Quando um caso de uso precisa de algo que vive
