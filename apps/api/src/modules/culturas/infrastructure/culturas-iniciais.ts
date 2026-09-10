@@ -1,4 +1,4 @@
-import { chaveDeComparacao } from '../domain/cultura';
+import { chaveDe } from '../domain/cultura';
 
 /**
  * A carga inicial do catálogo: as espécies mais comuns na produção brasileira.
@@ -22,5 +22,5 @@ export const CULTURAS_INICIAIS = [
 
 /** As linhas da carga inicial, com a chave calculada pela regra do domínio. */
 export function linhasIniciais(): { nome: string; chave: string }[] {
-  return CULTURAS_INICIAIS.map((nome) => ({ nome, chave: chaveDeComparacao(nome) }));
+  return CULTURAS_INICIAIS.map((nome) => ({ nome, chave: chaveDe(nome) }));
 }

@@ -32,8 +32,9 @@ export class Safra {
     return new Safra(randomUUID(), conferirAno(ano));
   }
 
+  /** O ano não passa pela conferência de novo: ele foi conferido quando entrou. */
   static restaurar({ id, ano }: DadosGravados): Safra {
-    return new Safra(id, conferirAno(ano));
+    return new Safra(id, ano);
   }
 }
 

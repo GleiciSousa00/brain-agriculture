@@ -47,6 +47,7 @@ describe('Cultura', () => {
     const cultura = Cultura.restaurar({
       id: '0b8b6f3a-1c2d-4e5f-8a9b-0c1d2e3f4a5b',
       nome: 'Soja',
+      chave: 'soja',
     });
 
     expect(cultura.id).toBe('0b8b6f3a-1c2d-4e5f-8a9b-0c1d2e3f4a5b');

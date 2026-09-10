@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { NomeDeCulturaInvalido } from './cultura.errors';
 
-const NOME_TAMANHO_MAXIMO = 100;
+export const NOME_TAMANHO_MAXIMO = 100;
 const ESPACOS_REPETIDOS = /\s+/g;
 const SINAIS_DIACRITICOS = /\p{Diacritic}/gu;
 
@@ -11,6 +11,7 @@ interface DadosDeCriacao {
 
 interface DadosGravados extends DadosDeCriacao {
   id: string;
+  chave: string;
 }
 
 /**
@@ -32,18 +33,23 @@ export class Cultura {
   static criar({ nome }: DadosDeCriacao): Cultura {
     const limpo = conferirNome(nome);
 
-    return new Cultura(randomUUID(), limpo, chaveDeComparacao(limpo));
+    return new Cultura(randomUUID(), limpo, chaveDe(limpo));
   }
 
-  static restaurar({ id, nome }: DadosGravados): Cultura {
-    const limpo = conferirNome(nome);
-
-    return new Cultura(id, limpo, chaveDeComparacao(limpo));
+  /**
+   * Uma Cultura que já existe e está voltando da persistência.
+   *
+   * O nome não passa pela conferência de novo, e a chave vem gravada em vez de ser
+   * recalculada: ela é a identidade da linha no catálogo, e recalcular faria a linha mudar
+   * de identidade em silêncio se a regra mudasse.
+   */
+  static restaurar({ id, nome, chave }: DadosGravados): Cultura {
+    return new Cultura(id, nome, chave);
   }
 }
 
 /** A forma que responde se dois nomes são a mesma espécie. */
-export function chaveDeComparacao(nome: string): string {
+export function chaveDe(nome: string): string {
   return nome
     .normalize('NFD')
     .replace(SINAIS_DIACRITICOS, '')
@@ -53,7 +59,7 @@ export function chaveDeComparacao(nome: string): string {
 }
 
 function conferirNome(nome: string): string {
-  const limpo = (nome ?? '').trim().replace(ESPACOS_REPETIDOS, ' ');
+  const limpo = nome.trim().replace(ESPACOS_REPETIDOS, ' ');
 
   if (limpo.length === 0) {
     throw new NomeDeCulturaInvalido('O nome da Cultura não pode ficar em branco.');

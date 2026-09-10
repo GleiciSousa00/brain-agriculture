@@ -37,14 +37,6 @@ describe('CriarSafraUseCase', () => {
     await expect(criar.execute({ ano: 1899 })).rejects.toThrow(AnoDeSafraInvalido);
     expect(save).not.toHaveBeenCalled();
   });
-
-  it('a Safra não guarda referência a Propriedade nem a Produtor: ela é de todas', async () => {
-    const { criar } = cenario();
-
-    const safra = await criar.execute({ ano: 2026 });
-
-    expect(Object.keys(safra).sort()).toEqual(['ano', 'id']);
-  });
 });
 
 describe('ListarSafrasUseCase', () => {

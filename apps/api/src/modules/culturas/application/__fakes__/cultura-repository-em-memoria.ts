@@ -14,6 +14,7 @@ export class CulturaRepositoryEmMemoria implements CulturaRepository {
   }
 
   async listAll(): Promise<Cultura[]> {
-    return [...this.culturas].sort((uma, outra) => uma.chave.localeCompare(outra.chave));
+    // Mesma ordem que o repositório de verdade pede ao banco: byte a byte.
+    return [...this.culturas].sort((uma, outra) => (uma.chave < outra.chave ? -1 : 1));
   }
 }
