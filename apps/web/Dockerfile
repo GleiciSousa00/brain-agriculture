@@ -14,8 +14,9 @@ COPY . .
 RUN pnpm --filter @cadastro-rural/contracts build \
   && pnpm --filter @cadastro-rural/web build
 
-FROM nginx:1.27-alpine AS runtime
-# Entrega o estático e repassa /api para a API, na mesma origem.
-COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /repo/apps/web/dist /usr/share/nginx/html
+# O Caddy é o único proxy do sistema: entrega o estático, repassa /api e, em produção,
+# termina o TLS. Um proxy só, e o mesmo em desenvolvimento e em produção.
+FROM caddy:2-alpine AS runtime
+COPY apps/web/Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /repo/apps/web/dist /srv
 EXPOSE 80

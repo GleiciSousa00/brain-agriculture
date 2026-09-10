@@ -1,0 +1,112 @@
+# Deploy
+
+O cadastro roda numa VPS x86 barata, com Ubuntu LTS, e o deploy é manual: entrar por SSH,
+puxar o repositório e subir a composição desta pasta. Tudo o que a operação precisa saber
+está neste arquivo. Não há registro de decisão sobre infraestrutura, de propósito: ela não
+é o que está sendo avaliado.
+
+## O que sobe
+
+Três contêineres. O Postgres 17, que guarda os dados num volume e não publica porta. A API,
+que também não publica porta e roda as migrações no arranque. E a interface web, servida
+pelo Caddy, que é o único proxy do sistema: emite e renova o certificado TLS, pede usuário
+e senha para o site inteiro, entrega os arquivos estáticos e repassa `/api` para a API,
+cortando o prefixo. As imagens vêm prontas do GitHub Container Registry, publicadas pela
+pipeline a cada commit na `main`, com a tag `latest` e a tag do SHA do commit.
+
+## Antes de tudo, uma vez
+
+1. **Alugar a VPS.** x86, Ubuntu LTS, 2 GB de RAM bastam. Uma Hetzner CX22 serve.
+2. **Criar o subdomínio no [DuckDNS](https://www.duckdns.org)** apontando para o IP da
+   VPS. É gratuito e o Caddy emite o certificado para ele sem configuração extra.
+3. **Tornar os dois pacotes públicos no GitHub.** Eles só existem depois que a pipeline
+   roda na `main` pela primeira vez com este deploy. Feito isso, na página *Packages* do
+   repositório abra `cadastro-rural-api` e `cadastro-rural-web`, e em *Package settings*
+   use *Change visibility*. Sem isso a VPS não consegue puxar as imagens sem credencial.
+
+## Subir
+
+1. Na VPS, como root, rode o script de preparação. Ele instala o Docker, abre só as portas
+   22, 80 e 443 no firewall, clona o repositório em `/opt/cadastro-rural` e cria o `.env`
+   a partir do exemplo:
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/GleiciSousa00/brain-agriculture/main/deploy/bootstrap.sh | sudo bash
+   ```
+
+   Quem preferir não executar script direto da rede pode copiar
+   [`bootstrap.sh`](bootstrap.sh) para a VPS e rodá-lo de lá. O script é idempotente:
+   rodar de novo não estraga nada.
+
+2. Preencha `/opt/cadastro-rural/deploy/.env`. Cada variável tem, no comentário, o comando
+   que gera o valor. Todas as que estão vazias são obrigatórias.
+
+3. Suba:
+
+   ```bash
+   cd /opt/cadastro-rural/deploy
+   docker compose pull && docker compose up -d
+   ```
+
+4. Espere alguns segundos. A primeira emissão do certificado precisa que as portas 80 e
+   443 estejam alcançáveis pela internet, e o domínio já apontando para o IP. Depois abra
+   `https://<domínio>` e entre com o usuário e a senha do `.env`. A especificação da API
+   fica em `https://<domínio>/api/docs`, atrás da mesma senha.
+
+Se algo não subir, o primeiro lugar a olhar é o log da API:
+
+```bash
+docker compose logs -f api
+```
+
+O próprio `docker compose` recusa subir com o `.env` incompleto, e diz qual variável falta. A
+API, por sua vez, recusa arrancar com as chaves públicas de desenvolvimento.
+
+## Atualizar
+
+```bash
+cd /opt/cadastro-rural/deploy
+git pull
+docker compose pull
+docker compose up -d
+```
+
+As migrações rodam no arranque da API, então não há passo de banco. O `git pull` existe
+porque o `Caddyfile` e a composição vivem no repositório.
+
+## Voltar versão
+
+Aponte `IMAGE_TAG` no `.env` para o SHA do commit que se quer e suba de novo:
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+O SHA está na lista de commits da `main` no GitHub, e também na página de versões de cada
+pacote em *Packages*. A migração de banco não volta sozinha: voltar para uma versão
+anterior a uma migração exige conferir se ela é compatível com o esquema atual.
+
+## Segredos
+
+O `.env` fica só no servidor e nunca entra no git. O `.gitignore` da raiz o ignora em
+qualquer pasta, e o script de preparação o deixa legível só para root.
+
+A chave de cifra e o segredo da impressão do Documento nunca mudam depois do primeiro
+`up`. Trocar a chave torna ilegível todo Documento já gravado. Trocar o segredo quebra a
+unicidade, porque o mesmo Documento passa a ter outra impressão. Ver
+[`docs/adr/0002`](../docs/adr/0002-documento-cifrado-em-repouso.md).
+
+## O que ficou de fora, de propósito
+
+A razão é uma só: ficar online com o menor número de peças; a infra não é o que está sendo
+avaliado.
+
+- Observabilidade: sem coleta de logs, métricas ou alertas. O log fica no `json-file` do
+  Docker, limitado a 30 MB por contêiner.
+- Backup do Postgres. Os dados vivem num volume nomeado, e só.
+- Deploy automático, por SSH a partir da pipeline ou por Watchtower.
+- Imagens para outras arquiteturas: só amd64.
+- Autenticação de verdade. A senha do Caddy cobre o site, e a decisão de não ter login na
+  aplicação está em [`docs/adr/0006`](../docs/adr/0006-autenticacao-fora-do-escopo.md).
+- Alta disponibilidade e troca de versão sem interrupção. Cada `up -d` derruba e sobe o
+  contêiner que mudou.

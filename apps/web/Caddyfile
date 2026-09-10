@@ -1,0 +1,26 @@
+# Servidor da interface web dentro do Docker, em desenvolvimento.
+#
+# Duas responsabilidades: entregar o estático e repassar `/api` para a API. O navegador
+# fala sempre com esta origem, nunca com a porta da API. Ver o registro 0009.
+#
+# Em produção a composição de `deploy/` monta outro Caddyfile por cima deste, com o
+# domínio, o TLS automático e a basic auth. O que os dois têm em comum está aqui.
+
+:80 {
+	root * /srv
+	encode gzip
+
+	# Corta o prefixo: /api/painel chega na API como /painel, com a consulta preservada.
+	# O nome da API é resolvido a cada pedido, então a web sobe antes dela e sobrevive a
+	# um reinício que troque o endereço.
+	handle_path /api/* {
+		reverse_proxy api:3000
+	}
+
+	# O roteador vive no navegador. Recarregar em /painel ou /cadastro precisa cair no
+	# index, senão o servidor procura um arquivo com esse nome e devolve 404.
+	handle {
+		try_files {path} /index.html
+		file_server
+	}
+}
