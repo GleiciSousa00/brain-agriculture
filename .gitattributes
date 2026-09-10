@@ -1,0 +1,13 @@
+# Normaliza fim de linha: LF no repositório, nativo no disco de quem clona.
+* text=auto eol=lf
+
+# Scripts que só rodam no Windows precisam de CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binários não são tocados.
+*.png binary
+*.jpg binary
+*.ico binary
+*.pdf binary
