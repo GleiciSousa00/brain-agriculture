@@ -14,8 +14,6 @@ export class TypeormPropriedadeRepository implements PropriedadeRepository {
     try {
       await this.linhas.save(propriedadeParaLinha(propriedade));
     } catch (erro) {
-      // A Propriedade aponta para um Produtor que não existe, ou que deixou de existir
-      // entre a leitura e a gravação.
       if (violouChaveEstrangeira(erro)) {
         throw new ProdutorDaPropriedadeNaoEncontrado(propriedade.produtorId);
       }
@@ -35,7 +33,6 @@ export class TypeormPropriedadeRepository implements PropriedadeRepository {
   }
 
   async list({ deslocamento, limite }: Recorte): Promise<Recortados<Propriedade>> {
-    // A contagem vem na mesma ida ao banco que a fatia, e é a do cadastro inteiro.
     const [linhas, total] = await this.linhas.findAndCount({
       order: { nome: 'ASC', id: 'ASC' },
       skip: deslocamento,

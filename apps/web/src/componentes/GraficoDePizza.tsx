@@ -36,7 +36,6 @@ export function GraficoDePizza({
 }: Props) {
   const tituloId = useId();
   const total = fatias.reduce((soma, fatia) => soma + fatia.valor, 0);
-  // Uma lista sem fatias e uma lista só de zeros dão a mesma pizza: nenhuma.
   const temOQueDesenhar = total > 0;
 
   return (
@@ -63,8 +62,6 @@ export function GraficoDePizza({
             </Pie>
             <Tooltip formatter={(valor) => formatarValor(Number(valor))} />
           </PieChart>
-          {/* A legenda repete os números em texto: é o que o leitor de tela lê, e é onde
-              o teste olha, porque o desenho em SVG não se afirma. */}
           <ul className="legenda">
             {fatias.map((fatia, indice) => (
               <li key={fatia.nome}>

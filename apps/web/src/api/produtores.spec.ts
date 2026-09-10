@@ -87,8 +87,6 @@ describe('excluirProdutor', () => {
   it('erra quando a recusa vem sem corpo nenhum, como o 502 de um repassador', async () => {
     respondaComRecusaSemCorpo(502);
 
-    // Sem esta conferência a exclusão passaria por bem-sucedida, e a linha sumiria da
-    // tela sem ter sumido do banco.
     await expect(excluirProdutor('p1')).rejects.toMatchObject({
       message: 'A API recusou o pedido com o status 502.',
     });

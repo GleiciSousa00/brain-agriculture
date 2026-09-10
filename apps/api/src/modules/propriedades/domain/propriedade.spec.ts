@@ -161,7 +161,6 @@ describe('Propriedade', () => {
   });
 
   it('volta da persistência sem reaplicar a regra da soma', () => {
-    // Uma linha gravada antes de a regra existir precisa continuar legível e editável.
     const propriedade = Propriedade.restaurar({
       id: '9c1e0f2a-2b3c-4d5e-8f90-a1b2c3d4e5f6',
       ...dados({ total: 100, agricultavel: 60, vegetacao: 30 }),
@@ -173,8 +172,6 @@ describe('Propriedade', () => {
   });
 
   it('volta da persistência com o nome gravado, sem conferi-lo de novo', () => {
-    // O nome foi conferido quando entrou. Apertar a regra depois tornaria ilegível a linha
-    // já gravada, em vez de editável.
     const propriedade = Propriedade.restaurar({
       id: '9c1e0f2a-2b3c-4d5e-8f90-a1b2c3d4e5f6',
       ...dados({ total: 100, agricultavel: 60, vegetacao: 30 }),

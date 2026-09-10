@@ -12,7 +12,6 @@ export class TypeormCulturasDoPainelRepository implements CulturasDoPainelReposi
   constructor(private readonly linhas: Repository<CulturaOrmEntity>) {}
 
   async nomesPorId(ids: string[]): Promise<Map<string, string>> {
-    // Sem identificador nenhum não há o que perguntar, e um `IN` vazio não é SQL válido.
     if (ids.length === 0) {
       return new Map();
     }

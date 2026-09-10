@@ -28,9 +28,6 @@ export class TypeormCulturaRepository implements CulturaRepository {
   }
 
   async listAll(): Promise<Cultura[]> {
-    // `COLLATE "C"` ordena por byte. Sem isso a ordem depende da configuração regional do
-    // banco, que trata hífen e espaço de um jeito, enquanto a comparação em JavaScript os
-    // trata de outro, e a lista sai diferente conforme onde o Postgres foi instalado.
     const linhas = await this.linhas
       .createQueryBuilder('cultura')
       .orderBy('cultura.chave COLLATE "C"', 'ASC')

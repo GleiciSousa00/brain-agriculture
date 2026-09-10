@@ -36,16 +36,9 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     const problem = toProblemDetails({
       error: falha,
       instance: request.originalUrl ?? request.url,
-      // `req.id` é o identificador que o pino atribuiu. Se a falha veio antes disso,
-      // `resolveCorrelationId` gera um, e a resposta ainda tem por onde ser rastreada.
       correlationId: resolveCorrelationId(request.id),
     });
 
-    // O detalhe da resposta é genérico quando a falha é interna; o log guarda o resto.
-    //
-    // A recusa da requisição é uso normal da API: um identificador digitado errado não é
-    // defeito do serviço, e sair em nível de erro faria o alerta por taxa de erro disparar
-    // com quem só errou o endereço. Nível de erro fica para o que a aplicação não previu.
     const registrar =
       problem.status < HttpStatus.INTERNAL_SERVER_ERROR
         ? this.logger.warn.bind(this.logger)
@@ -54,7 +47,6 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     registrar({ err: exception, problem }, 'requisição falhou');
 
     if (permitidos.length > 0) {
-      // A RFC 9110 obriga o `Allow` na resposta de método não permitido.
       response.setHeader('Allow', permitidos.join(', '));
     }
 

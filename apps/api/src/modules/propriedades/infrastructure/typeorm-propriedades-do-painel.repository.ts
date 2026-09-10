@@ -42,9 +42,6 @@ export class TypeormPropriedadesDoPainelRepository implements PropriedadesDoPain
    * ordens de grandeza abaixo do maior inteiro exato de um número em JavaScript.
    */
   async resumir(): Promise<ResumoDasPropriedades> {
-    // Os quatro números saem da mesma varredura: são uma agregação só, sem agrupamento.
-    // `COALESCE` porque `SUM` sobre tabela vazia devolve nulo, e o painel precisa devolver
-    // zero. `COUNT` já devolve zero sozinho.
     const linha = await this.linhas
       .createQueryBuilder('propriedade')
       .select('COUNT(*)', 'propriedades')
@@ -53,8 +50,6 @@ export class TypeormPropriedadesDoPainelRepository implements PropriedadesDoPain
       .addSelect('COALESCE(SUM(propriedade.areaDeVegetacao), 0)', 'areaDeVegetacao')
       .getRawOne<LinhaDoResumo>();
 
-    // A agregação sem agrupamento sempre devolve uma linha, mas o tipo não sabe disso, e a
-    // base vazia responde zeros pelo mesmo caminho.
     const {
       propriedades = '0',
       areaTotal = '0',
@@ -71,21 +66,16 @@ export class TypeormPropriedadesDoPainelRepository implements PropriedadesDoPain
   }
 
   async contarPorEstado(): Promise<PropriedadesPorEstado[]> {
-    // O agrupamento é servido por `ix_propriedades_estado`, criado com a tabela.
     const linhas = await this.linhas
       .createQueryBuilder('propriedade')
       .select('propriedade.estado', 'estado')
       .addSelect('COUNT(*)', 'propriedades')
       .groupBy('propriedade.estado')
-      // A maior fatia primeiro, que é como o gráfico se lê. A sigla desempata, para a
-      // ordem não depender de como o Postgres devolveu os grupos.
       .orderBy('COUNT(*)', 'DESC')
       .addOrderBy('propriedade.estado', 'ASC')
       .getRawMany<LinhaPorEstado>();
 
     return linhas.map((linha) => ({
-      // A mesma política de 'restaurar': a sigla foi conferida quando entrou, e conferi-la
-      // de novo tornaria o painel ilegível por causa de uma linha antiga.
       estado: linha.estado as UnidadeFederativa,
       propriedades: Number(linha.propriedades),
     }));

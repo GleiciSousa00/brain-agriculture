@@ -21,7 +21,6 @@ export class PropriedadesDoProdutorEmMemoria implements PropriedadesDoProdutorRe
     deslocamento,
     limite,
   }: RecorteDePropriedadesDoProdutor): Promise<Recortados<Propriedade>> {
-    // A mesma ordem do repositório de verdade: nome, com o identificador desempatando.
     const doProdutor = this.propriedades
       .filter((propriedade) => propriedade.produtorId === produtorId)
       .sort(porNome);

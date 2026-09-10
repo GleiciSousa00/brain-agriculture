@@ -60,8 +60,6 @@ describe('a seção de Produtores', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Registrar' }));
 
     expect(await screen.findByText('Ana Lima')).toBeInTheDocument();
-    // O Documento aparece mascarado porque é assim que a API o devolve, e a tela não o
-    // formata de novo: o que foi digitado tinha máscara diferente.
     expect(screen.getByText('***.456.789-00')).toBeInTheDocument();
   });
 
@@ -75,7 +73,6 @@ describe('a seção de Produtores', () => {
     await preencher('Documento', '12345678900');
     await userEvent.click(screen.getByRole('button', { name: 'Registrar' }));
 
-    // O formulário só se esvazia depois que a escrita passou.
     await waitFor(() => {
       expect(screen.getByLabelText('Nome')).toHaveValue('');
     });
@@ -243,8 +240,6 @@ describe('a seção de Produtores', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Cancelar edição' }));
 
-    // A recusa era do que se mandou. Deixá-la sobre o formulário vazio de novo Produtor
-    // seria acusar de recusado o que ninguém mandou.
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
@@ -275,7 +270,6 @@ describe('a seção de Produtores', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('O banco caiu.');
     expect(screen.queryByRole('table')).toBeNull();
-    // E nem por isso a tela diz que a base está vazia, que seria a outra mentira.
     expect(screen.queryByText('Nenhum Produtor cadastrado ainda.')).toBeNull();
   });
 });

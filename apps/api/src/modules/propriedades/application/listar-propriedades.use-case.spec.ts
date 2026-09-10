@@ -74,8 +74,6 @@ describe('ListarPropriedadesUseCase', () => {
   });
 
   it('desempata homônimas pelo identificador', async () => {
-    // Duas Propriedades com o mesmo nome são a razão de o identificador estar na ordem e
-    // no índice. Sem o desempate, a fatia de uma página poderia repetir ou pular uma delas.
     const { repository, useCase } = await cenarioCom(0);
     const uma = propriedadeChamada('Fazenda Boa Vista');
     const outra = propriedadeChamada('Fazenda Boa Vista');

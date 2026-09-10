@@ -24,8 +24,6 @@ export function ProdutoresSecao() {
     setEmEdicao(undefined);
     setNome('');
     setDocumento('');
-    // A recusa some com o formulário que a recebeu. Deixá-la sobre um formulário vazio
-    // seria acusar de recusado o que ninguém mandou.
     tentativaDoFormulario.limpar();
   }
 
@@ -61,8 +59,6 @@ export function ProdutoresSecao() {
 
       <form
         className="cartao formulario"
-        // A conferência do navegador fica de fora de propósito: ela barraria o envio com
-        // um texto que não é o da API, e o critério é que a recusa venha do corpo dela.
         noValidate
         onSubmit={(evento) => {
           evento.preventDefault();
@@ -79,7 +75,6 @@ export function ProdutoresSecao() {
             ajuda="Com ou sem máscara."
           />
         ) : (
-          // O Documento não é editável, e mostrá-lo desabilitado só convidaria a tentar.
           <p className="campo">
             <span className="rotulo-fixo">Documento</span>
             <span>{emEdicao.documento}</span>
@@ -99,7 +94,6 @@ export function ProdutoresSecao() {
         )}
       </form>
 
-      {/* A recusa de uma exclusão fica junto da tabela, que é onde ela foi pedida. */}
       {tentativaDaExclusao.recusa !== undefined && (
         <p role="alert">{tentativaDaExclusao.recusa}</p>
       )}
@@ -118,7 +112,6 @@ export function ProdutoresSecao() {
               {produtores.map((produtor) => (
                 <tr key={produtor.id}>
                   <td>{produtor.nome}</td>
-                  {/* Mascarado é como a API o entrega. A tela não o formata de novo. */}
                   <td>{produtor.documento}</td>
                   <td className="acoes">
                     <button

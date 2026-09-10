@@ -40,7 +40,5 @@ export const ORM_MIGRATIONS = [
   ...SAFRAS_MIGRACOES,
   ...CULTURAS_MIGRACOES,
   ...PLANTIOS_MIGRACOES,
-  // O painel não tem entidade, e por isso não aparece no catálogo acima. A migração dele
-  // cria o índice de que a consulta por Safra precisa.
   ...PAINEL_MIGRACOES,
 ];

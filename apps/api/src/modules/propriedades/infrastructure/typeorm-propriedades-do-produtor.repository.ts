@@ -22,9 +22,6 @@ export class TypeormPropriedadesDoProdutorRepository implements PropriedadesDoPr
     deslocamento,
     limite,
   }: RecorteDePropriedadesDoProdutor): Promise<Recortados<Propriedade>> {
-    // A contagem vem na mesma ida ao banco que a fatia, e é a do Produtor inteiro. O filtro
-    // é servido por `ix_propriedades_produtor`, e a ordem é a mesma da listagem do cadastro,
-    // para a Propriedade não trocar de lugar conforme a tela por onde se olha.
     const [linhas, total] = await this.linhas.findAndCount({
       where: { produtorId },
       order: { nome: 'ASC', id: 'ASC' },

@@ -71,7 +71,6 @@ describe('a seção de Culturas e Safras', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Registrar' }));
 
     expect(await screen.findByText('2026')).toBeInTheDocument();
-    // O ano vai como número, e não como o texto que o campo devolve.
     await expect(corpoEnviadoPara('POST', '/api/safras')).resolves.toEqual({ ano: 2026 });
   });
 
