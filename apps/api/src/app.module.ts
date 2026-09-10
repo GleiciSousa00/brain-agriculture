@@ -6,6 +6,7 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 import { databaseOptions } from './config/database.config';
 import { CulturasModule } from './modules/culturas/culturas.module';
 import { HealthModule } from './health/health.module';
+import { PainelModule } from './modules/painel/painel.module';
 import { PlantiosModule } from './modules/plantios/plantios.module';
 import { ProdutoresModule } from './modules/produtores/produtores.module';
 import { PropriedadesModule } from './modules/propriedades/propriedades.module';
@@ -27,6 +28,7 @@ import { LoggingModule } from './shared/logging/logging.module';
     SafrasModule,
     CulturasModule,
     PlantiosModule,
+    PainelModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },

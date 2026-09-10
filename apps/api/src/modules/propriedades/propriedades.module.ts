@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import type { Repository } from 'typeorm';
+import { PROPRIEDADES_DO_PAINEL_REPOSITORY } from '../painel/domain/propriedades-do-painel.repository';
 import { PROPRIEDADE_DO_PLANTIO_REPOSITORY } from '../plantios/domain/propriedade-do-plantio.repository';
 import { PROPRIEDADES_DO_PRODUTOR_REPOSITORY } from '../produtores/domain/propriedades-do-produtor.repository';
 import { CriarPropriedadeUseCase } from './application/criar-propriedade.use-case';
@@ -13,16 +14,17 @@ import { CriaPropriedades1789070000000 } from './infrastructure/migrations/17890
 import { PropriedadeOrmEntity } from './infrastructure/propriedade.orm-entity';
 import { TypeormPropriedadeRepository } from './infrastructure/typeorm-propriedade.repository';
 import { TypeormPropriedadeDoPlantioRepository } from './infrastructure/typeorm-propriedade-do-plantio.repository';
+import { TypeormPropriedadesDoPainelRepository } from './infrastructure/typeorm-propriedades-do-painel.repository';
 import { TypeormPropriedadesDoProdutorRepository } from './infrastructure/typeorm-propriedades-do-produtor.repository';
 
 /**
  * O único arquivo do módulo autorizado a enxergar as quatro camadas.
  *
  * Ele também exporta as implementações das portas que outros módulos declaram: a de
- * Produtor, para alcançar as Propriedades dele, e a de Plantio, para saber se uma
- * Propriedade existe. São esses provedores, e só eles, que os outros módulos recebem: eles
- * se falam por portas declaradas em `domain`, e nenhum alcança camada interna do outro.
- * Ver o registro 0005.
+ * Produtor, para alcançar as Propriedades dele, a de Plantio, para saber se uma Propriedade
+ * existe, e a do painel, para os números agregados. São esses provedores, e só eles, que os
+ * outros módulos recebem: eles se falam por portas declaradas em `domain`, e nenhum alcança
+ * camada interna do outro. Ver o registro 0005.
  */
 @Module({
   imports: [TypeOrmModule.forFeature([PropriedadeOrmEntity])],
@@ -45,6 +47,12 @@ import { TypeormPropriedadesDoProdutorRepository } from './infrastructure/typeor
       inject: [getRepositoryToken(PropriedadeOrmEntity)],
       useFactory: (linhas: Repository<PropriedadeOrmEntity>) =>
         new TypeormPropriedadeDoPlantioRepository(linhas),
+    },
+    {
+      provide: PROPRIEDADES_DO_PAINEL_REPOSITORY,
+      inject: [getRepositoryToken(PropriedadeOrmEntity)],
+      useFactory: (linhas: Repository<PropriedadeOrmEntity>) =>
+        new TypeormPropriedadesDoPainelRepository(linhas),
     },
     {
       provide: CriarPropriedadeUseCase,
@@ -71,7 +79,11 @@ import { TypeormPropriedadesDoProdutorRepository } from './infrastructure/typeor
         new ExcluirPropriedadeUseCase(propriedades),
     },
   ],
-  exports: [PROPRIEDADES_DO_PRODUTOR_REPOSITORY, PROPRIEDADE_DO_PLANTIO_REPOSITORY],
+  exports: [
+    PROPRIEDADES_DO_PRODUTOR_REPOSITORY,
+    PROPRIEDADE_DO_PLANTIO_REPOSITORY,
+    PROPRIEDADES_DO_PAINEL_REPOSITORY,
+  ],
 })
 export class PropriedadesModule {}
 
