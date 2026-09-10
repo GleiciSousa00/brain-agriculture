@@ -1,0 +1,76 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Um push novo na mesma branch cancela a execução anterior.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Trabalho rápido: tudo que responde em poucos minutos e não precisa de dependência de pé.
+  fast:
+    name: fast
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint, com limite de complexidade cognitiva
+        run: pnpm lint
+
+      - name: Checagem de tipos
+        run: pnpm typecheck
+
+      - name: Regra de dependência entre camadas
+        run: pnpm depcruise
+
+      - name: Testes de unidade
+        run: pnpm test
+
+      - name: Auditoria de dependências, portão em alta e crítica
+        run: pnpm audit:gate
+
+      - name: Auditoria de dependências, relatório em moderada
+        run: pnpm audit:report
+
+      - name: Build dos pacotes
+        run: pnpm build
+
+      - name: Imagem Docker da API
+        run: docker build --file apps/api/Dockerfile --tag cadastro-rural-api:${{ github.sha }} .
+
+  # Trabalho lento: reservado aos testes de integração, que sobem dependência de verdade.
+  integration:
+    name: integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Compilar o pacote de contratos
+        run: pnpm --filter @cadastro-rural/contracts build
+
+      - name: Testes de integração
+        run: pnpm test:integration
