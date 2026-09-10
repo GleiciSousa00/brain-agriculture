@@ -3,14 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { App } from './App';
+import { servirCadastro } from './teste/cadastro-falso';
 import { PAINEL_VAZIO } from './teste/exemplos';
-import { servirRotas } from './teste/fetch-falso';
 
 function abrirEm(endereco: string) {
-  servirRotas({
-    '/api/painel': () => ({ corpo: PAINEL_VAZIO }),
-    '/api/safras': () => ({ corpo: [] }),
-  });
+  // O cadastro busca os quatro catálogos ao montar, e o painel busca os próprios números.
+  // A navegação passa pelos dois, então o duplo serve os dois.
+  servirCadastro({}, { 'GET /api/painel': () => ({ corpo: PAINEL_VAZIO }) });
 
   return render(
     <MemoryRouter initialEntries={[endereco]}>

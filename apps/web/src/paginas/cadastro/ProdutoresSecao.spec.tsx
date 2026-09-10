@@ -1,0 +1,226 @@
+import type { Produtor } from '@cadastro-rural/contracts';
+import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it } from 'vitest';
+import { renderizarNoCadastro, servirCadastro } from '../../teste/cadastro-falso';
+import { AGRO_BETO, ANA } from '../../teste/exemplos';
+import { corpoEnviadoPara } from '../../teste/fetch-falso';
+import { ProdutoresSecao } from './ProdutoresSecao';
+
+/** A linha da tabela em que o nome dado aparece. */
+function linhaDe(nome: string): HTMLElement {
+  return screen.getByRole('row', { name: new RegExp(nome) });
+}
+
+async function preencher(rotulo: string, texto: string): Promise<void> {
+  const campo = screen.getByLabelText(rotulo);
+  await userEvent.clear(campo);
+  await userEvent.type(campo, texto);
+}
+
+describe('a seção de Produtores', () => {
+  it('lista os Produtores com o Documento como a API o mandou, já mascarado', async () => {
+    servirCadastro({ produtores: [ANA, AGRO_BETO] });
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+
+    expect(await screen.findByText('Ana Lima')).toBeInTheDocument();
+    expect(screen.getByText('***.456.789-00')).toBeInTheDocument();
+    expect(screen.getByText('**.***.678/0001-90')).toBeInTheDocument();
+  });
+
+  it('diz que a base está vazia em vez de mostrar tabela sem linha', async () => {
+    servirCadastro({ produtores: [] });
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+
+    expect(await screen.findByText('Nenhum Produtor cadastrado ainda.')).toBeInTheDocument();
+  });
+
+  it('registra um Produtor e mostra o que a API devolveu', async () => {
+    const produtores: Produtor[] = [];
+    servirCadastro(
+      { produtores },
+      {
+        'POST /api/produtores': ({ corpo }) => {
+          const pedido = corpo as { nome: string };
+          const criado = { ...ANA, nome: pedido.nome };
+          produtores.push(criado);
+
+          return { corpo: criado };
+        },
+      },
+    );
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Nenhum Produtor cadastrado ainda.');
+
+    await preencher('Nome', 'Ana Lima');
+    await preencher('Documento', '123.456.789-00');
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar' }));
+
+    expect(await screen.findByText('Ana Lima')).toBeInTheDocument();
+    // O Documento aparece mascarado porque é assim que a API o devolve, e a tela não o
+    // formata de novo: o que foi digitado tinha máscara diferente.
+    expect(screen.getByText('***.456.789-00')).toBeInTheDocument();
+  });
+
+  it('manda nome e Documento como foram digitados', async () => {
+    servirCadastro({ produtores: [] }, { 'POST /api/produtores': () => ({ corpo: ANA }) });
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Nenhum Produtor cadastrado ainda.');
+
+    await preencher('Nome', 'Ana Lima');
+    await preencher('Documento', '12345678900');
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar' }));
+
+    // O formulário só se esvazia depois que a escrita passou.
+    await waitFor(() => {
+      expect(screen.getByLabelText('Nome')).toHaveValue('');
+    });
+    await expect(corpoEnviadoPara('POST', '/api/produtores')).resolves.toEqual({
+      nome: 'Ana Lima',
+      documento: '12345678900',
+    });
+  });
+
+  it('mostra a recusa do Documento com o texto que a API mandou', async () => {
+    servirCadastro(
+      { produtores: [] },
+      {
+        'POST /api/produtores': () => ({
+          problema: {
+            status: 400,
+            title: 'Bad Request',
+            detail: 'O Documento informado não é um CPF nem um CNPJ válido.',
+            codigo: 'DOCUMENTO_INVALIDO',
+          },
+        }),
+      },
+    );
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Nenhum Produtor cadastrado ainda.');
+
+    await preencher('Nome', 'Ana Lima');
+    await preencher('Documento', '111');
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'O Documento informado não é um CPF nem um CNPJ válido.',
+    );
+  });
+
+  it('corrige o nome sem oferecer o Documento para edição', async () => {
+    const produtores = [{ ...ANA }];
+    servirCadastro(
+      { produtores },
+      {
+        'PATCH /api/produtores/:id': ({ corpo }) => {
+          const pedido = corpo as { nome: string };
+          produtores[0] = { ...ANA, nome: pedido.nome };
+
+          return { corpo: produtores[0] };
+        },
+      },
+    );
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Ana Lima');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Editar Ana Lima' }));
+    expect(screen.queryByLabelText('Documento')).toBeNull();
+
+    await preencher('Nome', 'Ana Maria Lima');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    expect(await screen.findByText('Ana Maria Lima')).toBeInTheDocument();
+  });
+
+  it('pergunta antes de excluir, e avisa que as Propriedades vão junto', async () => {
+    const produtores = [{ ...ANA }];
+    servirCadastro(
+      { produtores },
+      {
+        'DELETE /api/produtores/:id': () => {
+          produtores.length = 0;
+
+          return { semConteudo: true };
+        },
+      },
+    );
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Ana Lima');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Excluir Ana Lima' }));
+    expect(
+      screen.getByText('Excluir Ana Lima? As Propriedades e os Plantios desse Produtor vão junto.'),
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+
+    expect(await screen.findByText('Nenhum Produtor cadastrado ainda.')).toBeInTheDocument();
+  });
+
+  it('desiste da exclusão quando a pergunta é cancelada', async () => {
+    servirCadastro({ produtores: [ANA] });
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Ana Lima');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Excluir Ana Lima' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(screen.getByText('Ana Lima')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Excluir Ana Lima' })).toBeInTheDocument();
+  });
+
+  it('mostra dez por página e diz quantas páginas existem', async () => {
+    const muitos = Array.from({ length: 23 }, (_, indice) => ({
+      ...ANA,
+      id: `produtor-${indice}`,
+      nome: `Produtor ${String(indice).padStart(2, '0')}`,
+    }));
+    servirCadastro({ produtores: muitos });
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Produtor 00');
+
+    expect(screen.getByText('página 1 de 3')).toBeInTheDocument();
+    expect(screen.queryByText('Produtor 10')).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Próxima' }));
+
+    expect(await screen.findByText('Produtor 10')).toBeInTheDocument();
+    expect(screen.queryByText('Produtor 00')).toBeNull();
+    expect(screen.getByText('página 2 de 3')).toBeInTheDocument();
+  });
+
+  it('mostra a recusa da exclusão dentro da linha, sem derrubar a tabela', async () => {
+    servirCadastro(
+      { produtores: [ANA, AGRO_BETO] },
+      {
+        'DELETE /api/produtores/:id': () => ({
+          problema: {
+            status: 404,
+            title: 'Not Found',
+            detail: 'Não existe Produtor com esse identificador.',
+          },
+        }),
+      },
+    );
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Ana Lima');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Excluir Ana Lima' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não existe Produtor com esse identificador.',
+    );
+    expect(within(linhaDe('Agro Beto')).getByText('Agro Beto')).toBeInTheDocument();
+  });
+});
