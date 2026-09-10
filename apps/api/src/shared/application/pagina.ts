@@ -1,3 +1,5 @@
+import type { Recorte, Recortados } from '../domain/recorte';
+
 /**
  * A fatia de uma listagem, dita em vocabulário de caso de uso.
  *
@@ -23,4 +25,22 @@ export interface Pagina<T> {
 /** Quantos registros pular para chegar na página pedida. */
 export function deslocamentoDe({ pagina, tamanho }: PedidoDePagina): number {
   return (pagina - 1) * tamanho;
+}
+
+/**
+ * Traduz o pedido de página para o recorte que a porta entende, e devolve a fatia.
+ *
+ * Todo caso de uso de listar faz exatamente isto, e só muda em qual porta chama. Escrever
+ * a aritmética de novo em cada um é onde ela passa a divergir entre as listagens.
+ */
+export async function paginar<T>(
+  pedido: PedidoDePagina,
+  recortar: (recorte: Recorte) => Promise<Recortados<T>>,
+): Promise<Pagina<T>> {
+  const { itens, total } = await recortar({
+    deslocamento: deslocamentoDe(pedido),
+    limite: pedido.tamanho,
+  });
+
+  return { itens, total, pagina: pedido.pagina, tamanho: pedido.tamanho };
 }

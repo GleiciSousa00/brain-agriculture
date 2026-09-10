@@ -2,11 +2,8 @@ import type { Repository } from 'typeorm';
 import { violouChaveEstrangeira } from '../../../shared/infrastructure/postgres-errors';
 import type { Propriedade } from '../domain/propriedade';
 import { ProdutorDaPropriedadeNaoEncontrado } from '../domain/propriedade.errors';
-import type {
-  PropriedadeRepository,
-  PropriedadesRecortadas,
-  RecorteDePropriedades,
-} from '../domain/propriedade.repository';
+import type { Recorte, Recortados } from '../../../shared/domain/recorte';
+import type { PropriedadeRepository } from '../domain/propriedade.repository';
 import { propriedadeParaDominio, propriedadeParaLinha } from './propriedade.mapper';
 import { PropriedadeOrmEntity } from './propriedade.orm-entity';
 
@@ -37,7 +34,7 @@ export class TypeormPropriedadeRepository implements PropriedadeRepository {
     await this.linhas.delete({ id });
   }
 
-  async list({ deslocamento, limite }: RecorteDePropriedades): Promise<PropriedadesRecortadas> {
+  async list({ deslocamento, limite }: Recorte): Promise<Recortados<Propriedade>> {
     // A contagem vem na mesma ida ao banco que a fatia, e é a do cadastro inteiro.
     const [linhas, total] = await this.linhas.findAndCount({
       order: { cidade: 'ASC', id: 'ASC' },
