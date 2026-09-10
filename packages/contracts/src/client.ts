@@ -10,6 +10,12 @@ export type CriarProdutor = components['schemas']['CriarProdutorDto'];
 /** O formato único de erro da API, conforme a RFC 9457. */
 export type ProblemDetails = components['schemas']['ProblemDetailsDto'];
 
+/** O ciclo agrícola, compartilhado por todas as Propriedades. */
+export type Safra = components['schemas']['SafraDto'];
+
+/** A espécie cultivada, como o catálogo a devolve. */
+export type Cultura = components['schemas']['CulturaDto'];
+
 /**
  * Cliente tipado da API, gerado a partir da especificação OpenAPI.
  *
