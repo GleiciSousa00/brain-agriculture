@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
@@ -6,12 +6,21 @@ import { Logger } from 'nestjs-pino';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
+import { Documento } from '../src/modules/produtores/domain/documento';
+import { Produtor } from '../src/modules/produtores/domain/produtor';
+import {
+  PRODUTOR_REPOSITORY,
+  type ProdutorRepository,
+} from '../src/modules/produtores/domain/produtor.repository';
+import { ProdutorDuplicado } from '../src/modules/produtores/domain/produtor.errors';
 
-const CPF = '529.982.247-25';
-const CPF_SEM_MASCARA = '52998224725';
-const CNPJ_ALFANUMERICO = '12.ABC.345/01DE-35';
-
-describe('Produtores, ponta a ponta', () => {
+/**
+ * A suíte de contêiner é pequena de propósito. Ela cobre só o que apenas o banco prova: que
+ * a migração criou o esquema, que a cifra vai e volta, e que a restrição de unicidade
+ * recusa o Documento repetido. Regra de negócio é assunto dos testes de unidade, que rodam
+ * sem Docker e em milissegundos.
+ */
+describe('Produtor contra um Postgres de verdade', () => {
   let postgres: StartedPostgreSqlContainer;
   let app: INestApplication;
 
@@ -55,58 +64,46 @@ describe('Produtores, ponta a ponta', () => {
     ]);
   });
 
-  it('registra um Produtor com CPF e devolve o Documento mascarado', async () => {
-    const resposta = await request(app.getHttpServer())
-      .post('/produtores')
-      .send({ documento: CPF, nome: 'Maria da Silva' });
+  it.each([
+    ['CPF', '529.982.247-25', '52998224725', '***.***.247-25'],
+    ['CNPJ alfanumérico', '12.ABC.345/01DE-35', '12ABC34501DE35', '**.***.***/01DE-35'],
+  ])(
+    'grava o %s cifrado e o lê de volta, sem nenhuma coluna em claro',
+    async (_tipo, informado, semMascara, mascarado) => {
+      const criacao = await request(app.getHttpServer())
+        .post('/produtores')
+        .send({ documento: informado, nome: 'Maria da Silva' });
 
-    expect(resposta.status).toBe(201);
-    expect(resposta.body).toMatchObject({
-      nome: 'Maria da Silva',
-      documento: '***.***.247-25',
-      tipoDeDocumento: 'CPF',
-    });
-    expect(JSON.stringify(resposta.body)).not.toContain(CPF_SEM_MASCARA);
+      expect(criacao.status).toBe(201);
+      expect(criacao.body.documento).toBe(mascarado);
+
+      const [linha] = await app
+        .get(DataSource)
+        .query(`SELECT * FROM produtores WHERE id = $1`, [criacao.body.id]);
+      expect(JSON.stringify(linha)).not.toContain(semMascara);
+      expect(linha.documento_impressao).toHaveLength(64);
+
+      const leitura = await request(app.getHttpServer()).get(`/produtores/${criacao.body.id}`);
+      expect(leitura.status).toBe(200);
+      expect(leitura.body.documento).toBe(mascarado);
+    },
+  );
+
+  it('a restrição de unicidade do banco recusa o Documento repetido', async () => {
+    const documento = Documento.criar('390.533.447-05');
+    const produtores = app.get<ProdutorRepository>(PRODUTOR_REPOSITORY);
+
+    // Direto no repositório, sem passar pelo caso de uso: o que precisa ser exercitado é a
+    // restrição do banco, que é a única coisa entre duas requisições simultâneas.
+    await produtores.save(Produtor.criar({ documento, nome: 'Primeira' }));
+
+    await expect(
+      produtores.save(Produtor.criar({ documento, nome: 'Segunda' })),
+    ).rejects.toThrow(ProdutorDuplicado);
   });
 
-  it('registra um Produtor com CNPJ alfanumérico', async () => {
-    const resposta = await request(app.getHttpServer())
-      .post('/produtores')
-      .send({ documento: CNPJ_ALFANUMERICO, nome: 'Fazenda ABC' });
-
-    expect(resposta.status).toBe(201);
-    expect(resposta.body.tipoDeDocumento).toBe('CNPJ');
-    expect(resposta.body.documento).toBe('**.***.***/01DE-35');
-  });
-
-  it('o banco guarda o Documento cifrado e a impressão, e nenhuma coluna em claro', async () => {
-    const documento = '00.000.000/0001-91';
-    const criacao = await request(app.getHttpServer())
-      .post('/produtores')
-      .send({ documento, nome: 'Fazenda Numérica' });
-
-    const [linha] = await app
-      .get(DataSource)
-      .query(`SELECT * FROM produtores WHERE id = $1`, [criacao.body.id]);
-
-    expect(JSON.stringify(linha)).not.toContain('00000000000191');
-    expect(linha.documento_cifrado).toEqual(expect.any(String));
-    expect(linha.documento_impressao).toHaveLength(64);
-  });
-
-  it('a cifra vai e volta: o Produtor lido tem o mesmo Documento que entrou', async () => {
-    const criacao = await request(app.getHttpServer())
-      .post('/produtores')
-      .send({ documento: '111.444.777-35', nome: 'Ida e Volta' });
-
-    const leitura = await request(app.getHttpServer()).get(`/produtores/${criacao.body.id}`);
-
-    expect(leitura.status).toBe(200);
-    expect(leitura.body.documento).toBe('***.***.777-35');
-  });
-
-  it('recusa o segundo Produtor com o mesmo Documento, e a restrição do banco confirma', async () => {
-    const documento = '390.533.447-05';
+  it('a API responde o repetido em Problem Details, com o código do erro', async () => {
+    const documento = '111.444.777-35';
     await request(app.getHttpServer()).post('/produtores').send({ documento, nome: 'Primeira' });
 
     const segunda = await request(app.getHttpServer())
@@ -114,52 +111,7 @@ describe('Produtores, ponta a ponta', () => {
       .send({ documento, nome: 'Segunda' });
 
     expect(segunda.status).toBe(409);
+    expect(segunda.headers['content-type']).toContain('application/problem+json');
     expect(segunda.body.codigo).toBe('produtor-duplicado');
-
-    // A conferência do caso de uso é a mensagem amigável. A restrição do banco é a
-    // garantia: sem ela, duas requisições simultâneas passariam as duas.
-    const restricoes: { conname: string }[] = await app
-      .get(DataSource)
-      .query(`SELECT conname FROM pg_constraint WHERE conname = 'uq_produtores_documento'`);
-    expect(restricoes).toHaveLength(1);
-  });
-
-  it.each([
-    ['dígito verificador errado', '529.982.247-26'],
-    ['letra minúscula no CNPJ', '12.ABc.345/01DE-35'],
-    ['CNPJ zerado', '00.000.000/0000-00'],
-    ['CPF com sequência repetida', '111.111.111-11'],
-  ])('recusa %s em Problem Details', async (_caso, documento) => {
-    const resposta = await request(app.getHttpServer())
-      .post('/produtores')
-      .send({ documento, nome: 'Recusada' });
-
-    expect(resposta.status).toBe(400);
-    expect(resposta.headers['content-type']).toContain('application/problem+json');
-    expect(resposta.body).toMatchObject({ codigo: 'documento-invalido', status: 400 });
-    expect(resposta.body.detail).toEqual(expect.any(String));
-  });
-
-  it('aceita CNPJ com caracteres repetidos, que a Receita considera válido', async () => {
-    const resposta = await request(app.getHttpServer())
-      .post('/produtores')
-      .send({ documento: '11.111.111/1111-80', nome: 'Repetida' });
-
-    expect(resposta.status).toBe(201);
-  });
-
-  it('devolve não encontrado para identificador que não existe', async () => {
-    const resposta = await request(app.getHttpServer()).get(`/produtores/${randomUUID()}`);
-
-    expect(resposta.status).toBe(404);
-    expect(resposta.body.codigo).toBe('produtor-nao-encontrado');
-  });
-
-  it('nenhuma resposta de erro carrega o Documento informado', async () => {
-    const resposta = await request(app.getHttpServer())
-      .post('/produtores')
-      .send({ documento: '529.982.247-26', nome: 'Recusada' });
-
-    expect(JSON.stringify(resposta.body)).not.toContain('529982247');
   });
 });

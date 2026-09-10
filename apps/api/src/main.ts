@@ -3,7 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
-import { OPENAPI_ROTA, documentoOpenApi } from './config/openapi';
+import { OPENAPI_PATH, buildOpenApiDocument } from './config/openapi';
 
 const DEFAULT_PORT = 3000;
 
@@ -14,7 +14,7 @@ async function bootstrap(): Promise<void> {
   app.useLogger(app.get(Logger));
   app.enableShutdownHooks();
 
-  SwaggerModule.setup(OPENAPI_ROTA, app, documentoOpenApi(app));
+  SwaggerModule.setup(OPENAPI_PATH, app, buildOpenApiDocument(app));
 
   const port = Number(process.env.API_PORT ?? DEFAULT_PORT);
   await app.listen(port, '0.0.0.0');

@@ -6,10 +6,12 @@ import { BuscarProdutorUseCase } from './application/buscar-produtor.use-case';
 import { CriarProdutorUseCase } from './application/criar-produtor.use-case';
 import { PRODUTOR_REPOSITORY, type ProdutorRepository } from './domain/produtor.repository';
 import { DocumentoCrypto } from './infrastructure/crypto/documento-crypto';
+import { readSecretMaterial } from './infrastructure/crypto/secret-material';
 import { ProdutorMapper } from './infrastructure/produtor.mapper';
 import { ProdutorOrmEntity } from './infrastructure/produtor.orm-entity';
 import { TypeormProdutorRepository } from './infrastructure/typeorm-produtor.repository';
 import { ProdutoresController } from './http/produtores.controller';
+import { CriaProdutores1789040000000 } from './infrastructure/migrations/1789040000000-cria-produtores';
 
 /**
  * O único arquivo autorizado a enxergar as quatro camadas.
@@ -27,8 +29,8 @@ import { ProdutoresController } from './http/produtores.controller';
       inject: [ConfigService],
       useFactory: (config: ConfigService) =>
         new DocumentoCrypto(
-          materialSecreto(config, 'DOCUMENTO_ENCRYPTION_KEY'),
-          materialSecreto(config, 'DOCUMENTO_FINGERPRINT_SECRET'),
+          segredo(config, 'DOCUMENTO_ENCRYPTION_KEY'),
+          segredo(config, 'DOCUMENTO_FINGERPRINT_SECRET'),
         ),
     },
     {
@@ -38,12 +40,9 @@ import { ProdutoresController } from './http/produtores.controller';
     },
     {
       provide: PRODUTOR_REPOSITORY,
-      inject: [getRepositoryToken(ProdutorOrmEntity), ProdutorMapper, DocumentoCrypto],
-      useFactory: (
-        linhas: Repository<ProdutorOrmEntity>,
-        mapper: ProdutorMapper,
-        crypto: DocumentoCrypto,
-      ) => new TypeormProdutorRepository(linhas, mapper, crypto),
+      inject: [getRepositoryToken(ProdutorOrmEntity), ProdutorMapper],
+      useFactory: (linhas: Repository<ProdutorOrmEntity>, mapper: ProdutorMapper) =>
+        new TypeormProdutorRepository(linhas, mapper),
     },
     {
       provide: CriarProdutorUseCase,
@@ -59,13 +58,12 @@ import { ProdutoresController } from './http/produtores.controller';
 })
 export class ProdutoresModule {}
 
+/** O que o módulo publica para a raiz de composição montar o catálogo do ORM. */
+export const PRODUTORES_ENTIDADES = [ProdutorOrmEntity];
+
+export const PRODUTORES_MIGRACOES = [CriaProdutores1789040000000];
+
 /** A chave e o segredo chegam em base64 e não têm valor padrão: perder um é perder dado. */
-function materialSecreto(config: ConfigService, variavel: string): Buffer {
-  const valor = config.get<string>(variavel);
-
-  if (valor === undefined || valor.length === 0) {
-    throw new Error(`A variável de ambiente ${variavel} não está definida.`);
-  }
-
-  return Buffer.from(valor, 'base64');
+function segredo(config: ConfigService, variavel: string): Buffer {
+  return readSecretMaterial(config.get<string>(variavel), variavel, config.get<string>('NODE_ENV'));
 }

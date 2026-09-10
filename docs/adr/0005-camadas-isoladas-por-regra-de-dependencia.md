@@ -17,6 +17,10 @@ O arquivo de módulo (`<modulo>.module.ts`) fica na raiz do módulo, fora das qu
 camadas, e é o único lugar autorizado a enxergar todas elas. É ali que a implementação
 de repositório é ligada à porta que o caso de uso recebe.
 
+Ele também é a única face que o módulo mostra para fora. Quem está fora do módulo, como a
+raiz de composição que monta o catálogo do ORM, importa o arquivo de módulo e o que ele
+publica, nunca um arquivo de dentro de uma das quatro camadas.
+
 A razão não é purismo. Este projeto é um módulo de um sistema maior e precisa poder
 crescer. O que impede crescimento não é falta de engenharia, é acoplamento instalado
 cedo: regra de negócio que só roda com o Postgres de pé, entidade de domínio que é
@@ -33,6 +37,7 @@ Isolar as camadas hoje custa pouco e evita que qualquer uma dessas três coisas 
 | `http` | `application`, `domain`, `@nestjs/*`, `zod`, `nestjs-zod` | `infrastructure` |
 | `shared/<camada>` | o que a camada de mesmo nome pode | o que ela não pode, mais qualquer módulo |
 | `shared/logging` | `@nestjs/*`, `pino` | qualquer módulo |
+| fora de um módulo | o `<modulo>.module.ts` e o que ele publica | qualquer camada de dentro do módulo |
 | `<modulo>.module.ts` | tudo | nada |
 | `apps/web` | `packages/contracts` | `apps/api` |
 

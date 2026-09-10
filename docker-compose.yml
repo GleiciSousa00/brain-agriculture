@@ -29,7 +29,9 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      NODE_ENV: production
+      # Desenvolvimento por padrão: em produção a API recusa arrancar com a chave e o
+      # segredo abaixo, que são públicos.
+      NODE_ENV: ${NODE_ENV:-development}
       API_PORT: 3000
       LOG_LEVEL: ${LOG_LEVEL:-info}
       POSTGRES_HOST: postgres
@@ -37,7 +39,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-cadastro}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cadastro}
       POSTGRES_DB: ${POSTGRES_DB:-cadastro_rural}
-      # Valores de desenvolvimento. Ver o aviso em `.env.example`.
+      # Valores de desenvolvimento, públicos de propósito, para que um clone recém-feito
+      # suba com um comando. Ver o aviso em `.env.example`.
       DOCUMENTO_ENCRYPTION_KEY: ${DOCUMENTO_ENCRYPTION_KEY:-MFxpNBlirscUhol6+3M10FDOP08FwX/wz8GMUNc8Qmw=}
       DOCUMENTO_FINGERPRINT_SECRET: ${DOCUMENTO_FINGERPRINT_SECRET:-8wJpFBv+Fzfy5s07/oRT5i0/V3kzRif/IT8Uyw9Gh+w=}
     ports:

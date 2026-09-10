@@ -1,5 +1,6 @@
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
+import { NOME_TAMANHO_MAXIMO } from '../../domain/produtor';
 
 /** Onze caracteres num CPF sem máscara, dezoito num CNPJ com máscara. */
 const DOCUMENTO_TAMANHO_MINIMO = 11;
@@ -18,7 +19,7 @@ export const criarProdutorSchema = z.object({
     .min(DOCUMENTO_TAMANHO_MINIMO)
     .max(DOCUMENTO_TAMANHO_MAXIMO)
     .describe('CPF ou CNPJ, com ou sem máscara. Letra minúscula é recusada.'),
-  nome: z.string().trim().min(1).max(200).describe('Nome do Produtor.'),
+  nome: z.string().trim().min(1).max(NOME_TAMANHO_MAXIMO).describe('Nome do Produtor.'),
 });
 
 export class CriarProdutorDto extends createZodDto(criarProdutorSchema) {}

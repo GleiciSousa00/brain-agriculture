@@ -7,6 +7,9 @@ export type Produtor = components['schemas']['ProdutorDto'];
 /** O corpo aceito no registro de um Produtor. */
 export type CriarProdutor = components['schemas']['CriarProdutorDto'];
 
+/** O formato único de erro da API, conforme a RFC 9457. */
+export type ProblemDetails = components['schemas']['ProblemDetailsDto'];
+
 /**
  * Cliente tipado da API, gerado a partir da especificação OpenAPI.
  *

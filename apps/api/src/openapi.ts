@@ -2,9 +2,9 @@ import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { documentoOpenApi } from './config/openapi';
+import { buildOpenApiDocument } from './config/openapi';
 
-const DESTINO = resolve(__dirname, '..', 'openapi.json');
+const DESTINATION = resolve(__dirname, '..', 'openapi.json');
 
 /**
  * Escreve a especificação versionada.
@@ -12,14 +12,14 @@ const DESTINO = resolve(__dirname, '..', 'openapi.json');
  * O modo de pré-visualização do Nest monta o grafo de módulos sem instanciar provedor
  * nenhum, então isso roda sem banco de pé e sem segredo de cifra configurado.
  */
-async function gerar(): Promise<void> {
+async function generate(): Promise<void> {
   const app = await NestFactory.create(AppModule, { preview: true, logger: false });
-  const documento = documentoOpenApi(app);
+  const document = buildOpenApiDocument(app);
 
-  writeFileSync(DESTINO, `${JSON.stringify(documento, null, 2)}\n`, 'utf8');
+  writeFileSync(DESTINATION, `${JSON.stringify(document, null, 2)}\n`, 'utf8');
   await app.close();
 
-  process.stdout.write(`especificação escrita em ${DESTINO}\n`);
+  process.stdout.write(`especificação escrita em ${DESTINATION}\n`);
 }
 
-void gerar();
+void generate();

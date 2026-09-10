@@ -73,6 +73,19 @@ export interface components {
             /** @enum {string} */
             tipoDeDocumento: "CPF" | "CNPJ";
         };
+        ProblemDetailsDto: {
+            /** @description URI que identifica o tipo do problema. */
+            type: string;
+            title: string;
+            status: number;
+            detail?: string;
+            /** @description A URI que sofreu a falha. */
+            instance?: string;
+            /** @description Liga a resposta às linhas de log da requisição. */
+            correlationId?: string;
+            /** @description Código do erro de regra de negócio, quando a falha veio do domínio. */
+            codigo?: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -226,14 +239,18 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
             };
             /** @description Já existe um Produtor com esse Documento. */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
             };
         };
     };
@@ -261,7 +278,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                };
             };
         };
     };

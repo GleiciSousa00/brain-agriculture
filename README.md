@@ -41,8 +41,9 @@ o log tem regra de redação para o campo. Ver
 [`docs/adr/0002-documento-cifrado-em-repouso.md`](docs/adr/0002-documento-cifrado-em-repouso.md).
 
 A chave e o segredo chegam por variável de ambiente, sem valor padrão no código. A
-composição traz valores de desenvolvimento, e [`.env.example`](.env.example) explica como
-gerar os seus.
+composição traz valores de desenvolvimento para que um clone recém-feito suba com um
+comando. Eles são públicos, e a API recusa arrancar com eles quando `NODE_ENV` é
+`production`. [`.env.example`](.env.example) explica como gerar os seus.
 
 A validação segue o código de referência da Receita Federal, não as bibliotecas de npm, e
 diverge delas de propósito em dois pontos: um CNPJ com caracteres repetidos é válido, e um

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { Documento } from './documento';
 import { NomeDeProdutorInvalido } from './produtor.errors';
 
-const NOME_TAMANHO_MAXIMO = 200;
+export const NOME_TAMANHO_MAXIMO = 200;
 
 interface DadosDeCriacao {
   documento: Documento;
@@ -29,9 +29,14 @@ export class Produtor {
     return new Produtor(randomUUID(), documento, conferirNome(nome));
   }
 
-  /** Um Produtor que já existe e está voltando da persistência com o identificador dele. */
+  /**
+   * Um Produtor que já existe e está voltando da persistência.
+   *
+   * O nome não passa pela conferência de novo. Ele foi conferido quando entrou, e apertar
+   * a regra depois tornaria ilegível a linha já gravada, em vez de editável.
+   */
   static restaurar({ id, documento, nome }: DadosGravados): Produtor {
-    return new Produtor(id, documento, conferirNome(nome));
+    return new Produtor(id, documento, nome);
   }
 }
 

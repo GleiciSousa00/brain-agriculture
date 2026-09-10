@@ -1,6 +1,15 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
-import type { ProblemDetails } from '@cadastro-rural/contracts';
+import type { z } from 'zod';
 import { DomainError, type NaturezaDaFalha } from '../domain/domain-error';
+import type { problemDetailsSchema } from './dto/problem-details.dto';
+
+/**
+ * O formato único de erro, inferido do esquema que também gera a especificação.
+ *
+ * O esquema é a fonte: o tipo daqui, o que sai na resposta e o que o cliente do pacote de
+ * contratos enxerga saem todos dele, e não podem divergir entre si.
+ */
+export type ProblemDetails = z.infer<typeof problemDetailsSchema>;
 
 /**
  * A tradução entre a natureza da falha, que é vocabulário de domínio, e o status HTTP,

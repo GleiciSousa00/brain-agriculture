@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHmac, randomBytes } from 'node:crypto';
 
 const ALGORITMO = 'aes-256-gcm';
 const TAMANHO_DA_CHAVE = 32;
@@ -48,14 +48,6 @@ export class DocumentoCrypto {
   /** O valor determinístico sobre o qual a restrição de unicidade é declarada. */
   impressao(valor: string): string {
     return createHmac('sha256', this.segredoDaImpressao).update(valor, 'utf8').digest('hex');
-  }
-
-  /** Comparação em tempo constante, para quando a impressão vier de fora. */
-  static impressoesIguais(uma: string, outra: string): boolean {
-    const primeira = Buffer.from(uma, 'hex');
-    const segunda = Buffer.from(outra, 'hex');
-
-    return primeira.length === segunda.length && timingSafeEqual(primeira, segunda);
   }
 }
 

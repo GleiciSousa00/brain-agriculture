@@ -79,6 +79,14 @@ module.exports = {
       },
     },
     {
+      name: 'so-o-modulo-enxerga-as-proprias-camadas',
+      severity: 'error',
+      comment:
+        'De fora, um módulo se apresenta pelo arquivo de módulo. As quatro camadas são internas a ele.',
+      from: { path: '^apps/api/src/', pathNot: '^apps/api/src/modules/' },
+      to: { path: '^apps/api/src/modules/[^/]+/(domain|application|infrastructure|http)/' },
+    },
+    {
       name: 'shared-nao-conhece-modulo',
       severity: 'error',
       comment: '`shared` é usado pelos módulos e não conhece nenhum deles. A seta aponta num sentido só.',

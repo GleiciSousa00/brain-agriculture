@@ -54,6 +54,7 @@ export class Documento {
       return new Documento(semMascara, 'CNPJ');
     }
 
+
     throw new DocumentoInvalido(
       'O Documento precisa ter onze caracteres, no CPF, ou catorze, no CNPJ.',
     );
@@ -81,7 +82,7 @@ function conferirCpf(valor: string): void {
     throw new DocumentoInvalido('O CPF não pode ter todos os dígitos iguais.');
   }
 
-  conferirDigitosVerificadores(valor, digitosDoCpf(valor), CPF_PESOS);
+  conferirDigitosVerificadores(valor, digitosDoCpf(valor), CPF_PESOS, 'CPF');
 }
 
 function conferirCnpj(valor: string): void {
@@ -96,7 +97,7 @@ function conferirCnpj(valor: string): void {
     throw new DocumentoInvalido('O CNPJ zerado não é válido.');
   }
 
-  conferirDigitosVerificadores(valor, valoresDoCnpj(valor), CNPJ_PESOS);
+  conferirDigitosVerificadores(valor, valoresDoCnpj(valor), CNPJ_PESOS, 'CNPJ');
 }
 
 /** No CPF cada posição vale o próprio dígito. */
@@ -118,13 +119,18 @@ interface Pesos {
   segundo: number[];
 }
 
-function conferirDigitosVerificadores(valor: string, valores: number[], pesos: Pesos): void {
+function conferirDigitosVerificadores(
+  valor: string,
+  valores: number[],
+  pesos: Pesos,
+  tipo: TipoDeDocumento,
+): void {
   const base = valores.slice(0, pesos.primeiro.length);
   const primeiro = digitoVerificador(base, pesos.primeiro);
   const segundo = digitoVerificador([...base, primeiro], pesos.segundo);
 
   if (valor.slice(-2) !== `${primeiro}${segundo}`) {
-    throw new DocumentoInvalido(`O dígito verificador do ${rotulo(valor)} não confere.`);
+    throw new DocumentoInvalido(`O dígito verificador do ${tipo} não confere.`);
   }
 }
 
@@ -133,8 +139,4 @@ function digitoVerificador(valores: number[], pesos: number[]): number {
   const resto = soma % 11;
 
   return resto < 2 ? 0 : 11 - resto;
-}
-
-function rotulo(valor: string): TipoDeDocumento {
-  return valor.length === CPF_COMPRIMENTO ? 'CPF' : 'CNPJ';
 }

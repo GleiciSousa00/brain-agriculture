@@ -9,6 +9,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ZodSerializerDto } from 'nestjs-zod';
+import { ProblemDetailsDto } from '../../../shared/http/dto/problem-details.dto';
 import { BuscarProdutorUseCase } from '../application/buscar-produtor.use-case';
 import { CriarProdutorUseCase } from '../application/criar-produtor.use-case';
 import { CriarProdutorDto } from './dto/criar-produtor.dto';
@@ -28,8 +29,14 @@ export class ProdutoresController {
   @ZodSerializerDto(ProdutorDto)
   @ApiOperation({ summary: 'Registra um Produtor.' })
   @ApiCreatedResponse({ type: ProdutorDto })
-  @ApiBadRequestResponse({ description: 'O Documento ou o nome informado não é válido.' })
-  @ApiConflictResponse({ description: 'Já existe um Produtor com esse Documento.' })
+  @ApiBadRequestResponse({
+    description: 'O Documento ou o nome informado não é válido.',
+    type: ProblemDetailsDto,
+  })
+  @ApiConflictResponse({
+    description: 'Já existe um Produtor com esse Documento.',
+    type: ProblemDetailsDto,
+  })
   async criar(@Body() corpo: CriarProdutorDto): Promise<ProdutorResposta> {
     return paraResposta(await this.criarProdutor.execute(corpo));
   }
@@ -38,7 +45,10 @@ export class ProdutoresController {
   @ZodSerializerDto(ProdutorDto)
   @ApiOperation({ summary: 'Recupera um Produtor, com o Documento mascarado.' })
   @ApiOkResponse({ type: ProdutorDto })
-  @ApiNotFoundResponse({ description: 'Não existe Produtor com esse identificador.' })
+  @ApiNotFoundResponse({
+    description: 'Não existe Produtor com esse identificador.',
+    type: ProblemDetailsDto,
+  })
   async buscar(@Param('id', ParseUUIDPipe) id: string): Promise<ProdutorResposta> {
     return paraResposta(await this.buscarProdutor.execute(id));
   }

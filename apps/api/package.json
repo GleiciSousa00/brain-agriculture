@@ -12,7 +12,6 @@
     "openapi": "ts-node --project tsconfig.json src/openapi.ts"
   },
   "dependencies": {
-    "@cadastro-rural/contracts": "workspace:*",
     "@nestjs/common": "^11.1.6",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.6",

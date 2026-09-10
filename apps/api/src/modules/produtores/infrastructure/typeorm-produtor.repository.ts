@@ -3,7 +3,6 @@ import type { Documento } from '../domain/documento';
 import type { Produtor } from '../domain/produtor';
 import { ProdutorDuplicado } from '../domain/produtor.errors';
 import type { ProdutorRepository } from '../domain/produtor.repository';
-import type { DocumentoCrypto } from './crypto/documento-crypto';
 import type { ProdutorMapper } from './produtor.mapper';
 import { ProdutorOrmEntity } from './produtor.orm-entity';
 
@@ -14,7 +13,6 @@ export class TypeormProdutorRepository implements ProdutorRepository {
   constructor(
     private readonly linhas: Repository<ProdutorOrmEntity>,
     private readonly mapper: ProdutorMapper,
-    private readonly crypto: DocumentoCrypto,
   ) {}
 
   async save(produtor: Produtor): Promise<void> {
@@ -40,7 +38,7 @@ export class TypeormProdutorRepository implements ProdutorRepository {
   async findByDocumento(documento: Documento): Promise<Produtor | null> {
     // Só igualdade exata: o valor cifrado muda a cada gravação e não serve para busca.
     const linha = await this.linhas.findOneBy({
-      documentoImpressao: this.crypto.impressao(documento.valor),
+      documentoImpressao: this.mapper.impressaoDe(documento),
     });
 
     return linha === null ? null : this.mapper.paraDominio(linha);

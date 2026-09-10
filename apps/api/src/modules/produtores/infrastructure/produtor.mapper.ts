@@ -17,6 +17,11 @@ export class ProdutorMapper {
     return linha;
   }
 
+  /** A coluna determinística sobre a qual a busca por igualdade acontece. */
+  impressaoDe(documento: Documento): string {
+    return this.crypto.impressao(documento.valor);
+  }
+
   paraDominio(linha: ProdutorOrmEntity): Produtor {
     return Produtor.restaurar({
       id: linha.id,
