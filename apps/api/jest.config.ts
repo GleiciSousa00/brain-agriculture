@@ -3,13 +3,13 @@ import type { Config } from 'jest';
 /**
  * O limite de cobertura, e por que ele é este.
  *
- * A barra saiu da medição de hoje, arredondada para baixo até o inteiro imediatamente
- * abaixo. Com 221 testes sobre os 31 arquivos do recorte, a medição foi de 98,87% de
- * instruções, 92,50% de ramos, 98,92% de funções e 98,86% de linhas. Fixar no número exato
- * reprovaria por uma linha a mais de código, que não é queda de qualidade.
+ * A barra saiu da medição, arredondada para baixo até o inteiro imediatamente abaixo. Com
+ * 228 testes sobre os 32 arquivos do recorte, a medição foi de 98,91% de instruções, 92,68%
+ * de ramos, 98,98% de funções e 98,89% de linhas. Fixar no número exato reprovaria por uma
+ * linha a mais de código, que não é queda de qualidade.
  *
  * A folga não é igual nas quatro. Instruções, funções e linhas ganham quase um ponto; ramos
- * ganham meio, porque a medição caiu perto do inteiro. **Ramos é o limite que trepida
+ * ganham dois terços, porque a medição caiu perto do inteiro. **Ramos é o limite que trepida
  * primeiro**, e é o primeiro a olhar quando a pipeline reprovar aqui.
  *
  * O limite é barra contra queda, e não meta. Quem subir a cobertura sobe a barra junto,
