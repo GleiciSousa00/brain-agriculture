@@ -25,7 +25,7 @@ export class ProdutorMapper {
   paraDominio(linha: ProdutorOrmEntity): Produtor {
     return Produtor.restaurar({
       id: linha.id,
-      documento: Documento.criar(this.crypto.decifrar(linha.documentoCifrado)),
+      documento: Documento.restaurar(this.crypto.decifrar(linha.documentoCifrado)),
       nome: linha.nome,
     });
   }
