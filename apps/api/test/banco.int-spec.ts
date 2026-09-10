@@ -22,8 +22,11 @@ import { ProdutorDuplicado } from '../src/modules/produtores/domain/produtor.err
  * repetido, e que a exclusão em cascata chega até o Plantio. Regra de negócio é assunto dos
  * testes de unidade, que rodam sem Docker e em milissegundos.
  *
- * A issue 2 limita a suíte a cinco casos. O caso do Plantio entrou juntando num só os dois
- * que provavam o Documento repetido, pelo repositório e pela API.
+ * A issue 2 limita a suíte a cinco casos, e é por isso que dois deles são junções. O caso
+ * do Plantio entrou juntando num só os dois que provavam o Documento repetido, pelo
+ * repositório e pela API. O caso do painel entrou juntando os dois da cifra, que eram um
+ * `it.each` sobre CPF e CNPJ: os dois documentos passaram a ser percorridos dentro de um
+ * caso só, sem que nenhuma asserção se perdesse.
  */
 describe('A aplicação contra um Postgres de verdade', () => {
   let postgres: StartedPostgreSqlContainer;
@@ -70,6 +73,13 @@ describe('A aplicação contra um Postgres de verdade', () => {
     const restricoes: { conname: string }[] = await dataSource.query(
       `SELECT conname FROM pg_constraint WHERE conrelid = 'plantios'::regclass ORDER BY conname`,
     );
+    // As colunas que o painel agrupa recebem índice por migração, e o registro 0004 é o que
+    // manda. A lista é a das duas tabelas que ele consulta, inteira, porque apagar um índice
+    // não quebra nada visível e passaria pela pipeline verde.
+    const indices: { indexname: string }[] = await dataSource.query(
+      `SELECT indexname FROM pg_indexes WHERE tablename IN ('plantios', 'propriedades')
+         AND indexname LIKE 'ix_%' ORDER BY indexname`,
+    );
 
     expect(dataSource.options.synchronize).toBe(false);
     expect(colunas.map((coluna) => coluna.column_name).sort()).toEqual([
@@ -97,17 +107,31 @@ describe('A aplicação contra um Postgres de verdade', () => {
       'pk_plantios',
       'uq_plantios_ligacao',
     ]);
+    expect(indices.map((indice) => indice.indexname)).toEqual([
+      'ix_plantios_cultura',
+      'ix_plantios_safra_cultura',
+      'ix_propriedades_cidade',
+      'ix_propriedades_estado',
+      'ix_propriedades_produtor',
+    ]);
     expect(catalogo.map((cultura) => cultura.nome)).toEqual(
       [...CULTURAS_INICIAIS].sort((um, outro) => (chaveDe(um) < chaveDe(outro) ? -1 : 1)),
     );
   });
 
-  it.each([
-    ['CPF', '529.982.247-25', '52998224725', '***.***.247-25'],
-    ['CNPJ alfanumérico', '12.ABC.345/01DE-35', '12ABC34501DE35', '**.***.***/01DE-35'],
-  ])(
-    'grava o %s cifrado e o lê de volta, sem nenhuma coluna em claro',
-    async (_tipo, informado, semMascara, mascarado) => {
+  it('grava o CPF e o CNPJ cifrados e os lê de volta, sem nenhuma coluna em claro', async () => {
+    // Os dois documentos são percorridos aqui dentro, e não num `it.each`, porque a suíte
+    // tem cinco vagas e o caso do painel precisava de uma. Nenhuma asserção se perdeu.
+    const documentos = [
+      { informado: '529.982.247-25', semMascara: '52998224725', mascarado: '***.***.247-25' },
+      {
+        informado: '12.ABC.345/01DE-35',
+        semMascara: '12ABC34501DE35',
+        mascarado: '**.***.***/01DE-35',
+      },
+    ];
+
+    for (const { informado, semMascara, mascarado } of documentos) {
       const criacao = await request(app.getHttpServer())
         .post('/produtores')
         .send({ documento: informado, nome: 'Maria da Silva' });
@@ -124,8 +148,8 @@ describe('A aplicação contra um Postgres de verdade', () => {
       const leitura = await request(app.getHttpServer()).get(`/produtores/${criacao.body.id}`);
       expect(leitura.status).toBe(200);
       expect(leitura.body.documento).toBe(mascarado);
-    },
-  );
+    }
+  });
 
   it('a unicidade recusa o Documento repetido, no repositório e na resposta da API', async () => {
     const documento = Documento.criar('390.533.447-05');
@@ -184,6 +208,130 @@ describe('A aplicação contra um Postgres de verdade', () => {
       .query(`SELECT id FROM plantios WHERE id = $1`, [primeiro.body.id]);
     expect(sobraram).toEqual([]);
   });
+
+  it('o painel agrega no banco e confere com os números conhecidos', async () => {
+    // A base é esvaziada primeiro porque as agregações são do cadastro inteiro, e os casos
+    // acima deixaram Propriedades e Plantios para trás. A cascata leva os Plantios junto.
+    await app.get(DataSource).query(`TRUNCATE TABLE propriedades CASCADE`);
+
+    const vazio = await request(app.getHttpServer()).get('/painel').expect(200);
+    expect(vazio.body).toEqual({
+      totais: { propriedades: 0, areaTotal: 0 },
+      usoDoSolo: { areaAgricultavel: 0, areaDeVegetacao: 0 },
+      propriedadesPorEstado: [],
+      plantiosPorCultura: [],
+    });
+
+    const { soja, milho, safraId, outraSafraId } = await cadastroDoPainel();
+
+    const inteiro = await request(app.getHttpServer()).get('/painel').expect(200);
+    const recortado = await request(app.getHttpServer())
+      .get('/painel')
+      .query({ safraId })
+      .expect(200);
+
+    // Três Propriedades: 100 + 50 + 25,5 hectares, com 60 + 30 + 15,5 agricultáveis.
+    expect(inteiro.body.totais).toEqual({ propriedades: 3, areaTotal: 175.5 });
+    expect(inteiro.body.usoDoSolo).toEqual({ areaAgricultavel: 105.5, areaDeVegetacao: 70 });
+    expect(inteiro.body.propriedadesPorEstado).toEqual([
+      { estado: 'MT', propriedades: 2 },
+      { estado: 'SP', propriedades: 1 },
+    ]);
+    expect(inteiro.body.plantiosPorCultura).toEqual([
+      { culturaId: soja.id, cultura: soja.nome, plantios: 3 },
+      { culturaId: milho.id, cultura: milho.nome, plantios: 2 },
+    ]);
+
+    // O filtro recorta a distribuição por Cultura e não toca no resto.
+    expect(recortado.body.plantiosPorCultura).toEqual([
+      { culturaId: soja.id, cultura: soja.nome, plantios: 3 },
+      { culturaId: milho.id, cultura: milho.nome, plantios: 1 },
+    ]);
+    expect(recortado.body.totais).toEqual(inteiro.body.totais);
+    expect(recortado.body.usoDoSolo).toEqual(inteiro.body.usoDoSolo);
+    expect(recortado.body.propriedadesPorEstado).toEqual(inteiro.body.propriedadesPorEstado);
+
+    const daOutraSafra = await request(app.getHttpServer())
+      .get('/painel')
+      .query({ safraId: outraSafraId })
+      .expect(200);
+    expect(daOutraSafra.body.plantiosPorCultura).toEqual([
+      { culturaId: milho.id, cultura: milho.nome, plantios: 1 },
+    ]);
+
+    // Uma Safra sem nenhum Plantio devolve a fatia vazia, e não erro. Contra o Postgres
+    // porque é aqui que o agrupamento filtrado devolve zero linha de verdade.
+    const semPlantio = await request(app.getHttpServer())
+      .get('/painel')
+      .query({ safraId: randomUUID() })
+      .expect(200);
+    expect(semPlantio.body.plantiosPorCultura).toEqual([]);
+    expect(semPlantio.body.totais).toEqual(inteiro.body.totais);
+  });
+
+  /**
+   * O cadastro conferido à mão de que o caso do painel se cobra: três Propriedades em dois
+   * estados, duas Culturas do catálogo e cinco Plantios em duas Safras.
+   */
+  async function cadastroDoPainel() {
+    const produtor = await request(app.getHttpServer())
+      .post('/produtores')
+      .send({ documento: '295.379.955-93', nome: 'Quem aparece no painel' })
+      .expect(201);
+    const emMatoGrosso = await propriedadeDoPainel(produtor.body.id, 'MT', 100, 60, 40);
+    const outraEmMatoGrosso = await propriedadeDoPainel(produtor.body.id, 'MT', 50, 30, 20);
+    const emSaoPaulo = await propriedadeDoPainel(produtor.body.id, 'SP', 25.5, 15.5, 10);
+
+    const catalogo: { id: string; nome: string }[] = (
+      await request(app.getHttpServer()).get('/culturas').expect(200)
+    ).body;
+    const [soja, milho] = catalogo;
+
+    if (soja === undefined || milho === undefined) {
+      throw new Error('A carga inicial do catálogo precisa ter pelo menos duas Culturas.');
+    }
+
+    const { id: safraId } = (
+      await request(app.getHttpServer()).post('/safras').send({ ano: 2041 }).expect(201)
+    ).body;
+    const { id: outraSafraId } = (
+      await request(app.getHttpServer()).post('/safras').send({ ano: 2042 }).expect(201)
+    ).body;
+
+    await plantioDoPainel(emMatoGrosso, soja.id, safraId);
+    await plantioDoPainel(outraEmMatoGrosso, soja.id, safraId);
+    await plantioDoPainel(emSaoPaulo, soja.id, safraId);
+    await plantioDoPainel(emMatoGrosso, milho.id, safraId);
+    await plantioDoPainel(outraEmMatoGrosso, milho.id, outraSafraId);
+
+    return { soja, milho, safraId, outraSafraId };
+  }
+
+  async function propriedadeDoPainel(
+    produtorId: string,
+    estado: string,
+    areaTotal: number,
+    areaAgricultavel: number,
+    areaDeVegetacao: number,
+  ): Promise<string> {
+    const criada = await request(app.getHttpServer())
+      .post('/propriedades')
+      .send({ produtorId, cidade: 'Sorriso', estado, areaTotal, areaAgricultavel, areaDeVegetacao })
+      .expect(201);
+
+    return criada.body.id;
+  }
+
+  async function plantioDoPainel(
+    propriedadeId: string,
+    culturaId: string,
+    safraId: string,
+  ): Promise<void> {
+    await request(app.getHttpServer())
+      .post('/plantios')
+      .send({ propriedadeId, culturaId, safraId })
+      .expect(201);
+  }
 
   /**
    * Um Produtor com uma Propriedade, que é o mínimo para um Plantio poder existir.
