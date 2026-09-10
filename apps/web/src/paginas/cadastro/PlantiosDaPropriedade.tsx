@@ -7,7 +7,6 @@ import { Listagem } from './Listagem';
 
 const CARREGANDO = 'Carregando os Plantios…';
 const VAZIO = 'Nenhum Plantio registrado nesta Propriedade ainda.';
-const FORA_DO_CATALOGO = '—';
 
 interface Props {
   propriedadeId: string;
@@ -24,18 +23,8 @@ interface Props {
  * do contexto, que já está em memória para os campos de escolha.
  */
 export function PlantiosDaPropriedade({ propriedadeId }: Props) {
-  const { culturas, safras, excluirPlantio } = useCadastro();
+  const { nomeDaCultura, anoDaSafra, excluirPlantio } = useCadastro();
   const [recusa, setRecusa] = useState<string>();
-
-  function nomeDaCultura(culturaId: string): string {
-    return culturas.find((cultura) => cultura.id === culturaId)?.nome ?? FORA_DO_CATALOGO;
-  }
-
-  function anoDaSafra(safraId: string): string {
-    const safra = safras.find((candidata) => candidata.id === safraId);
-
-    return safra === undefined ? FORA_DO_CATALOGO : String(safra.ano);
-  }
 
   async function excluir(id: string): Promise<void> {
     setRecusa(undefined);

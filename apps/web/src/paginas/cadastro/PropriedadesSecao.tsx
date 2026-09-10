@@ -12,7 +12,6 @@ import { Listagem } from './Listagem';
 const CARREGANDO = 'Carregando as Propriedades…';
 const VAZIO = 'Nenhuma Propriedade cadastrada ainda.';
 const SEM_PRODUTOR = 'Registre um Produtor antes: toda Propriedade é registrada em nome de um.';
-const FORA_DO_CATALOGO = '—';
 
 /** O que o formulário guarda enquanto se digita: texto, como o campo devolve. */
 interface Rascunho {
@@ -60,7 +59,8 @@ function corpoDe(rascunho: Rascunho) {
 }
 
 export function PropriedadesSecao() {
-  const { produtores, criarPropriedade, editarPropriedade, excluirPropriedade } = useCadastro();
+  const { produtores, nomeDoProdutor, criarPropriedade, editarPropriedade, excluirPropriedade } =
+    useCadastro();
 
   const [emEdicao, setEmEdicao] = useState<Propriedade>();
   const [rascunho, setRascunho] = useState<Rascunho>(RASCUNHO_LIMPO);
@@ -109,17 +109,6 @@ export function PropriedadesSecao() {
     } catch (causa: unknown) {
       setRecusaDaExclusao(mensagemDe(causa));
     }
-  }
-
-  /**
-   * O nome do Produtor de uma Propriedade.
-   *
-   * Ele sai do catálogo em memória, que vai até cem. Passando disso, a Propriedade de um
-   * Produtor que ficou de fora aparece sem nome, e o aviso do alto da tela é quem explica
-   * por quê.
-   */
-  function nomeDoProdutor(produtorId: string): string {
-    return produtores.find((produtor) => produtor.id === produtorId)?.nome ?? FORA_DO_CATALOGO;
   }
 
   // Sem Produtor no cadastro não há em nome de quem registrar, e um formulário que só
