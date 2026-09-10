@@ -51,6 +51,10 @@ Entre módulos, só `domain` é território comum. Um módulo nunca importa a `a
 a `infrastructure` ou o `http` de outro. Quando um caso de uso precisa de algo que vive
 noutro módulo, declara uma porta no próprio domínio e a infraestrutura a implementa.
 
+A regra vale para o código que vai para a imagem. Os testes estão de fora dela de
+propósito: um teste alcança a camada que precisa afirmar, e obrigar cada módulo a publicar
+o que só o teste usa inflaria o arquivo de módulo sem proteger nada.
+
 A tabela acima é a versão legível. A versão executável é a configuração do
 `dependency-cruiser`, que roda como portão obrigatório da pipeline e falha o build.
 Divergência entre as duas é defeito, e quem valer é a configuração.

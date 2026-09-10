@@ -1,7 +1,6 @@
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
-
-const NOME_TAMANHO_MAXIMO = 100;
+import { NOME_TAMANHO_MAXIMO } from '../../domain/cultura';
 
 /** O esquema confere a forma. Se a espécie já está no catálogo, quem responde é o domínio. */
 export const acrescentarCulturaSchema = z.object({

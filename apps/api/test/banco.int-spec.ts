@@ -6,7 +6,7 @@ import { Logger } from 'nestjs-pino';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
-import { chaveDeComparacao } from '../src/modules/culturas/domain/cultura';
+import { chaveDe } from '../src/modules/culturas/domain/cultura';
 import { CULTURAS_INICIAIS } from '../src/modules/culturas/infrastructure/culturas-iniciais';
 import { Documento } from '../src/modules/produtores/domain/documento';
 import { Produtor } from '../src/modules/produtores/domain/produtor';
@@ -72,9 +72,7 @@ describe('A aplicação contra um Postgres de verdade', () => {
     ]);
     expect(safras.map((coluna) => coluna.column_name).sort()).toEqual(['ano', 'criado_em', 'id']);
     expect(catalogo.map((cultura) => cultura.nome)).toEqual(
-      CULTURAS_INICIAIS.map((nome) => nome).sort((um, outro) =>
-        chaveDeComparacao(um).localeCompare(chaveDeComparacao(outro)),
-      ),
+      [...CULTURAS_INICIAIS].sort((um, outro) => (chaveDe(um) < chaveDe(outro) ? -1 : 1)),
     );
   });
 

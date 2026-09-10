@@ -11,5 +11,5 @@ export function culturaParaLinha(cultura: Cultura): CulturaOrmEntity {
 }
 
 export function culturaParaDominio(linha: CulturaOrmEntity): Cultura {
-  return Cultura.restaurar({ id: linha.id, nome: linha.nome });
+  return Cultura.restaurar({ id: linha.id, nome: linha.nome, chave: linha.chave });
 }
