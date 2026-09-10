@@ -1,28 +1,19 @@
-# Caddyfile de produção. A composição desta pasta o monta por cima do que vem na imagem,
-# que serve só HTTP na porta 80 e existe para desenvolvimento.
-#
-# DOMAIN e BASIC_AUTH_USER vêm do `.env`. BASIC_AUTH_HASH é calculado no arranque do
-# contêiner a partir de BASIC_AUTH_PASSWORD, pelo `command` da composição.
-#
-# Declarar o domínio como endereço do site é o que liga o HTTPS automático: o Caddy
-# emite e renova o certificado sozinho, desde que as portas 80 e 443 estejam abertas.
+# Caddyfile de produção, montado por cima do que vem na imagem. DOMAIN e BASIC_AUTH_USER
+# vêm do .env; BASIC_AUTH_HASH é calculado no arranque do contêiner, pelo docker-compose.yml.
 
 {$DOMAIN} {
 	root * /srv
 	encode gzip
 
-	# A aplicação não tem login, por decisão (docs/adr/0006). A senha aqui cobre o site
-	# inteiro, incluindo a especificação em /api/docs.
+	# A aplicação não tem login (registro 0006). A senha cobre o site inteiro, /api/docs incluído.
 	basic_auth {
 		{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
 	}
 
-	# Corta o prefixo: /api/painel chega na API como /painel, com a consulta preservada.
 	handle_path /api/* {
 		reverse_proxy api:3000
 	}
 
-	# O roteador vive no navegador: rota que não é arquivo devolve o index.
 	handle {
 		try_files {path} /index.html
 		file_server

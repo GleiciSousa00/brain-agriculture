@@ -1,14 +1,8 @@
-# Sobe o cadastro em produção, numa VPS só, a partir das imagens que a pipeline publica.
-# Diferente da composição da raiz, aqui nada tem valor padrão que seja segredo: o `.env`
-# ao lado é obrigatório, e `docker compose config` reprova enquanto ele estiver incompleto.
-#
-# O único serviço com porta aberta é o `web`, e é o Caddy dentro dele que faz TLS, a senha
-# de acesso e o repasse de `/api` para a API. Postgres e API só existem na rede interna.
+# Sobe o cadastro em produção a partir das imagens que a pipeline publica. O `.env` ao
+# lado é obrigatório: `docker compose config` reprova enquanto faltar variável.
 
 name: cadastro-rural
 
-# Sem limite, o log em JSON cresce até encher o disco da VPS. Três arquivos de 10 MB por
-# contêiner é o suficiente para investigar uma falha recente.
 x-logging: &logging
   driver: json-file
   options:
@@ -27,15 +21,12 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      # A API só arranca depois que o banco aceita conexão.
       test: ['CMD-SHELL', 'pg_isready -U cadastro -d cadastro_rural']
       interval: 5s
       timeout: 5s
       retries: 10
 
   api:
-    # A tag padrão é `latest`. Para voltar uma versão, aponte IMAGE_TAG para o SHA
-    # do commit no `.env`. Ver `README.md` nesta pasta.
     image: ghcr.io/gleicisousa00/cadastro-rural-api:${IMAGE_TAG:-latest}
     restart: unless-stopped
     logging: *logging
@@ -43,8 +34,6 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      # Em produção a API recusa arrancar com a chave e o segredo públicos de
-      # desenvolvimento, por isso os dois abaixo não têm valor padrão.
       NODE_ENV: production
       API_PORT: 3000
       LOG_LEVEL: ${LOG_LEVEL:-info}
@@ -66,8 +55,6 @@ services:
       - '80:80'
       - '443:443'
     volumes:
-      # A imagem traz um Caddyfile de desenvolvimento, só HTTP na porta 80. O daqui
-      # substitui aquele com o domínio, o TLS e a senha de acesso.
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
@@ -75,10 +62,8 @@ services:
       DOMAIN: ${DOMAIN:?defina DOMAIN no .env}
       BASIC_AUTH_USER: ${BASIC_AUTH_USER:?defina BASIC_AUTH_USER no .env}
       BASIC_AUTH_PASSWORD: ${BASIC_AUTH_PASSWORD:?defina BASIC_AUTH_PASSWORD no .env}
-    # A senha fica em claro no `.env` e vira hash aqui, no arranque do contêiner. Um hash
-    # bcrypt é cheio de `$`, que o Compose interpola dentro do `.env`, e pedir para quem
-    # opera dobrar cada `$` à mão é convite a erro. O `$$` abaixo é o escape do Compose:
-    # o shell recebe um `$` só.
+    # A senha vira hash bcrypt aqui, e não no `.env`: o hash é cheio de `$`, que o Compose
+    # interpola. O `$$` é o escape do Compose.
     command:
       - sh
       - -c
@@ -86,7 +71,6 @@ services:
 
 volumes:
   postgres-data:
-  # Guarda os certificados. Perder este volume obriga a emitir de novo, e o Let's Encrypt
-  # limita quantas emissões aceita por semana para o mesmo domínio.
+  # Guarda os certificados. Perdê-lo força emissão nova, e o Let's Encrypt limita quantas aceita por semana.
   caddy-data:
   caddy-config:

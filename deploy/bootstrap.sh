@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-# Prepara uma VPS Ubuntu LTS recém-criada para receber o cadastro: Docker, firewall e o
-# clone do repositório em /opt/cadastro-rural. Rode como root ou com sudo.
-#
-# Cada passo confere antes de agir, então rodar duas vezes não estraga nada. O script para
-# antes de subir os contêineres, porque o `.env` precisa ser preenchido à mão.
+# Prepara uma VPS Ubuntu LTS recém-criada: Docker, firewall e o clone em /opt/cadastro-rural.
+# Rode como root. Cada passo confere antes de agir, então rodar de novo não estraga nada.
 set -euo pipefail
 
 REPOSITORIO='https://github.com/GleiciSousa00/brain-agriculture.git'
@@ -20,14 +17,10 @@ fi
 
 export DEBIAN_FRONTEND=noninteractive
 
-# Uma VPS recém-criada vem com o índice do apt vazio ou velho, e `install` sem `update`
-# falha com 404. Uma vez aqui, para todos os passos; o do Docker repete depois de
-# acrescentar a fonte dele.
 apt-get update
 apt-get install -y ca-certificates curl git ufw
 
-# 1. Docker Engine e o plugin do Compose, pelo repositório apt oficial. O script de
-#    conveniência do Docker é evitado de propósito: ele muda sem aviso e não é idempotente.
+# Docker pelo repositório apt oficial, e não pelo script de conveniência, que não é idempotente.
 if docker compose version > /dev/null 2>&1; then
   log 'Docker com Compose já instalado, pulando.'
 else
@@ -44,17 +37,15 @@ else
   systemctl enable --now docker
 fi
 
-# 2. Firewall: só SSH e as duas portas do Caddy. Ele protege o que roda na máquina, e não
-#    os contêineres: porta publicada pelo Docker passa por fora do ufw. O que mantém o
-#    Postgres e a API fechados é a composição não publicar porta para eles.
+# Porta publicada pelo Docker passa por fora do ufw. O que fecha Postgres e API é a
+# composição não publicar porta para eles.
 log 'Configurando o firewall.'
 ufw allow OpenSSH
 ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable
 
-# 3. O repositório. A composição de produção lê o Caddyfile desta pasta, por isso o clone
-#    inteiro fica no servidor, e não só o docker-compose.yml.
+# O clone inteiro, porque a composição lê o Caddyfile desta pasta.
 if [[ -d "${DESTINO}/.git" ]]; then
   log "Atualizando ${DESTINO}."
   git -C "${DESTINO}" pull --ff-only
@@ -63,8 +54,7 @@ else
   git clone "${REPOSITORIO}" "${DESTINO}"
 fi
 
-# 4. O `.env`, a partir do exemplo. Nunca sobrescreve: o que já está lá tem os segredos
-#    que não podem mudar. Só root lê, porque ali estão as chaves do Documento.
+# Nunca sobrescreve o .env: as chaves do Documento que estão nele não podem mudar.
 if [[ -f "${DESTINO}/deploy/.env" ]]; then
   log 'deploy/.env já existe, mantendo.'
 else
@@ -73,7 +63,6 @@ else
 fi
 chmod 600 "${DESTINO}/deploy/.env"
 
-# 5. O que falta é manual.
 log 'Pronto. Próximos passos:'
 cat <<FIM
 

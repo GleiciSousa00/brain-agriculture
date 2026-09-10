@@ -78,14 +78,8 @@ jobs:
           echo 'a imagem da API não foi construída em três tentativas'
           exit 1
 
-      # A imagem da web carrega o Caddyfile que entrega o estático e repassa `/api`.
-      # Construí-la e mandar o próprio Caddy conferir a configuração é o portão sintático
-      # desse arquivo: nenhum teste de unidade o alcança. O portão de comportamento é a
-      # composição, no trabalho de integração. O Caddyfile de produção, em `deploy/`, é
-      # conferido pela mesma imagem, com valores de mentira nas variáveis que ele lê.
-      #
-      # A nova tentativa envolve só a construção. O `caddy validate` roda uma vez, no ramo
-      # de sucesso, porque ele reprova por configuração inválida, que não é falha de
+      # O `caddy validate` é o portão sintático dos dois Caddyfiles, o da imagem e o de
+      # `deploy/`. Roda uma vez, no ramo de sucesso: configuração inválida não é falha de
       # registro e não melhora com tentativa nova.
       - name: Imagem Docker da interface web
         run: |
@@ -109,10 +103,8 @@ jobs:
           echo 'a imagem da interface web não foi construída em três tentativas'
           exit 1
 
-      # A composição de produção não sobe no CI: ela puxa imagem do registro, que só existe
-      # depois do push na `main`. O que se confere aqui é a interpolação: toda variável que
-      # ela exige está no `.env.example`. O exemplo é lido de verdade, com os valores vazios
-      # preenchidos: uma variável nova na composição que não entre no exemplo reprova aqui.
+      # A composição de produção não sobe no CI. O que se confere é que toda variável que
+      # ela exige está no `.env.example`, lendo o exemplo com os valores vazios preenchidos.
       - name: Composição de produção interpola
         run: |
           sed 's/=$/=exemplo/' deploy/.env.example > deploy/.env.ci
@@ -144,13 +136,9 @@ jobs:
       - name: Testes de integração
         run: pnpm test:integration
 
-      # A composição é conferida aqui porque este é o trabalho que pode gastar tempo.
-      #
-      # A rota de saúde é consultada pela porta da web, e não pela da API. É o caminho que
-      # o navegador faz, e é o único portão de comportamento do Caddyfile: prova que o
-      # prefixo `/api` é cortado e que o repasse chega na API. O `caddy validate` do
-      # trabalho rápido só prova sintaxe, e foi por uma configuração sintaticamente válida
-      # que o nginx, antes dele, resolvia o nome da API uma vez no arranque e quebrava.
+      # A composição é conferida aqui porque este é o trabalho que pode gastar tempo. A rota
+      # de saúde é pedida pela porta da web, o caminho do navegador: é o portão de
+      # comportamento do Caddyfile, e prova o corte de `/api` e o repasse para a API.
       #
       # Os dois laços deste passo contam coisas diferentes, e por isso não repetem o nome
       # da variável. O de `subida` é nova tentativa contra a falha de registro descrita
@@ -186,8 +174,6 @@ jobs:
           docker compose logs
           exit 1
 
-      # O roteador vive no navegador: um endereço de tela pedido ao servidor precisa
-      # devolver o `index.html`, e não 404. É a outra metade do contrato do Caddyfile.
       - name: Conferir que uma rota de tela devolve o index
         run: curl --fail --silent http://localhost:5173/cadastro/produtores | grep --quiet '<div id="root">'
 
@@ -221,13 +207,8 @@ jobs:
         if: always()
         run: docker compose down --volumes
 
-  # Publicação: só na `main`, e só depois dos dois trabalhos acima passarem. As imagens
-  # vão para o GitHub Container Registry com a tag do commit e a tag `latest`. A composição
-  # de `deploy/` puxa `latest` por padrão e a tag do commit para voltar versão.
-  #
   # As imagens são construídas de novo, e não reaproveitadas do trabalho rápido: guardá-las
-  # como artefato entre trabalhos custaria mais minutos do que reconstruir. O login usa o
-  # token do próprio workflow, sem segredo novo e sem ação de terceiro.
+  # como artefato entre trabalhos custaria mais minutos do que reconstruir.
   publish:
     name: publish
     needs: [fast, integration]
@@ -242,9 +223,8 @@ jobs:
       - name: Entrar no registro
         run: echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io --username '${{ github.actor }}' --password-stdin
 
-      # O registro exige nome em minúsculas, e o dono do repositório tem maiúsculas. O rótulo
-      # `source` é o que liga o pacote a este repositório na página Packages; sem ele a
-      # imagem aparece só na conta de quem publicou.
+      # O registro exige nome em minúsculas. O rótulo `source` liga o pacote ao repositório
+      # na página Packages.
       - name: Construir e publicar as imagens
         run: |
           registro="ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
