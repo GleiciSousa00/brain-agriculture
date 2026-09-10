@@ -5,3 +5,9 @@
 **/*.log
 .git
 .github
+
+# O `.env` fica de fora da imagem. Quem roda sem Docker cria um na raiz, e sem esta
+# linha ele entraria na camada de build junto com a chave de cifra.
+.env
+.env.*
+!.env.example
