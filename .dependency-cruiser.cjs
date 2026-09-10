@@ -5,15 +5,18 @@
  * legível. Divergência entre as duas é defeito, e quem vale é este arquivo.
  */
 
-const CAMADA = {
-  dominio: '^apps/api/src/(modules/[^/]+|shared)/domain/',
-  aplicacao: '^apps/api/src/(modules/[^/]+|shared)/application/',
-  infraestrutura: '^apps/api/src/modules/[^/]+/infrastructure/',
-  http: '^apps/api/src/modules/[^/]+/http/',
+/** As quatro camadas valem tanto dentro de um módulo quanto dentro de `shared`. */
+const DENTRO_DE = '^apps/api/src/(modules/[^/]+|shared)';
+
+const LAYER = {
+  domain: `${DENTRO_DE}/domain/`,
+  application: `${DENTRO_DE}/application/`,
+  infrastructure: `${DENTRO_DE}/infrastructure/`,
+  http: `${DENTRO_DE}/http/`,
 };
 
 /** Bibliotecas proibidas nas duas camadas de dentro: elas são TypeScript puro. */
-const BIBLIOTECAS_DE_FORA = 'node_modules/(@nestjs/|typeorm/|pg/|zod/|nestjs-zod/)';
+const OUTSIDE_LIBRARIES = 'node_modules/(@nestjs/|typeorm/|pg/|zod/|nestjs-zod/)';
 
 module.exports = {
   forbidden: [
@@ -21,43 +24,49 @@ module.exports = {
       name: 'domain-nao-olha-para-fora',
       severity: 'error',
       comment: '`domain` só importa `domain`. Ele não sabe que existe caso de uso, banco ou HTTP.',
-      from: { path: CAMADA.dominio },
-      to: { path: '^apps/api/src/(modules/[^/]+|shared)/(application|infrastructure|http)/' },
+      from: { path: LAYER.domain },
+      to: { path: `${DENTRO_DE}/(application|infrastructure|http)/` },
     },
     {
       name: 'domain-sem-framework',
       severity: 'error',
       comment: '`domain` é TypeScript puro: sem framework, sem ORM, sem biblioteca de validação.',
-      from: { path: CAMADA.dominio },
-      to: { dependencyTypes: ['npm', 'npm-dev', 'npm-optional', 'npm-peer'], path: BIBLIOTECAS_DE_FORA },
+      from: { path: LAYER.domain },
+      to: {
+        dependencyTypes: ['npm', 'npm-dev', 'npm-optional', 'npm-peer'],
+        path: OUTSIDE_LIBRARIES,
+      },
     },
     {
       name: 'application-nao-olha-para-fora',
       severity: 'error',
       comment: '`application` recebe portas. Ela não sabe que existe banco nem que existe HTTP.',
-      from: { path: CAMADA.aplicacao },
-      to: { path: '^apps/api/src/modules/[^/]+/(infrastructure|http)/' },
+      from: { path: LAYER.application },
+      to: { path: `${DENTRO_DE}/(infrastructure|http)/` },
     },
     {
       name: 'application-sem-framework',
       severity: 'error',
       comment: 'Sem `@nestjs/*` na `application`: é a única propriedade que a torna portátil.',
-      from: { path: CAMADA.aplicacao },
-      to: { dependencyTypes: ['npm', 'npm-dev', 'npm-optional', 'npm-peer'], path: BIBLIOTECAS_DE_FORA },
+      from: { path: LAYER.application },
+      to: {
+        dependencyTypes: ['npm', 'npm-dev', 'npm-optional', 'npm-peer'],
+        path: OUTSIDE_LIBRARIES,
+      },
     },
     {
       name: 'infrastructure-nao-importa-http',
       severity: 'error',
       comment: '`infrastructure` é a porta de saída. Ela nunca depende da porta de entrada.',
-      from: { path: CAMADA.infraestrutura },
-      to: { path: '^apps/api/src/modules/[^/]+/http/' },
+      from: { path: LAYER.infrastructure },
+      to: { path: LAYER.http },
     },
     {
       name: 'http-nao-importa-infrastructure',
       severity: 'error',
       comment: '`http` fala com casos de uso, nunca com repositório concreto.',
-      from: { path: CAMADA.http },
-      to: { path: '^apps/api/src/modules/[^/]+/infrastructure/' },
+      from: { path: LAYER.http },
+      to: { path: LAYER.infrastructure },
     },
     {
       name: 'entre-modulos-so-domain',
@@ -68,6 +77,13 @@ module.exports = {
         path: '^apps/api/src/modules/[^/]+/(application|infrastructure|http)/',
         pathNot: '^apps/api/src/modules/$1/',
       },
+    },
+    {
+      name: 'shared-nao-conhece-modulo',
+      severity: 'error',
+      comment: '`shared` é usado pelos módulos e não conhece nenhum deles. A seta aponta num sentido só.',
+      from: { path: '^apps/api/src/shared/' },
+      to: { path: '^apps/api/src/modules/' },
     },
     {
       name: 'web-nao-importa-api',

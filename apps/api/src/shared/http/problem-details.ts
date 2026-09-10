@@ -5,12 +5,12 @@ import type { ProblemDetails } from '@cadastro-rural/contracts';
 export const PROBLEM_DETAILS_CONTENT_TYPE = 'application/problem+json';
 
 /** Sem catálogo de tipos de problema publicado, a RFC manda usar este URI. */
-const TIPO_PADRAO = 'about:blank';
+const DEFAULT_TYPE = 'about:blank';
 
-const DETALHE_DE_FALHA_INTERNA =
+const INTERNAL_FAILURE_DETAIL =
   'A requisição não pôde ser concluída. Consulte o identificador de correlação no log.';
 
-interface EntradaDoProblema {
+interface ProblemInput {
   /** O que foi lançado. Pode não ser sequer um erro. */
   error: unknown;
   /** A URI que sofreu a falha. */
@@ -26,46 +26,46 @@ interface EntradaDoProblema {
  * interna pode carregar segredo, e o rastro fica no log, ligado pelo identificador de
  * correlação.
  */
-export function toProblemDetails({ error, instance, correlationId }: EntradaDoProblema): ProblemDetails {
+export function toProblemDetails({ error, instance, correlationId }: ProblemInput): ProblemDetails {
   const status =
     error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
   return {
-    type: TIPO_PADRAO,
-    title: tituloDoStatus(status),
+    type: DEFAULT_TYPE,
+    title: statusTitle(status),
     status,
-    detail: error instanceof HttpException ? detalheDaExcecao(error) : DETALHE_DE_FALHA_INTERNA,
+    detail: error instanceof HttpException ? exceptionDetail(error) : INTERNAL_FAILURE_DETAIL,
     instance,
     correlationId,
   };
 }
 
 /** O nome do status HTTP em inglês, como manda a RFC: `Not Found`, `Bad Request`. */
-function tituloDoStatus(status: number): string {
-  const nome = HttpStatus[status] as string | undefined;
+function statusTitle(status: number): string {
+  const name = HttpStatus[status] as string | undefined;
 
-  return nome === undefined
+  return name === undefined
     ? 'Error'
-    : nome
+    : name
         .toLowerCase()
         .split('_')
-        .map((parte) => parte.charAt(0).toUpperCase() + parte.slice(1))
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ');
 }
 
 /** A mensagem da exceção, que na validação chega como lista de problemas. */
-function detalheDaExcecao(error: HttpException): string {
-  const resposta = error.getResponse();
+function exceptionDetail(error: HttpException): string {
+  const response = error.getResponse();
 
-  if (typeof resposta === 'string') {
-    return resposta;
+  if (typeof response === 'string') {
+    return response;
   }
 
-  const mensagem = (resposta as { message?: unknown }).message;
+  const message = (response as { message?: unknown }).message;
 
-  if (Array.isArray(mensagem)) {
-    return mensagem.map(String).join('; ');
+  if (Array.isArray(message)) {
+    return message.map(String).join('; ');
   }
 
-  return typeof mensagem === 'string' ? mensagem : error.message;
+  return typeof message === 'string' ? message : error.message;
 }

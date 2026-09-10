@@ -11,10 +11,7 @@ export const DOCUMENTO_REDACTION_PATHS: string[] = [
   'documento',
   '*.documento',
   'req.body.documento',
-  'req.query.documento',
-  'req.params.documento',
-  'req.headers.documento',
-  'res.body.documento',
   'req.body.*.documento',
-  'res.body.*.documento',
+  'req.query.documento',
+  'res.body.documento',
 ];

@@ -47,7 +47,8 @@ variáveis de `POSTGRES_*` para outro banco.
 ```
 apps/api          API em NestJS
 apps/web          interface em React e Vite
-packages/contracts  cliente e tipos compartilhados, gerados da especificação OpenAPI
+packages/contracts  tipos compartilhados entre a API e a web; o cliente gerado da
+                  especificação OpenAPI chega com a camada HTTP
 ```
 
 Cada módulo do domínio da API se divide em `domain`, `application`, `infrastructure` e
@@ -83,8 +84,9 @@ pnpm build             # build dos três pacotes
 ```
 
 A pipeline roda em dois trabalhos paralelos: um rápido, com tudo acima menos a
-integração, e um lento reservado aos testes de integração. Os dois precisam passar para o
-pull request ser incorporado.
+integração, e um lento reservado aos testes de integração. O lento também sobe a
+composição e confere que a rota de saúde responde. Os dois precisam passar para o pull
+request ser incorporado.
 
 Duas dependências transitivas estão presas por `pnpm.overrides` no `package.json`, porque
 o pacote que as puxa ainda não adotou a correção de segurança: `multer`, vindo de

@@ -1,7 +1,7 @@
-import { randomUUID } from 'node:crypto';
 import { Catch, type ArgumentsHost, type ExceptionFilter } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { InjectPinoLogger, type PinoLogger } from 'nestjs-pino';
+import { resolveCorrelationId } from '../logging/correlation-id';
 import { PROBLEM_DETAILS_CONTENT_TYPE, toProblemDetails } from './problem-details';
 
 /**
@@ -17,29 +17,21 @@ export class ProblemDetailsFilter implements ExceptionFilter {
   ) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
-    const contexto = host.switchToHttp();
-    const requisicao = contexto.getRequest<Request>();
-    const resposta = contexto.getResponse<Response>();
+    const context = host.switchToHttp();
+    const request = context.getRequest<Request & { id?: unknown }>();
+    const response = context.getResponse<Response>();
 
-    const problema = toProblemDetails({
+    const problem = toProblemDetails({
       error: exception,
-      instance: requisicao.originalUrl ?? requisicao.url,
-      correlationId: identificadorDaRequisicao(requisicao),
+      instance: request.originalUrl ?? request.url,
+      // `req.id` é o identificador que o pino atribuiu. Se a falha veio antes disso,
+      // `resolveCorrelationId` gera um, e a resposta ainda tem por onde ser rastreada.
+      correlationId: resolveCorrelationId(request.id),
     });
 
     // O detalhe da resposta é genérico quando a falha é interna; o log guarda o resto.
-    this.logger.error({ err: exception, problema }, 'requisição falhou');
+    this.logger.error({ err: exception, problem }, 'requisição falhou');
 
-    resposta
-      .status(problema.status)
-      .type(PROBLEM_DETAILS_CONTENT_TYPE)
-      .json(problema);
+    response.status(problem.status).type(PROBLEM_DETAILS_CONTENT_TYPE).json(problem);
   }
-}
-
-/** O `req.id` que o pino atribuiu, ou um novo se a falha veio antes disso. */
-function identificadorDaRequisicao(requisicao: Request): string {
-  const id: unknown = (requisicao as Request & { id?: unknown }).id;
-
-  return typeof id === 'string' ? id : randomUUID();
 }

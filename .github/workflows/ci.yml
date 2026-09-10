@@ -74,3 +74,23 @@ jobs:
 
       - name: Testes de integração
         run: pnpm test:integration
+
+      # A composição é conferida aqui porque este é o trabalho que pode gastar tempo.
+      - name: Subir a composição e conferir a rota de saúde
+        run: |
+          docker compose up --build --detach postgres api
+          for tentativa in $(seq 1 30); do
+            if curl --fail --silent http://localhost:3000/health; then
+              echo
+              echo "a rota de saúde respondeu na tentativa $tentativa"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo 'a rota de saúde não respondeu'
+          docker compose logs
+          exit 1
+
+      - name: Derrubar a composição
+        if: always()
+        run: docker compose down --volumes

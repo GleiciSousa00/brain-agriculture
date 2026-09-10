@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint';
  * Portão de simplicidade: a complexidade cognitiva de uma função não passa de quinze.
  * O limite é a medida determinística de simplicidade exigida pela pipeline.
  */
-const LIMITE_DE_COMPLEXIDADE_COGNITIVA = 15;
+const COGNITIVE_COMPLEXITY_LIMIT = 15;
 
 export default tseslint.config(
   {
@@ -30,7 +30,7 @@ export default tseslint.config(
       globals: { ...globals.node },
     },
     rules: {
-      'sonarjs/cognitive-complexity': ['error', LIMITE_DE_COMPLEXIDADE_COGNITIVA],
+      'sonarjs/cognitive-complexity': ['error', COGNITIVE_COMPLEXITY_LIMIT],
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },

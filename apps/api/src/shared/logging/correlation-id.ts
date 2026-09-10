@@ -4,20 +4,23 @@ import { randomUUID } from 'node:crypto';
 export const CORRELATION_ID_HEADER = 'x-correlation-id';
 
 /** Um identificador vindo de fora só é aproveitado se couber nestes limites. */
-const TAMANHO_MAXIMO = 128;
-const CARACTERES_ACEITOS = /^[\w.:-]+$/;
+const MAX_LENGTH = 128;
+const ACCEPTED_CHARACTERS = /^[\w.:-]+$/;
 
 /**
- * Devolve o identificador que atravessa a requisição inteira: o que chegou, quando é
- * confiável, ou um novo. Cabeçalho é entrada de fora, então valor sem forma conhecida é
+ * Devolve o identificador que atravessa a requisição inteira: o que já existe, quando é
+ * confiável, ou um novo.
+ *
+ * A entrada é `unknown` de propósito. Ela vem de cabeçalho HTTP ou do `req.id` do pino, e
+ * nenhum dos dois é digno de confiança sem conferência. Valor sem forma conhecida é
  * descartado em vez de entrar no log.
  */
-export function resolveCorrelationId(recebido: string | string[] | undefined): string {
-  const candidato = Array.isArray(recebido) ? recebido[0] : recebido;
-  const limpo = candidato?.trim() ?? '';
+export function resolveCorrelationId(received: unknown): string {
+  const candidate = Array.isArray(received) ? received[0] : received;
+  const trimmed = typeof candidate === 'string' ? candidate.trim() : '';
 
-  if (limpo.length > 0 && limpo.length <= TAMANHO_MAXIMO && CARACTERES_ACEITOS.test(limpo)) {
-    return limpo;
+  if (trimmed.length > 0 && trimmed.length <= MAX_LENGTH && ACCEPTED_CHARACTERS.test(trimmed)) {
+    return trimmed;
   }
 
   return randomUUID();

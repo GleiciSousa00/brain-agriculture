@@ -2,13 +2,13 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 
-const raiz = document.getElementById('root');
+const root = document.getElementById('root');
 
-if (!raiz) {
+if (!root) {
   throw new Error('Elemento raiz não encontrado no documento.');
 }
 
-createRoot(raiz).render(
+createRoot(root).render(
   <StrictMode>
     <App />
   </StrictMode>,

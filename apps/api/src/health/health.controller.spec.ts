@@ -1,11 +1,11 @@
-import { HealthController, VERIFICACAO_DE_BANCO } from './health.controller';
+import { DATABASE_CHECK, HealthController } from './health.controller';
 import type { HealthCheckService, TypeOrmHealthIndicator } from '@nestjs/terminus';
 
 describe('HealthController', () => {
   it('verifica o banco com um ping, sem tocar em tabela do cadastro', async () => {
-    const pingCheck = jest.fn().mockResolvedValue({ [VERIFICACAO_DE_BANCO]: { status: 'up' } });
-    const check = jest.fn(async (verificadores: (() => Promise<unknown>)[]) => {
-      await Promise.all(verificadores.map((verificador) => verificador()));
+    const pingCheck = jest.fn().mockResolvedValue({ [DATABASE_CHECK]: { status: 'up' } });
+    const check = jest.fn(async (indicators: (() => Promise<unknown>)[]) => {
+      await Promise.all(indicators.map((indicator) => indicator()));
       return { status: 'ok' };
     });
 
@@ -14,7 +14,7 @@ describe('HealthController', () => {
       { pingCheck } as unknown as TypeOrmHealthIndicator,
     );
 
-    await expect(controller.verificar()).resolves.toMatchObject({ status: 'ok' });
-    expect(pingCheck).toHaveBeenCalledWith(VERIFICACAO_DE_BANCO);
+    await expect(controller.check()).resolves.toMatchObject({ status: 'ok' });
+    expect(pingCheck).toHaveBeenCalledWith(DATABASE_CHECK);
   });
 });

@@ -7,7 +7,7 @@ import {
 } from '@nestjs/terminus';
 
 /** Nome do único verificador da rota de saúde. */
-export const VERIFICACAO_DE_BANCO = 'database';
+export const DATABASE_CHECK = 'database';
 
 /**
  * Rota de saúde. Ela responde se a aplicação está de pé e se o banco atende, e faz isso
@@ -17,12 +17,12 @@ export const VERIFICACAO_DE_BANCO = 'database';
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
-    private readonly banco: TypeOrmHealthIndicator,
+    private readonly database: TypeOrmHealthIndicator,
   ) {}
 
   @Get()
   @HealthCheck()
-  verificar(): Promise<HealthCheckResult> {
-    return this.health.check([() => this.banco.pingCheck(VERIFICACAO_DE_BANCO)]);
+  check(): Promise<HealthCheckResult> {
+    return this.health.check([() => this.database.pingCheck(DATABASE_CHECK)]);
   }
 }
