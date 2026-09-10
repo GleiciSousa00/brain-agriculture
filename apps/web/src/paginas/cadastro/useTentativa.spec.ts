@@ -50,8 +50,6 @@ describe('a tentativa de escrita de uma seção', () => {
     });
     expect(result.current.recusa).toBe('O nome não pode ser vazio.');
 
-    // A segunda tentativa fica em voo de propósito: a recusa da primeira tem de sair da
-    // tela quando a nova começa, e não só quando ela termina.
     let concluir = (): void => undefined;
     const emVoo = new Promise<void>((resolve) => {
       concluir = resolve;

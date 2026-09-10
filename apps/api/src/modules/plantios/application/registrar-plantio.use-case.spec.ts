@@ -133,8 +133,6 @@ describe('RegistrarPlantioUseCase', () => {
       SafraDoPlantioNaoEncontrada,
     ],
   ])('recusa e diz qual referência falta quando %s', async (_caso, ligacao, esperado) => {
-    // Quem recusa é a chave estrangeira, na gravação. O que se prova aqui é que o caso de
-    // uso deixa a recusa subir, com o erro que diz qual dos três campos corrigir.
     const { registrar } = cenario(CADASTRO);
 
     await expect(registrar.execute(ligacao)).rejects.toThrow(esperado);

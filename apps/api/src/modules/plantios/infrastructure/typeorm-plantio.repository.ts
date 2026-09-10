@@ -48,10 +48,6 @@ export class TypeormPlantioRepository implements PlantioRepository {
     deslocamento,
     limite,
   }: RecorteDePlantios): Promise<Recortados<Plantio>> {
-    // A contagem vem na mesma ida ao banco que a fatia, e é a da Propriedade inteira. O
-    // índice da restrição de unicidade começa por `propriedade_id` e atende o filtro; a
-    // ordenação não é indexada porque uma Propriedade tem poucos Plantios, um por Cultura
-    // em cada Safra.
     const [linhas, total] = await this.linhas.findAndCount({
       where: { propriedadeId },
       order: { criadoEm: 'ASC', id: 'ASC' },
@@ -85,9 +81,6 @@ export class TypeormPlantioRepository implements PlantioRepository {
         return new SafraDoPlantioNaoEncontrada(plantio.safraId);
       case 'fk_plantios_propriedade':
         return new PropriedadeDoPlantioNaoEncontrada(plantio.propriedadeId);
-      // Uma chave estrangeira que este módulo não declarou não é caso de negócio: ela sobe
-      // como está e vira 500, com o rastro no log, em vez de virar uma resposta que mente
-      // sobre qual referência falta.
       default:
         return erro;
     }

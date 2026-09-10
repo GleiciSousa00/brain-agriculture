@@ -103,8 +103,6 @@ export function PropriedadesSecao() {
     await tentativaDaExclusao.tentar(() => excluirPropriedade(id));
   }
 
-  // Sem Produtor no cadastro não há em nome de quem registrar, e um formulário que só
-  // pode ser recusado é pior do que um formulário que não aparece.
   const podeRegistrar = emEdicao !== undefined || produtores.length > 0;
 
   return (
@@ -114,8 +112,6 @@ export function PropriedadesSecao() {
       {podeRegistrar ? (
         <form
           className="cartao formulario"
-          // Sem a conferência do navegador: a recusa tem de vir do corpo da API, e um
-          // valor fora do passo faria o navegador barrar o envio com texto dele.
           noValidate
           onSubmit={(evento) => {
             evento.preventDefault();
@@ -135,7 +131,6 @@ export function PropriedadesSecao() {
               }))}
             />
           ) : (
-            // Mudar a Propriedade de Produtor não é uma operação que a API ofereça.
             <p className="campo">
               <span className="rotulo-fixo">Produtor</span>
               <span>{nomeDoProdutor(emEdicao.produtorId)}</span>
@@ -187,7 +182,6 @@ export function PropriedadesSecao() {
         <p className="cartao vazio">{SEM_PRODUTOR}</p>
       )}
 
-      {/* A recusa de uma exclusão fica junto da tabela, que é onde ela foi pedida. */}
       {tentativaDaExclusao.recusa !== undefined && (
         <p role="alert">{tentativaDaExclusao.recusa}</p>
       )}

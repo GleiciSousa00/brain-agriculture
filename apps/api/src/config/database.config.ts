@@ -48,12 +48,9 @@ export function databaseOptions(config: ConfigService): TypeOrmModuleOptions {
     entities: ORM_ENTITIES,
     migrations: ORM_MIGRATIONS,
     migrationsRun: true,
-    // O banco pode demorar a aceitar conexão quando sobe junto com a API.
     retryAttempts: 10,
     retryDelay: 3_000,
     maxQueryExecutionTime: CONSULTA_LENTA_MS,
-    // O que o driver do Postgres recebe direto. É aqui que moram os freios: nenhuma
-    // consulta corre para sempre, e nenhuma fila de espera por conexão cresce sem limite.
     extra: {
       statement_timeout: TEMPO_MAXIMO_DE_CONSULTA_MS,
       max: CONEXOES,

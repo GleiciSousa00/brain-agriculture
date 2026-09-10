@@ -41,15 +41,11 @@ export function usePainel(): PainelEmTela {
   const [erro, setErro] = useState<string>();
   const [erroDoRecorte, setErroDoRecorte] = useState<string>();
 
-  // Diz se a resposta que chegar é a primeira, sem depender do estado e sem redisparar
-  // o efeito. Sobrevive à montagem dupla do StrictMode.
   const jaVeioOPainel = useRef(false);
 
   useEffect(() => {
     let cancelado = false;
     setErroDoRecorte(undefined);
-    // O número da Safra anterior sai da tela agora. Deixá-lo sob o rótulo da Safra nova
-    // seria mostrar um dado e dizer que ele é outro.
     setPorCultura(undefined);
 
     buscarPainel(safraId === TODAS_AS_SAFRAS ? undefined : safraId)

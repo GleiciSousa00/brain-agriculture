@@ -231,6 +231,12 @@ export interface components {
             correlationId?: string;
             /** @description Código do erro de regra de negócio, quando a falha veio do domínio. */
             codigo?: string;
+            /** @description Os campos recusados pelo esquema de entrada. Só existe na recusa de esquema. */
+            erros?: {
+                /** @description O caminho do campo recusado, como `areaTotal`. */
+                campo: string;
+                mensagem: string;
+            }[];
         };
         ProdutoresPaginaDto: {
             itens: {
@@ -512,13 +518,22 @@ export interface operations {
                     };
                 };
             };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
             /** @description The Health Check is not successful */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    "application/problem+json": {
                         /** @example error */
                         status?: string;
                         /**
@@ -601,7 +616,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -633,7 +657,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
             /** @description Já existe um Produtor com esse Documento. */
@@ -642,7 +666,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -671,13 +704,31 @@ export interface operations {
                     "application/json": components["schemas"]["ProdutorDetalhadoDto"];
                 };
             };
+            /** @description A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
             /** @description Não existe Produtor com esse identificador. */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -700,13 +751,31 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
             /** @description Não existe Produtor com esse identificador. */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -740,7 +809,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
             /** @description Não existe Produtor com esse identificador. */
@@ -749,7 +818,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -774,6 +852,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PropriedadesPaginaDto"];
+                };
+            };
+            /** @description A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -805,7 +901,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
             /** @description Não existe Produtor com esse identificador. */
@@ -814,7 +910,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -848,7 +953,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
             /** @description Não existe Propriedade com esse identificador. */
@@ -857,7 +962,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -880,13 +994,31 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
             /** @description Não existe Propriedade com esse identificador. */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -906,6 +1038,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SafrasDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -937,7 +1078,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
             /** @description Já existe Safra para esse ano. */
@@ -946,7 +1087,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -966,6 +1116,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CulturasDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -997,7 +1156,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
             /** @description O catálogo já tem essa espécie, ainda que escrita de outro jeito. */
@@ -1006,7 +1165,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -1038,7 +1206,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
             /** @description A Cultura, a Propriedade ou a Safra informada não existe. */
@@ -1047,7 +1215,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
             /** @description Essa Propriedade já tem essa Cultura registrada nessa Safra. */
@@ -1056,7 +1224,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -1079,13 +1256,31 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
             /** @description Não existe Plantio com esse identificador. */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -1115,13 +1310,31 @@ export interface operations {
                     "application/json": components["schemas"]["PlantiosPaginaDto"];
                 };
             };
+            /** @description A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
             /** @description Não existe Propriedade com esse identificador. */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };
@@ -1153,7 +1366,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProblemDetailsDto"];
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
                 };
             };
         };

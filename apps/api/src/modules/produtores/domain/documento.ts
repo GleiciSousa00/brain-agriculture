@@ -54,7 +54,6 @@ export class Documento {
       return new Documento(semMascara, 'CNPJ');
     }
 
-
     throw new DocumentoInvalido(
       'O Documento precisa ter onze caracteres, no CPF, ou catorze, no CNPJ.',
     );
@@ -101,7 +100,6 @@ function conferirCpf(valor: string): void {
     throw new DocumentoInvalido('O CPF aceita apenas dígitos.');
   }
 
-  // Sequência repetida fecha pelo módulo 11 e não é CPF. No CNPJ é o contrário.
   if (CPF_REPETIDO.test(valor)) {
     throw new DocumentoInvalido('O CPF não pode ter todos os dígitos iguais.');
   }
@@ -116,7 +114,6 @@ function conferirCnpj(valor: string): void {
     );
   }
 
-  // Única sequência repetida que o código de referência da Receita exclui à mão.
   if (valor === CNPJ_ZERADO) {
     throw new DocumentoInvalido('O CNPJ zerado não é válido.');
   }

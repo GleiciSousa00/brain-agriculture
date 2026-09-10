@@ -16,7 +16,6 @@ const SAFRA_2026 = 'e5f6a7b8-c9d0-4b4c-9e5f-6a7b8c9d0e1f';
 
 function cenario() {
   const repository = new PlantioRepositoryEmMemoria();
-  // As três Propriedades que existem no cadastro deste teste. A quarta, INEXISTENTE, não.
   const propriedades = new PropriedadeDoPlantioEmMemoria([
     PROPRIEDADE,
     OUTRA_PROPRIEDADE,
@@ -33,8 +32,6 @@ function cenario() {
 describe('ListarPlantiosDaPropriedadeUseCase', () => {
   it('devolve os Plantios da Propriedade na ordem em que foram registrados', async () => {
     const { registrar, listar } = cenario();
-    // Cadastrados fora de qualquer ordem alfabética ou de identificador, para a ordem de
-    // registro ser a única que explica o resultado.
     await registrar.execute({ propriedadeId: PROPRIEDADE, culturaId: SOJA, safraId: SAFRA_2026 });
     await registrar.execute({ propriedadeId: PROPRIEDADE, culturaId: CAFE, safraId: SAFRA_2026 });
     await registrar.execute({ propriedadeId: PROPRIEDADE, culturaId: SOJA, safraId: SAFRA_2025 });

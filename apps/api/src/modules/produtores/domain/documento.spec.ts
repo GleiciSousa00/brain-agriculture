@@ -32,9 +32,6 @@ describe('Documento', () => {
     });
 
     it('aceita caractere repetido, ao contrário do CPF', () => {
-      // Não é engano nem defeito: `11.111.111/1111-80` fecha pelo módulo 11 e a Receita
-      // o considera válido. Só o zerado é excluído, e por regra escrita à parte. Ver
-      // `docs/adr/0008-validacao-de-documento-segue-a-norma-da-receita.md`.
       expect(() => Documento.criar('11.111.111/1111-80')).not.toThrow();
       expect(() => Documento.criar('111.111.111-11')).toThrow(DocumentoInvalido);
     });

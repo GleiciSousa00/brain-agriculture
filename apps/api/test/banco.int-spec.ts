@@ -78,9 +78,6 @@ describe('A aplicação contra um Postgres de verdade', () => {
     const restricoes: { conname: string }[] = await dataSource.query(
       `SELECT conname FROM pg_constraint WHERE conrelid = 'plantios'::regclass ORDER BY conname`,
     );
-    // As colunas que o painel agrupa recebem índice por migração, e o registro 0004 é o que
-    // manda. A lista é a das duas tabelas que ele consulta, inteira, porque apagar um índice
-    // não quebra nada visível e passaria pela pipeline verde.
     const indices: { indexname: string }[] = await dataSource.query(
       `SELECT indexname FROM pg_indexes WHERE tablename IN ('plantios', 'propriedades')
          AND indexname LIKE 'ix_%' ORDER BY indexname`,
@@ -102,9 +99,6 @@ describe('A aplicação contra um Postgres de verdade', () => {
       'propriedade_id',
       'safra_id',
     ]);
-    // O repositório de Plantio se apoia nestes nomes para dizer qual das três referências
-    // falta. Renomear um deles na migração faria a tradução cair no caso geral, e a
-    // resposta viraria 500 com a pipeline verde.
     expect(restricoes.map((restricao) => restricao.conname)).toEqual([
       'fk_plantios_cultura',
       'fk_plantios_propriedade',
@@ -125,8 +119,6 @@ describe('A aplicação contra um Postgres de verdade', () => {
   });
 
   it('grava o CPF e o CNPJ cifrados e os lê de volta, sem nenhuma coluna em claro', async () => {
-    // Os dois documentos são percorridos aqui dentro, e não num `it.each`, porque a suíte
-    // tem cinco vagas e o caso do painel precisava de uma. Nenhuma asserção se perdeu.
     const documentos = [
       { informado: '529.982.247-25', semMascara: '52998224725', mascarado: '***.***.247-25' },
       {
@@ -160,8 +152,6 @@ describe('A aplicação contra um Postgres de verdade', () => {
     const documento = Documento.criar('390.533.447-05');
     const produtores = app.get<ProdutorRepository>(PRODUTOR_REPOSITORY);
 
-    // Direto no repositório, sem passar pelo caso de uso: o que precisa ser exercitado é a
-    // restrição do banco, que é a única coisa entre duas requisições simultâneas.
     await produtores.save(Produtor.criar({ documento, nome: 'Primeira' }));
 
     await expect(produtores.save(Produtor.criar({ documento, nome: 'Segunda' }))).rejects.toThrow(
@@ -205,8 +195,6 @@ describe('A aplicação contra um Postgres de verdade', () => {
     expect(semSafra.status).toBe(404);
     expect(semSafra.body.codigo).toBe('safra-do-plantio-nao-encontrada');
 
-    // A cascata parte do Produtor, e é o único jeito de provar a chave estrangeira de
-    // verdade: apagá-lo leva a Propriedade e, dali, o Plantio, na mesma instrução.
     await request(app.getHttpServer()).delete(`/produtores/${produtorId}`).expect(204);
 
     const propriedadesRestantes = await app
@@ -220,8 +208,6 @@ describe('A aplicação contra um Postgres de verdade', () => {
   });
 
   it('o painel agrega no banco e confere com o conjunto de exemplo', async () => {
-    // A base é esvaziada primeiro porque as agregações são do cadastro inteiro, e este caso
-    // não pode depender do que os outros deixaram para trás. A cascata leva os Plantios junto.
     await app.get(DataSource).query(`TRUNCATE TABLE propriedades CASCADE`);
 
     const vazio = await request(app.getHttpServer()).get('/painel').expect(200);
@@ -232,8 +218,6 @@ describe('A aplicação contra um Postgres de verdade', () => {
       plantiosPorCultura: [],
     });
 
-    // O mesmo conjunto que a carga de exemplo insere, pelo mesmo caminho. Os números
-    // esperados abaixo foram conferidos à mão contra `scripts/dados-de-exemplo.ts`.
     await carregarDadosDeExemplo(app.getHttpServer());
 
     const culturas = await catalogoPorNome(app.getHttpServer());
@@ -243,8 +227,6 @@ describe('A aplicação contra um Postgres de verdade', () => {
       .query({ safraId: await safraDoAno(2024) })
       .expect(200);
 
-    // Cinco Propriedades: 1200 + 800 + 450 + 300 + 250 hectares, dos quais 2050 são
-    // agricultáveis e 950 são de vegetação.
     expect(inteiro.body.totais).toEqual({ propriedades: 5, areaTotal: 3000 });
     expect(inteiro.body.usoDoSolo).toEqual({ areaAgricultavel: 2050, areaDeVegetacao: 950 });
     expect(inteiro.body.propriedadesPorEstado).toEqual([
@@ -260,7 +242,6 @@ describe('A aplicação contra um Postgres de verdade', () => {
       fatiaEsperada(culturas, 'Algodão', 1),
     ]);
 
-    // O filtro recorta a distribuição por Cultura e não toca no resto.
     expect(recortado.body.plantiosPorCultura).toEqual([
       fatiaEsperada(culturas, 'Soja', 3),
       fatiaEsperada(culturas, 'Milho', 2),
@@ -276,8 +257,6 @@ describe('A aplicação contra um Postgres de verdade', () => {
       .expect(200);
     expect(de2023.body.plantiosPorCultura).toEqual([fatiaEsperada(culturas, 'Milho', 1)]);
 
-    // Uma Safra sem nenhum Plantio devolve a fatia vazia, e não erro. Contra o Postgres
-    // porque é aqui que o agrupamento filtrado devolve zero linha de verdade.
     const semPlantio = await request(app.getHttpServer())
       .get('/painel')
       .query({ safraId: randomUUID() })

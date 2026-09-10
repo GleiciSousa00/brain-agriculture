@@ -93,8 +93,6 @@ export class Propriedade {
       dados.produtorId,
       dados.nome,
       dados.cidade,
-      // A conversão é a política do 'restaurar': a sigla foi conferida quando entrou, e
-      // conferi-la de novo tornaria ilegível a linha gravada em vez de editável.
       dados.estado as UnidadeFederativa,
       dados.areaTotal,
       dados.areaAgricultavel,

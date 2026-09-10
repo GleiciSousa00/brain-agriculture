@@ -17,8 +17,6 @@ describe('Plantio', () => {
     const um = Plantio.criar(LIGACAO);
     const outro = Plantio.criar(LIGACAO);
 
-    // Que a ligação repetida seja recusada é regra do cadastro, e não da entidade: quem
-    // responde por ela é o caso de uso, apoiado na restrição de unicidade do banco.
     expect(um.id).not.toBe(outro.id);
   });
 
