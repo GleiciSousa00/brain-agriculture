@@ -1,5 +1,16 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { DomainError, type NaturezaDaFalha } from '../domain/domain-error';
 import { PROBLEM_DETAILS_CONTENT_TYPE, toProblemDetails } from './problem-details';
+
+class FalhaDeTeste extends DomainError {
+  constructor(
+    readonly codigo: string,
+    readonly natureza: NaturezaDaFalha,
+    mensagem = 'a regra não fecha',
+  ) {
+    super(mensagem);
+  }
+}
 
 const context = { instance: '/produtores', correlationId: 'abc-123' };
 
@@ -64,5 +75,44 @@ describe('toProblemDetails', () => {
     const problem = toProblemDetails({ error: new Error('falha'), ...context });
 
     expect(problem.correlationId).toBe('abc-123');
+  });
+});
+
+describe('toProblemDetails com erro de domínio', () => {
+  it.each([
+    ['entrada-invalida', 400],
+    ['conflito', 409],
+    ['nao-encontrado', 404],
+  ] as const)('traduz a natureza %s para o status %i', (natureza, status) => {
+    const problem = toProblemDetails({
+      error: new FalhaDeTeste('qualquer-coisa', natureza),
+      ...context,
+    });
+
+    expect(problem.status).toBe(status);
+  });
+
+  it('leva a mensagem do domínio para o detalhe, porque ela é para quem chamou', () => {
+    const problem = toProblemDetails({
+      error: new FalhaDeTeste('documento-invalido', 'entrada-invalida', 'O dígito não confere.'),
+      ...context,
+    });
+
+    expect(problem.detail).toBe('O dígito não confere.');
+  });
+
+  it('publica o código do erro, para o tratamento não depender do texto', () => {
+    const problem = toProblemDetails({
+      error: new FalhaDeTeste('produtor-duplicado', 'conflito'),
+      ...context,
+    });
+
+    expect(problem.codigo).toBe('produtor-duplicado');
+  });
+
+  it('não publica código quando a falha não vem do domínio', () => {
+    const problem = toProblemDetails({ error: new NotFoundException(), ...context });
+
+    expect(problem.codigo).toBeUndefined();
   });
 });

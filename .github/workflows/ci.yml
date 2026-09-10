@@ -43,6 +43,11 @@ jobs:
       - name: Testes de unidade
         run: pnpm test
 
+      # A especificação é versionada. Se ela sair diferente do que está commitado, o
+      # contrato mudou sem que o arquivo e o cliente gerado acompanhassem.
+      - name: Especificação OpenAPI em dia
+        run: pnpm openapi:check
+
       - name: Auditoria de dependências, portão em alta e crítica
         run: pnpm audit:gate
 
