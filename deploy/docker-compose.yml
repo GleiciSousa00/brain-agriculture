@@ -1,0 +1,71 @@
+name: cadastro-rural
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      POSTGRES_USER: cadastro
+      POSTGRES_DB: cadastro_rural
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U cadastro -d cadastro_rural']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: ghcr.io/gleicisousa00/cadastro-rural-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    logging: *logging
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      API_PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: cadastro
+      POSTGRES_DB: cadastro_rural
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      DOCUMENTO_ENCRYPTION_KEY: ${DOCUMENTO_ENCRYPTION_KEY:?defina DOCUMENTO_ENCRYPTION_KEY no .env}
+      DOCUMENTO_FINGERPRINT_SECRET: ${DOCUMENTO_FINGERPRINT_SECRET:?defina DOCUMENTO_FINGERPRINT_SECRET no .env}
+
+  web:
+    image: ghcr.io/gleicisousa00/cadastro-rural-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    logging: *logging
+    depends_on:
+      - api
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      DOMAIN: ${DOMAIN:?defina DOMAIN no .env}
+      BASIC_AUTH_USER: ${BASIC_AUTH_USER:?defina BASIC_AUTH_USER no .env}
+      BASIC_AUTH_PASSWORD: ${BASIC_AUTH_PASSWORD:?defina BASIC_AUTH_PASSWORD no .env}
+    # O hash bcrypt tem `$`, que o Compose interpolaria dentro do `.env`.
+    command:
+      - sh
+      - -c
+      - 'export BASIC_AUTH_HASH="$$(caddy hash-password --plaintext "$$BASIC_AUTH_PASSWORD")" && exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile'
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:

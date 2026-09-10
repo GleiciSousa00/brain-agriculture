@@ -1,0 +1,17 @@
+{$DOMAIN} {
+	root * /srv
+	encode gzip
+
+	basic_auth {
+		{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+	}
+
+	handle_path /api/* {
+		reverse_proxy api:3000
+	}
+
+	handle {
+		try_files {path} /index.html
+		file_server
+	}
+}
