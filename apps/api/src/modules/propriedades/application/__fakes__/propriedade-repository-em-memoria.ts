@@ -25,8 +25,15 @@ export class PropriedadeRepositoryEmMemoria implements PropriedadeRepository {
   }
 
   async list({ deslocamento, limite }: RecorteDePropriedades): Promise<PropriedadesRecortadas> {
-    const todas = [...this.propriedades.values()];
+    // A mesma ordem que o repositório de verdade promete. Um substituto que ordena
+    // diferente faz o teste de paginação passar por acidente.
+    const ordenadas = [...this.propriedades.values()].sort(
+      (uma, outra) => uma.cidade.localeCompare(outra.cidade) || uma.id.localeCompare(outra.id),
+    );
 
-    return { itens: todas.slice(deslocamento, deslocamento + limite), total: todas.length };
+    return {
+      itens: ordenadas.slice(deslocamento, deslocamento + limite),
+      total: ordenadas.length,
+    };
   }
 }

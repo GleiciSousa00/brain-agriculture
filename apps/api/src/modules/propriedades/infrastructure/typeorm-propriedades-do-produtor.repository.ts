@@ -22,7 +22,7 @@ export class TypeormPropriedadesDoProdutorRepository implements PropriedadesDoPr
     return encontradas.map(propriedadeParaDominio);
   }
 
-  async excluirDoProdutor(produtorId: string): Promise<void> {
+  async deleteByProdutor(produtorId: string): Promise<void> {
     await this.linhas.delete({ produtorId });
   }
 }

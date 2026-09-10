@@ -61,7 +61,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lista as Propriedades, da mais recente para a mais antiga. */
+        /** Lista as Propriedades por cidade, em páginas. */
         get: operations["PropriedadesController_listar"];
         put?: never;
         /** Registra uma Propriedade em nome de um Produtor. */

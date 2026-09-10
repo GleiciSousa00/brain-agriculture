@@ -28,13 +28,13 @@ export class PropriedadeOrmEntity {
   @Column({ type: 'char', length: 2 })
   estado!: string;
 
-  @Column({ name: 'area_total', type: 'numeric', precision: 14, scale: 2 })
+  @Column({ name: 'area_total', type: 'numeric', precision: 16, scale: 4 })
   areaTotal!: string;
 
-  @Column({ name: 'area_agricultavel', type: 'numeric', precision: 14, scale: 2 })
+  @Column({ name: 'area_agricultavel', type: 'numeric', precision: 16, scale: 4 })
   areaAgricultavel!: string;
 
-  @Column({ name: 'area_de_vegetacao', type: 'numeric', precision: 14, scale: 2 })
+  @Column({ name: 'area_de_vegetacao', type: 'numeric', precision: 16, scale: 4 })
   areaDeVegetacao!: string;
 
   @CreateDateColumn({ name: 'criado_em', type: 'timestamptz' })

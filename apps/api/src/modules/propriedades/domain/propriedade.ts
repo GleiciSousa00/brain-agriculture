@@ -29,7 +29,8 @@ interface DadosDeCriacao extends Localizacao, Areas {
 
 interface DadosGravados extends Omit<DadosDeCriacao, 'estado'> {
   id: string;
-  estado: UnidadeFederativa | string;
+  /** Texto, e não a sigla conferida: o que vem da coluna ainda não passou por regra. */
+  estado: string;
 }
 
 /**
@@ -76,6 +77,8 @@ export class Propriedade {
       dados.id,
       dados.produtorId,
       dados.cidade,
+      // A conversão é a política do 'restaurar': a sigla foi conferida quando entrou, e
+      // conferi-la de novo tornaria ilegível a linha gravada em vez de editável.
       dados.estado as UnidadeFederativa,
       dados.areaTotal,
       dados.areaAgricultavel,
@@ -103,7 +106,7 @@ function conferirAreas({ areaTotal, areaAgricultavel, areaDeVegetacao }: Areas):
   const soma = areaAgricultavel.somar(areaDeVegetacao);
 
   if (soma.maiorQue(areaTotal)) {
-    throw new AreasNaoFecham(soma.emHectares(), areaTotal.emHectares());
+    throw new AreasNaoFecham(soma.escritaEmHectares(), areaTotal.escritaEmHectares());
   }
 }
 

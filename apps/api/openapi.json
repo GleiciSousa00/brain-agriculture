@@ -353,7 +353,7 @@
             }
           }
         },
-        "summary": "Lista as Propriedades, da mais recente para a mais antiga.",
+        "summary": "Lista as Propriedades por cidade, em páginas.",
         "tags": [
           "Propriedades"
         ]

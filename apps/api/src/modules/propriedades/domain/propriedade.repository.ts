@@ -30,6 +30,7 @@ export interface PropriedadeRepository {
    * que remover junto.
    */
   delete(id: string): Promise<void>;
+  /** Lista em ordem de cidade, com o identificador desempatando homônimas. */
   list(recorte: RecorteDePropriedades): Promise<PropriedadesRecortadas>;
 }
 

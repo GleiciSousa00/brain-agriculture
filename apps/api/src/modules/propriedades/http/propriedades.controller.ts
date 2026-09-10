@@ -34,7 +34,7 @@ import {
   type PropriedadeResposta,
   type PropriedadesPaginaResposta,
 } from './dto/propriedade.dto';
-import { paraResposta, paraRespostaDePagina } from './propriedade.presenter';
+import { paraPagina, paraResposta } from './propriedade.presenter';
 
 const AREAS_NAO_FECHAM =
   'A entrada não é válida, ou a soma da Área Agricultável com a Área de Vegetação passa da Área Total.';
@@ -65,10 +65,10 @@ export class PropriedadesController {
 
   @Get()
   @ZodSerializerDto(PropriedadesPaginaDto)
-  @ApiOperation({ summary: 'Lista as Propriedades, da mais recente para a mais antiga.' })
+  @ApiOperation({ summary: 'Lista as Propriedades por cidade, em páginas.' })
   @ApiOkResponse({ type: PropriedadesPaginaDto })
   async listar(@Query() pagina: ParametrosDePaginaDto): Promise<PropriedadesPaginaResposta> {
-    return paraRespostaDePagina(await this.listarPropriedades.execute(pagina));
+    return paraPagina(await this.listarPropriedades.execute(pagina));
   }
 
   @Put(':id')

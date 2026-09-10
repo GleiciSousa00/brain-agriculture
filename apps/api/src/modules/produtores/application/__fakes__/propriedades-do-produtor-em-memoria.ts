@@ -16,7 +16,7 @@ export class PropriedadesDoProdutorEmMemoria implements PropriedadesDoProdutorRe
     return this.propriedades.filter((propriedade) => propriedade.produtorId === produtorId);
   }
 
-  async excluirDoProdutor(produtorId: string): Promise<void> {
+  async deleteByProdutor(produtorId: string): Promise<void> {
     this.propriedades = this.propriedades.filter(
       (propriedade) => propriedade.produtorId !== produtorId,
     );

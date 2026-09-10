@@ -33,15 +33,31 @@ describe('Area', () => {
     expect(() => Area.criar(Number.POSITIVE_INFINITY)).toThrow(AreaInvalida);
   });
 
-  it('recusa mais de duas casas decimais, que a coluna não guardaria', () => {
-    expect(() => Area.criar(12.345)).toThrow(AreaInvalida);
+  it('guarda a medida até o metro quadrado, que são quatro casas decimais', () => {
+    expect(Area.criar(12.3456).hectares).toBe(12.3456);
   });
 
-  it('recusa extensão maior do que a coluna comporta', () => {
+  it('arredonda abaixo do metro quadrado em vez de recusar', () => {
+    // Recusar transformaria a precisão do registro em regra de negócio, e a operadora
+    // levaria erro por uma diferença que o cadastro não distingue.
+    expect(Area.criar(12.34567).hectares).toBe(12.3457);
+  });
+
+  it('recusa extensão maior que o teto, porque acima dele é digitação e não terra', () => {
     expect(() => Area.criar(AREA_MAXIMA_HECTARES + 1)).toThrow(AreaInvalida);
   });
 
+  it('aceita o teto exato, que a coluna comporta com folga', () => {
+    expect(Area.criar(AREA_MAXIMA_HECTARES).hectares).toBe(AREA_MAXIMA_HECTARES);
+  });
+
+  it('escreve a extensão com vírgula, sem casas que não dizem nada', () => {
+    expect(Area.criar(60.25).escritaEmHectares()).toBe('60,25');
+    expect(Area.criar(100).escritaEmHectares()).toBe('100,00');
+    expect(Area.criar(12.3456).escritaEmHectares()).toBe('12,3456');
+  });
+
   it('volta da persistência sem reaplicar a política de escrita', () => {
-    expect(Area.restaurar(12.345).hectares).toBe(12.35);
+    expect(Area.restaurar(12.3456).hectares).toBe(12.3456);
   });
 });

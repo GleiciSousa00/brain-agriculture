@@ -15,7 +15,7 @@ export function paraResposta(propriedade: Propriedade): PropriedadeResposta {
   };
 }
 
-export function paraRespostaDePagina(pagina: Pagina<Propriedade>): PropriedadesPaginaResposta {
+export function paraPagina(pagina: Pagina<Propriedade>): PropriedadesPaginaResposta {
   return {
     itens: pagina.itens.map(paraResposta),
     total: pagina.total,
