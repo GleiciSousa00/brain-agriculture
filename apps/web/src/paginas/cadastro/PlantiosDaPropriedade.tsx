@@ -1,11 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { mensagemDe } from '../../api/chamada';
-import { TAMANHO_DA_PAGINA } from '../../api/pagina';
 import { listarPlantiosDaPropriedade } from '../../api/plantios';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { useCadastro } from './CadastroContexto';
 import { Listagem } from './Listagem';
-import { usePagina } from './usePagina';
 
 const CARREGANDO = 'Carregando os Plantios…';
 const VAZIO = 'Nenhum Plantio registrado nesta Propriedade ainda.';
@@ -26,12 +24,7 @@ interface Props {
  * do contexto, que já está em memória para os campos de escolha.
  */
 export function PlantiosDaPropriedade({ propriedadeId }: Props) {
-  const { culturas, safras, excluirPlantio, versao } = useCadastro();
-  const buscar = useCallback(
-    (pagina: number) => listarPlantiosDaPropriedade(propriedadeId, pagina, TAMANHO_DA_PAGINA),
-    [propriedadeId],
-  );
-  const pagina = usePagina(buscar, versao);
+  const { culturas, safras, excluirPlantio } = useCadastro();
   const [recusa, setRecusa] = useState<string>();
 
   function nomeDaCultura(culturaId: string): string {
@@ -57,7 +50,11 @@ export function PlantiosDaPropriedade({ propriedadeId }: Props) {
   return (
     <>
       {recusa !== undefined && <p role="alert">{recusa}</p>}
-      <Listagem pagina={pagina} carregando={CARREGANDO} vazio={VAZIO}>
+      <Listagem
+        listar={(pagina, tamanho) => listarPlantiosDaPropriedade(propriedadeId, pagina, tamanho)}
+        carregando={CARREGANDO}
+        vazio={VAZIO}
+      >
         {(plantios) => (
           <table className="tabela">
             <thead>

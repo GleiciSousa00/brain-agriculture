@@ -1,21 +1,17 @@
 import type { Produtor } from '@cadastro-rural/contracts';
-import { useCallback, useId, useState } from 'react';
+import { useId, useState } from 'react';
 import { mensagemDe } from '../../api/chamada';
-import { TAMANHO_DA_PAGINA } from '../../api/pagina';
 import { listarProdutores } from '../../api/produtores';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { Campo } from '../../componentes/Campo';
 import { useCadastro } from './CadastroContexto';
 import { Listagem } from './Listagem';
-import { usePagina } from './usePagina';
 
 const CARREGANDO = 'Carregando os Produtores…';
 const VAZIO = 'Nenhum Produtor cadastrado ainda.';
 
 export function ProdutoresSecao() {
-  const { criarProdutor, editarProdutor, excluirProdutor, versao } = useCadastro();
-  const buscar = useCallback((pagina: number) => listarProdutores(pagina, TAMANHO_DA_PAGINA), []);
-  const pagina = usePagina(buscar, versao);
+  const { criarProdutor, editarProdutor, excluirProdutor } = useCadastro();
 
   const [emEdicao, setEmEdicao] = useState<Produtor>();
   const [nome, setNome] = useState('');
@@ -112,7 +108,7 @@ export function ProdutoresSecao() {
       {/* A recusa de uma exclusão fica junto da tabela, que é onde ela foi pedida. */}
       {recusaDaExclusao !== undefined && <p role="alert">{recusaDaExclusao}</p>}
 
-      <Listagem pagina={pagina} carregando={CARREGANDO} vazio={VAZIO}>
+      <Listagem listar={listarProdutores} carregando={CARREGANDO} vazio={VAZIO}>
         {(produtores) => (
           <table className="tabela">
             <thead>

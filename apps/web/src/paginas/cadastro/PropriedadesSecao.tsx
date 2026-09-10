@@ -1,7 +1,6 @@
 import type { Propriedade } from '@cadastro-rural/contracts';
-import { useCallback, useId, useState } from 'react';
+import { useId, useState } from 'react';
 import { mensagemDe } from '../../api/chamada';
-import { TAMANHO_DA_PAGINA } from '../../api/pagina';
 import { listarPropriedades } from '../../api/propriedades';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { Campo } from '../../componentes/Campo';
@@ -9,7 +8,6 @@ import { Escolha } from '../../componentes/Escolha';
 import { comoNumero, formatarHectares } from '../../formato';
 import { useCadastro } from './CadastroContexto';
 import { Listagem } from './Listagem';
-import { usePagina } from './usePagina';
 
 const CARREGANDO = 'Carregando as Propriedades…';
 const VAZIO = 'Nenhuma Propriedade cadastrada ainda.';
@@ -62,10 +60,7 @@ function corpoDe(rascunho: Rascunho) {
 }
 
 export function PropriedadesSecao() {
-  const { produtores, criarPropriedade, editarPropriedade, excluirPropriedade, versao } =
-    useCadastro();
-  const buscar = useCallback((pagina: number) => listarPropriedades(pagina, TAMANHO_DA_PAGINA), []);
-  const pagina = usePagina(buscar, versao);
+  const { produtores, criarPropriedade, editarPropriedade, excluirPropriedade } = useCadastro();
 
   const [emEdicao, setEmEdicao] = useState<Propriedade>();
   const [rascunho, setRascunho] = useState<Rascunho>(RASCUNHO_LIMPO);
@@ -212,7 +207,7 @@ export function PropriedadesSecao() {
       {/* A recusa de uma exclusão fica junto da tabela, que é onde ela foi pedida. */}
       {recusaDaExclusao !== undefined && <p role="alert">{recusaDaExclusao}</p>}
 
-      <Listagem pagina={pagina} carregando={CARREGANDO} vazio={VAZIO}>
+      <Listagem listar={listarPropriedades} carregando={CARREGANDO} vazio={VAZIO}>
         {(propriedades) => (
           <table className="tabela">
             <thead>
