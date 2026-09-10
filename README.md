@@ -243,11 +243,20 @@ Requisitos: Node 24 (a versão está em [`.nvmrc`](.nvmrc)) e pnpm, que vem pelo
 ```bash
 corepack enable pnpm
 pnpm install
+cp .env.example .env
 pnpm dev
 ```
 
+O `.env` é obrigatório aqui, ao contrário da composição: a chave de cifra e o segredo da
+impressão não têm valor padrão na aplicação, e sem eles a API recusa arrancar. Copiar o
+exemplo basta, porque ele já traz os mesmos valores públicos que o `docker-compose.yml`
+usa. O arquivo vale na raiz do repositório ou dentro de `apps/api`.
+
 Um Postgres precisa estar de pé. `docker compose up postgres` resolve, ou aponte as
 variáveis de `POSTGRES_*` para outro banco.
+
+`pnpm dev` compila o pacote de contratos antes de subir a API e a interface, porque a
+interface o importa pelo `dist`. Sem essa compilação a tela sobe em branco.
 
 ## Como rodar os testes
 
