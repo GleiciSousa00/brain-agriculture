@@ -21,10 +21,10 @@ export class PropriedadesDoProdutorEmMemoria implements PropriedadesDoProdutorRe
     deslocamento,
     limite,
   }: RecorteDePropriedadesDoProdutor): Promise<Recortados<Propriedade>> {
-    // A mesma ordem do repositório de verdade: cidade, com o identificador desempatando.
+    // A mesma ordem do repositório de verdade: nome, com o identificador desempatando.
     const doProdutor = this.propriedades
       .filter((propriedade) => propriedade.produtorId === produtorId)
-      .sort(porCidade);
+      .sort(porNome);
 
     return {
       itens: doProdutor.slice(deslocamento, deslocamento + limite),
@@ -39,10 +39,6 @@ export class PropriedadesDoProdutorEmMemoria implements PropriedadesDoProdutorRe
   }
 }
 
-function porCidade(uma: Propriedade, outra: Propriedade): number {
-  if (uma.cidade !== outra.cidade) {
-    return uma.cidade < outra.cidade ? -1 : 1;
-  }
-
-  return uma.id < outra.id ? -1 : 1;
+function porNome(uma: Propriedade, outra: Propriedade): number {
+  return uma.nome.localeCompare(outra.nome) || uma.id.localeCompare(outra.id);
 }

@@ -10,6 +10,7 @@ async function cenario() {
   const repository = new PropriedadeRepositoryEmMemoria();
   const propriedade = Propriedade.criar({
     produtorId: '3f2f0c8e-6a1e-4a2b-9f0e-0f0a1b2c3d4e',
+    nome: 'Fazenda Boa Vista',
     cidade: 'Sorriso',
     estado: 'MT',
     areaTotal: Area.criar(100),

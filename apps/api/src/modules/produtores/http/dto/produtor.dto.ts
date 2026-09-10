@@ -29,6 +29,7 @@ export class ProdutorDto extends createZodDto(produtorSchema) {}
  */
 export const propriedadeDoProdutorSchema = z.object({
   id: z.uuid(),
+  nome: z.string(),
   cidade: z.string(),
   estado: z.string().describe('A sigla da unidade federativa.'),
   areaTotal: z.number().describe('Em hectares.'),

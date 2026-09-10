@@ -14,8 +14,9 @@ import { UNIDADES_FEDERATIVAS } from '../src/modules/propriedades/propriedades.m
  * painel não conta Produtor em lugar nenhum, então multiplicá-los não mudaria número
  * nenhum da medição.
  *
- * Os dados são sintéticos e assumidos como tais: a cidade é numerada e o estado gira pela
- * lista das vinte e sete siglas, que vem publicada pelo arquivo de módulo de Propriedade.
+ * Os dados são sintéticos e assumidos como tais: o nome e a cidade são numerados e o estado
+ * gira pela lista das vinte e sete siglas, que vem publicada pelo arquivo de módulo de
+ * Propriedade.
  * Copiá-la para cá criaria duas listas que divergem.
  */
 
@@ -86,11 +87,12 @@ async function inserir(
     `
       WITH novas AS (
         INSERT INTO propriedades (
-          id, produtor_id, cidade, estado, area_total, area_agricultavel, area_de_vegetacao
+          id, produtor_id, nome, cidade, estado, area_total, area_agricultavel, area_de_vegetacao
         )
         SELECT
           gen_random_uuid(),
           ($2::uuid[])[1 + (n % array_length($2::uuid[], 1))],
+          'Fazenda ' || n,
           'Cidade ' || n,
           ($3::text[])[1 + (n % array_length($3::text[], 1))],
           medida.total,

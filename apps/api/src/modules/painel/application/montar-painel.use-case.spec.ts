@@ -59,6 +59,7 @@ function propriedadeDe(
 ): Propriedade {
   return Propriedade.criar({
     produtorId: randomUUID(),
+    nome: 'Fazenda Boa Vista',
     cidade: 'Sorriso',
     estado,
     areaTotal: Area.criar(areaTotal),

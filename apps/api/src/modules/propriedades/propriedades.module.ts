@@ -11,6 +11,7 @@ import { ListarPropriedadesUseCase } from './application/listar-propriedades.use
 import { PROPRIEDADE_REPOSITORY, type PropriedadeRepository } from './domain/propriedade.repository';
 import { PropriedadesController } from './http/propriedades.controller';
 import { CriaPropriedades1789070000000 } from './infrastructure/migrations/1789070000000-cria-propriedades';
+import { NomeiaPropriedade1789100000000 } from './infrastructure/migrations/1789100000000-nomeia-propriedade';
 import { PropriedadeOrmEntity } from './infrastructure/propriedade.orm-entity';
 import { TypeormPropriedadeRepository } from './infrastructure/typeorm-propriedade.repository';
 import { TypeormPropriedadeDoPlantioRepository } from './infrastructure/typeorm-propriedade-do-plantio.repository';
@@ -99,4 +100,7 @@ export const PROPRIEDADES_ENTIDADES = [PropriedadeOrmEntity];
  */
 export { UNIDADES_FEDERATIVAS } from './domain/propriedade';
 
-export const PROPRIEDADES_MIGRACOES = [CriaPropriedades1789070000000];
+export const PROPRIEDADES_MIGRACOES = [
+  CriaPropriedades1789070000000,
+  NomeiaPropriedade1789100000000,
+];
