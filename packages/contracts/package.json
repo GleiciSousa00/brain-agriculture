@@ -13,9 +13,14 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "echo \"nenhum teste no pacote de contratos ainda\" && exit 0"
+    "test": "echo \"nenhum teste no pacote de contratos ainda\" && exit 0",
+    "gerar": "openapi-typescript ../../apps/api/openapi.json --output src/generated/api.ts"
   },
   "devDependencies": {
+    "openapi-typescript": "^7.13.0",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
   }
 }

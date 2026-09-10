@@ -13,6 +13,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:integration": "turbo run test:integration",
+    "openapi": "pnpm --filter @cadastro-rural/api openapi && pnpm --filter @cadastro-rural/contracts gerar",
+    "openapi:check": "pnpm openapi && git diff --exit-code -- apps/api/openapi.json packages/contracts/src/generated",
     "depcruise": "dependency-cruiser --config .dependency-cruiser.cjs apps packages",
     "audit:gate": "pnpm audit --audit-level high",
     "audit:report": "pnpm audit --audit-level moderate || true"

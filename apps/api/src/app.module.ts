@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 import { databaseOptions } from './config/database.config';
 import { HealthModule } from './health/health.module';
+import { ProdutoresModule } from './modules/produtores/produtores.module';
 import { ProblemDetailsFilter } from './shared/http/problem-details.filter';
 import { LoggingModule } from './shared/logging/logging.module';
 
@@ -16,7 +18,14 @@ import { LoggingModule } from './shared/logging/logging.module';
       useFactory: databaseOptions,
     }),
     HealthModule,
+    ProdutoresModule,
   ],
-  providers: [{ provide: APP_FILTER, useClass: ProblemDetailsFilter }],
+  providers: [
+    { provide: APP_FILTER, useClass: ProblemDetailsFilter },
+    // A entrada é conferida pelo esquema Zod do DTO, e a saída é montada pelo esquema de
+    // resposta. Nada sai por padrão. Ver o registro 0007.
+    { provide: APP_PIPE, useClass: ZodValidationPipe },
+    { provide: APP_INTERCEPTOR, useClass: ZodSerializerInterceptor },
+  ],
 })
 export class AppModule {}
