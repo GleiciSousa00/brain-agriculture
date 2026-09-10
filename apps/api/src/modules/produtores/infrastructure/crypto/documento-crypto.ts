@@ -6,6 +6,17 @@ const TAMANHO_DO_NONCE = 12;
 const SEPARADOR = '.';
 
 /**
+ * Os dois segredos de trinta e dois bytes que a classe consome, cada um no seu papel.
+ *
+ * Eles entram nomeados, e não por posição, porque trocá-los de lugar continua cifrando e
+ * deduplicando: o sistema fica consistente e errado, sem que nada acuse.
+ */
+export interface MaterialDeSegredo {
+  chaveDeCifra: Buffer;
+  segredoDaImpressao: Buffer;
+}
+
+/**
  * As duas derivações do Documento que vão para o banco, conforme o registro 0002.
  *
  * A cifra é para exibição e usa nonce aleatório, o que faz o mesmo Documento virar bytes
@@ -14,12 +25,15 @@ const SEPARADOR = '.';
  * é o que impede percorrer o espaço de CPFs válidos por força bruta caso a coluna vaze.
  */
 export class DocumentoCrypto {
-  constructor(
-    private readonly chaveDeCifra: Buffer,
-    private readonly segredoDaImpressao: Buffer,
-  ) {
+  private readonly chaveDeCifra: Buffer;
+  private readonly segredoDaImpressao: Buffer;
+
+  constructor({ chaveDeCifra, segredoDaImpressao }: MaterialDeSegredo) {
     conferirTamanho(chaveDeCifra, 'a chave de cifra');
     conferirTamanho(segredoDaImpressao, 'o segredo da impressão');
+
+    this.chaveDeCifra = chaveDeCifra;
+    this.segredoDaImpressao = segredoDaImpressao;
   }
 
   /** Devolve nonce, etiqueta de autenticação e texto cifrado, em base64, separados por ponto. */
