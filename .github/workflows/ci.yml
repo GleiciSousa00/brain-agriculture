@@ -16,11 +16,14 @@ jobs:
     name: fast
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: pnpm/action-setup@v4
+      # O pnpm vem pelo Corepack, com a versão que o `packageManager` fixa. Uma ação de
+      # terceiro a menos, e sem a descontinuação do Node 20 que ela arrasta.
+      - name: Habilitar o pnpm
+        run: corepack enable pnpm
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -57,11 +60,14 @@ jobs:
     name: integration
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: pnpm/action-setup@v4
+      # O pnpm vem pelo Corepack, com a versão que o `packageManager` fixa. Uma ação de
+      # terceiro a menos, e sem a descontinuação do Node 20 que ela arrasta.
+      - name: Habilitar o pnpm
+        run: corepack enable pnpm
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
           cache: pnpm
