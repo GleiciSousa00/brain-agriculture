@@ -40,8 +40,11 @@ jobs:
       - name: Regra de dependência entre camadas
         run: pnpm depcruise
 
-      - name: Testes de unidade
-        run: pnpm test
+      # Com cobertura, porque o limite declarado no `jest.config.ts` só reprova quando o
+      # relatório é pedido. O `pnpm test`, sem cobertura, existe para o laço de TDD, que
+      # roda na metade do tempo.
+      - name: Testes de unidade, com portão de cobertura
+        run: pnpm test:coverage
 
       # A especificação é versionada. Se ela sair diferente do que está commitado, o
       # contrato mudou sem que o arquivo e o cliente gerado acompanhassem.

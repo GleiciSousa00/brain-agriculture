@@ -109,11 +109,15 @@ pnpm lint              # ESLint, com complexidade cognitiva limitada a 15 por fu
 pnpm openapi           # regera a especificação e o cliente do pacote de contratos
 pnpm typecheck         # tsc --noEmit nos três pacotes
 pnpm depcruise         # regra de dependência entre as camadas
-pnpm test              # testes de unidade
+pnpm test              # testes de unidade, para o laço de TDD
+pnpm test:coverage     # os mesmos, com o portão de cobertura; é este que a pipeline roda
 pnpm test:integration  # testes de integração
 pnpm audit:gate        # falha em vulnerabilidade alta ou crítica
 pnpm build             # build dos três pacotes
 ```
+
+O portão de cobertura vale só em `domain` e em `application`, que são as camadas onde há
+decisão de verdade. O limite e a razão dele estão no `apps/api/jest.config.ts`.
 
 A pipeline também confere que a especificação versionada e o cliente gerado estão em dia
 com os decoradores. Se alguém mudar uma rota e esquecer de rodar `pnpm openapi`, o trabalho
