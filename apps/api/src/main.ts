@@ -12,6 +12,9 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   app.useLogger(app.get(Logger));
+  // O `X-Powered-By` do Express não serve a quem integra e diz a quem procura alvo com
+  // que servidor está falando.
+  app.getHttpAdapter().getInstance().disable('x-powered-by');
   app.enableShutdownHooks();
 
   SwaggerModule.setup(OPENAPI_PATH, app, buildOpenApiDocument(app));
