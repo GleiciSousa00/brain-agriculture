@@ -1,8 +1,13 @@
 /**
- * Pacote de contratos: o cliente TypeScript gerado a partir da especificação OpenAPI
- * mora aqui. Enquanto a API não expõe rota de cadastro, o pacote publica apenas o
- * formato de erro compartilhado entre a API e a interface web.
+ * Pacote de contratos.
+ *
+ * Os tipos das rotas saem da especificação OpenAPI da API, gerados por `pnpm gerar`, e o
+ * cliente é montado sobre eles. O formato de erro é escrito à mão porque é o mesmo para
+ * toda rota e não pertence a nenhuma.
  */
+
+export { createApiClient, type CriarProdutor, type Produtor } from './client';
+export type { components, operations, paths } from './generated/api';
 
 /** Problem Details da RFC 9457, o formato único de erro da API. */
 export interface ProblemDetails {
@@ -18,4 +23,6 @@ export interface ProblemDetails {
   instance?: string;
   /** Identificador de correlação da requisição que falhou. */
   correlationId?: string;
+  /** Código do erro de regra de negócio, quando a falha veio do domínio. */
+  codigo?: string;
 }

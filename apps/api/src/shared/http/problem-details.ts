@@ -1,5 +1,17 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import type { ProblemDetails } from '@cadastro-rural/contracts';
+import { DomainError, type NaturezaDaFalha } from '../domain/domain-error';
+
+/**
+ * A tradução entre a natureza da falha, que é vocabulário de domínio, e o status HTTP,
+ * que é vocabulário desta camada. É aqui que a fronteira do registro 0005 é atravessada,
+ * e em nenhum outro lugar.
+ */
+const STATUS_POR_NATUREZA: Record<NaturezaDaFalha, number> = {
+  'entrada-invalida': HttpStatus.BAD_REQUEST,
+  conflito: HttpStatus.CONFLICT,
+  'nao-encontrado': HttpStatus.NOT_FOUND,
+};
 
 /** Tipo de conteúdo da resposta de erro, conforme a RFC 9457. */
 export const PROBLEM_DETAILS_CONTENT_TYPE = 'application/problem+json';
@@ -27,17 +39,39 @@ interface ProblemInput {
  * correlação.
  */
 export function toProblemDetails({ error, instance, correlationId }: ProblemInput): ProblemDetails {
-  const status =
-    error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+  const { status, detail, codigo } = classificar(error);
 
   return {
     type: DEFAULT_TYPE,
     title: statusTitle(status),
     status,
-    detail: error instanceof HttpException ? exceptionDetail(error) : INTERNAL_FAILURE_DETAIL,
+    detail,
     instance,
     correlationId,
+    ...(codigo === undefined ? {} : { codigo }),
   };
+}
+
+interface Classificacao {
+  status: number;
+  detail: string;
+  codigo?: string;
+}
+
+function classificar(error: unknown): Classificacao {
+  if (error instanceof DomainError) {
+    return {
+      status: STATUS_POR_NATUREZA[error.natureza],
+      detail: error.message,
+      codigo: error.codigo,
+    };
+  }
+
+  if (error instanceof HttpException) {
+    return { status: error.getStatus(), detail: exceptionDetail(error) };
+  }
+
+  return { status: HttpStatus.INTERNAL_SERVER_ERROR, detail: INTERNAL_FAILURE_DETAIL };
 }
 
 /** O nome do status HTTP em inglês, como manda a RFC: `Not Found`, `Bad Request`. */

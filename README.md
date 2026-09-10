@@ -25,9 +25,29 @@ banco aceita conexão. Não é preciso criar `.env`: toda variável tem valor pa
 | API | http://localhost:3000 |
 | Rota de saúde | http://localhost:3000/health |
 | Interface web | http://localhost:5173 |
+| Especificação navegável | http://localhost:3000/docs |
 
 A rota de saúde responde sem tocar em nenhuma tabela do cadastro: ela manda um `SELECT 1`
-no banco e mais nada.
+no banco e mais nada. As migrações rodam no arranque da API, então o banco sobe pronto.
+
+## O Documento
+
+O CPF ou CNPJ de um Produtor é dado pessoal e nunca é gravado em claro. A tabela guarda
+duas colunas derivadas dele: o valor cifrado em AES-256-GCM, para exibição, e um HMAC-SHA-256
+com segredo da aplicação, que é onde a restrição de unicidade pode existir. A cifra usa
+nonce aleatório, então o mesmo Documento vira bytes diferentes a cada gravação, e é por
+isso que a unicidade não pode se apoiar nela. A API devolve o Documento sempre mascarado e
+o log tem regra de redação para o campo. Ver
+[`docs/adr/0002-documento-cifrado-em-repouso.md`](docs/adr/0002-documento-cifrado-em-repouso.md).
+
+A chave e o segredo chegam por variável de ambiente, sem valor padrão no código. A
+composição traz valores de desenvolvimento, e [`.env.example`](.env.example) explica como
+gerar os seus.
+
+A validação segue o código de referência da Receita Federal, não as bibliotecas de npm, e
+diverge delas de propósito em dois pontos: um CNPJ com caracteres repetidos é válido, e um
+CNPJ pode ter letras maiúsculas nas doze primeiras posições. Ver
+[`docs/adr/0008-validacao-de-documento-segue-a-norma-da-receita.md`](docs/adr/0008-validacao-de-documento-segue-a-norma-da-receita.md).
 
 ## Desenvolver sem Docker
 
@@ -75,6 +95,7 @@ Os mesmos comandos que a pipeline roda:
 
 ```bash
 pnpm lint              # ESLint, com complexidade cognitiva limitada a 15 por função
+pnpm openapi           # regera a especificação e o cliente do pacote de contratos
 pnpm typecheck         # tsc --noEmit nos três pacotes
 pnpm depcruise         # regra de dependência entre as camadas
 pnpm test              # testes de unidade
@@ -82,6 +103,10 @@ pnpm test:integration  # testes de integração
 pnpm audit:gate        # falha em vulnerabilidade alta ou crítica
 pnpm build             # build dos três pacotes
 ```
+
+A pipeline também confere que a especificação versionada e o cliente gerado estão em dia
+com os decoradores. Se alguém mudar uma rota e esquecer de rodar `pnpm openapi`, o trabalho
+rápido acusa.
 
 A pipeline roda em dois trabalhos paralelos: um rápido, com tudo acima menos a
 integração, e um lento reservado aos testes de integração. O lento também sobe a

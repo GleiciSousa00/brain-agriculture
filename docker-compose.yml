@@ -37,6 +37,9 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-cadastro}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cadastro}
       POSTGRES_DB: ${POSTGRES_DB:-cadastro_rural}
+      # Valores de desenvolvimento. Ver o aviso em `.env.example`.
+      DOCUMENTO_ENCRYPTION_KEY: ${DOCUMENTO_ENCRYPTION_KEY:-MFxpNBlirscUhol6+3M10FDOP08FwX/wz8GMUNc8Qmw=}
+      DOCUMENTO_FINGERPRINT_SECRET: ${DOCUMENTO_FINGERPRINT_SECRET:-8wJpFBv+Fzfy5s07/oRT5i0/V3kzRif/IT8Uyw9Gh+w=}
     ports:
       - '${API_PORT:-3000}:3000'
 

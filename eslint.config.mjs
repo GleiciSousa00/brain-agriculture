@@ -15,6 +15,8 @@ export default tseslint.config(
       '**/dist/**',
       // Ferramental local, fora do versionamento, em pastas ocultas.
       '**/.*/**',
+      // Cliente gerado a partir da especificação OpenAPI: editar aqui não adianta.
+      'packages/contracts/src/generated/**',
       '**/coverage/**',
       '**/node_modules/**',
       '**/.turbo/**',
