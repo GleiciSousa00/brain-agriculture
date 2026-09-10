@@ -72,8 +72,8 @@ jobs:
             if docker build --file apps/api/Dockerfile --tag cadastro-rural-api:${{ github.sha }} .; then
               exit 0
             fi
-            echo "a construção falhou na tentativa $tentativa; esperando"
-            sleep 15
+            echo "a construção falhou na tentativa $tentativa"
+            [ "$tentativa" = 3 ] || sleep 15
           done
           echo 'a imagem da API não foi construída em três tentativas'
           exit 1
@@ -92,8 +92,8 @@ jobs:
               docker run --rm cadastro-rural-web:${{ github.sha }} nginx -t
               exit 0
             fi
-            echo "a construção falhou na tentativa $tentativa; esperando"
-            sleep 15
+            echo "a construção falhou na tentativa $tentativa"
+            [ "$tentativa" = 3 ] || sleep 15
           done
           echo 'a imagem da interface web não foi construída em três tentativas'
           exit 1
@@ -126,20 +126,21 @@ jobs:
 
       # A composição é conferida aqui porque este é o trabalho que pode gastar tempo.
       #
-      # Os dois laços deste passo são coisas diferentes, e confundi-los custaria o portão.
-      # O primeiro é a nova tentativa de subir, contra a falha de registro descrita acima.
-      # O segundo é a espera pela rota de saúde, que é o portão de verdade: ele reprova uma
-      # API que não sobe, e é justamente por isso que não ganha tentativa nova.
+      # Os dois laços deste passo contam coisas diferentes, e por isso não repetem o nome
+      # da variável. O de `subida` é nova tentativa contra a falha de registro descrita
+      # acima, e desiste na terceira. O de `tentativa` não é nova tentativa: é a espera
+      # pela API terminar de arrancar, e esgotá-la reprova o passo. É esse segundo laço que
+      # pega uma API que não sobe, e é por isso que ele fica exatamente como estava.
       - name: Subir a composição e conferir a rota de saúde
         run: |
           subiu=nao
-          for tentativa in 1 2 3; do
+          for subida in 1 2 3; do
             if docker compose up --build --detach postgres api; then
               subiu=sim
               break
             fi
-            echo "a composição não subiu na tentativa $tentativa; esperando"
-            sleep 15
+            echo "a composição não subiu na tentativa $subida"
+            [ "$subida" = 3 ] || sleep 15
           done
           if [ "$subiu" = nao ]; then
             echo 'a composição não subiu em três tentativas'
