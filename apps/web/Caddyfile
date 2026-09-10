@@ -1,16 +1,13 @@
-# Entrega o estático e repassa /api para a API, na mesma origem. Ver o registro 0009.
-# Em produção, deploy/ monta outro Caddyfile por cima, com domínio, TLS e basic auth.
+# Em produção, deploy/Caddyfile é montado por cima deste.
 
 :80 {
 	root * /srv
 	encode gzip
 
-	# handle_path corta o prefixo: /api/painel chega na API como /painel.
 	handle_path /api/* {
 		reverse_proxy api:3000
 	}
 
-	# Rota do roteador do navegador cai no index, e não em 404.
 	handle {
 		try_files {path} /index.html
 		file_server

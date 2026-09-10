@@ -1,11 +1,7 @@
-# Caddyfile de produção, montado por cima do que vem na imagem. DOMAIN e BASIC_AUTH_USER
-# vêm do .env; BASIC_AUTH_HASH é calculado no arranque do contêiner, pelo docker-compose.yml.
-
 {$DOMAIN} {
 	root * /srv
 	encode gzip
 
-	# A aplicação não tem login (registro 0006). A senha cobre o site inteiro, /api/docs incluído.
 	basic_auth {
 		{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
 	}

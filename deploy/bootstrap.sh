@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Prepara uma VPS Ubuntu LTS recém-criada: Docker, firewall e o clone em /opt/cadastro-rural.
-# Rode como root. Cada passo confere antes de agir, então rodar de novo não estraga nada.
+# Prepara uma VPS Ubuntu LTS: Docker, firewall e o clone em /opt/cadastro-rural. Idempotente.
 set -euo pipefail
 
 REPOSITORIO='https://github.com/GleiciSousa00/brain-agriculture.git'
@@ -20,7 +19,6 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y ca-certificates curl git ufw
 
-# Docker pelo repositório apt oficial, e não pelo script de conveniência, que não é idempotente.
 if docker compose version > /dev/null 2>&1; then
   log 'Docker com Compose já instalado, pulando.'
 else
@@ -37,15 +35,13 @@ else
   systemctl enable --now docker
 fi
 
-# Porta publicada pelo Docker passa por fora do ufw. O que fecha Postgres e API é a
-# composição não publicar porta para eles.
+# Porta publicada pelo Docker passa por fora do ufw.
 log 'Configurando o firewall.'
 ufw allow OpenSSH
 ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable
 
-# O clone inteiro, porque a composição lê o Caddyfile desta pasta.
 if [[ -d "${DESTINO}/.git" ]]; then
   log "Atualizando ${DESTINO}."
   git -C "${DESTINO}" pull --ff-only
@@ -54,7 +50,6 @@ else
   git clone "${REPOSITORIO}" "${DESTINO}"
 fi
 
-# Nunca sobrescreve o .env: as chaves do Documento que estão nele não podem mudar.
 if [[ -f "${DESTINO}/deploy/.env" ]]; then
   log 'deploy/.env já existe, mantendo.'
 else

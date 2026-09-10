@@ -78,9 +78,7 @@ jobs:
           echo 'a imagem da API não foi construída em três tentativas'
           exit 1
 
-      # O `caddy validate` é o portão sintático dos dois Caddyfiles, o da imagem e o de
-      # `deploy/`. Roda uma vez, no ramo de sucesso: configuração inválida não é falha de
-      # registro e não melhora com tentativa nova.
+      # O `caddy validate` fica fora do laço: configuração inválida não melhora com tentativa nova.
       - name: Imagem Docker da interface web
         run: |
           for tentativa in 1 2 3; do
@@ -103,8 +101,6 @@ jobs:
           echo 'a imagem da interface web não foi construída em três tentativas'
           exit 1
 
-      # A composição de produção não sobe no CI. O que se confere é que toda variável que
-      # ela exige está no `.env.example`, lendo o exemplo com os valores vazios preenchidos.
       - name: Composição de produção interpola
         run: |
           sed 's/=$/=exemplo/' deploy/.env.example > deploy/.env.ci
@@ -137,8 +133,7 @@ jobs:
         run: pnpm test:integration
 
       # A composição é conferida aqui porque este é o trabalho que pode gastar tempo. A rota
-      # de saúde é pedida pela porta da web, o caminho do navegador: é o portão de
-      # comportamento do Caddyfile, e prova o corte de `/api` e o repasse para a API.
+      # de saúde é pedida pela porta da web, o caminho do navegador.
       #
       # Os dois laços deste passo contam coisas diferentes, e por isso não repetem o nome
       # da variável. O de `subida` é nova tentativa contra a falha de registro descrita
@@ -207,8 +202,6 @@ jobs:
         if: always()
         run: docker compose down --volumes
 
-  # As imagens são construídas de novo, e não reaproveitadas do trabalho rápido: guardá-las
-  # como artefato entre trabalhos custaria mais minutos do que reconstruir.
   publish:
     name: publish
     needs: [fast, integration]
@@ -223,8 +216,6 @@ jobs:
       - name: Entrar no registro
         run: echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io --username '${{ github.actor }}' --password-stdin
 
-      # O registro exige nome em minúsculas. O rótulo `source` liga o pacote ao repositório
-      # na página Packages.
       - name: Construir e publicar as imagens
         run: |
           registro="ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
