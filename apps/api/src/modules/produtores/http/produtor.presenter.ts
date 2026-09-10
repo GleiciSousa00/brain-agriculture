@@ -1,4 +1,5 @@
 import type { Pagina } from '../../../shared/application/pagina';
+import { paginaPara } from '../../../shared/http/pagina.presenter';
 import type { Propriedade } from '../../propriedades/domain/propriedade';
 import type { ProdutorComPropriedades } from '../application/buscar-produtor.use-case';
 import type { Produtor } from '../domain/produtor';
@@ -38,11 +39,6 @@ function paraPropriedade(propriedade: Propriedade) {
 }
 
 /** Monta a fatia da listagem. O Documento sai mascarado aqui como sai em qualquer rota. */
-export function paraPagina({
-  itens,
-  total,
-  pagina,
-  tamanho,
-}: Pagina<Produtor>): ProdutoresPaginaResposta {
-  return { itens: itens.map(paraResposta), total, pagina, tamanho };
+export function paraPagina(pagina: Pagina<Produtor>): ProdutoresPaginaResposta {
+  return paginaPara(pagina, paraResposta);
 }

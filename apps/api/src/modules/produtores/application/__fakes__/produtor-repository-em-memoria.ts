@@ -1,10 +1,7 @@
+import type { Recorte, Recortados } from '../../../../shared/domain/recorte';
 import type { Documento } from '../../domain/documento';
 import type { Produtor } from '../../domain/produtor';
-import type {
-  ProdutorRepository,
-  ProdutoresRecortados,
-  RecorteDeProdutores,
-} from '../../domain/produtor.repository';
+import type { ProdutorRepository } from '../../domain/produtor.repository';
 
 /**
  * Repositório substituto, usado pelos testes de caso de uso. `__fakes__` fica fora do
@@ -43,7 +40,7 @@ export class ProdutorRepositoryEmMemoria implements ProdutorRepository {
   }
 
   /** A mesma ordem que o repositório de verdade promete: nome, e o identificador desempata. */
-  async list({ deslocamento, limite }: RecorteDeProdutores): Promise<ProdutoresRecortados> {
+  async list({ deslocamento, limite }: Recorte): Promise<Recortados<Produtor>> {
     const ordenados = [...this.produtores.values()].sort(
       (um, outro) => um.nome.localeCompare(outro.nome) || um.id.localeCompare(outro.id),
     );
