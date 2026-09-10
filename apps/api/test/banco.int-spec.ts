@@ -220,8 +220,8 @@ describe('A aplicação contra um Postgres de verdade', () => {
   });
 
   it('o painel agrega no banco e confere com o conjunto de exemplo', async () => {
-    // A base é esvaziada primeiro porque as agregações são do cadastro inteiro, e os casos
-    // acima deixaram Propriedades e Plantios para trás. A cascata leva os Plantios junto.
+    // A base é esvaziada primeiro porque as agregações são do cadastro inteiro, e este caso
+    // não pode depender do que os outros deixaram para trás. A cascata leva os Plantios junto.
     await app.get(DataSource).query(`TRUNCATE TABLE propriedades CASCADE`);
 
     const vazio = await request(app.getHttpServer()).get('/painel').expect(200);

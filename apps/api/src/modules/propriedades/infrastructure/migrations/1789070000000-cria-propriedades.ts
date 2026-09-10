@@ -4,9 +4,9 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
  * Cria a tabela de Propriedade.
  *
  * A chave estrangeira para o Produtor é `ON DELETE CASCADE`: excluir um Produtor apaga as
- * Propriedades dele, em exclusão física, conforme o registro 0003. Ela é a rede de baixo
- * da cascata que o caso de uso de exclusão também faz, e é o que garante que nada fica
- * órfão mesmo se a exclusão vier por outro caminho.
+ * Propriedades dele, em exclusão física, conforme o registro 0003. É a única cascata: o
+ * caso de uso de exclusão de Produtor não apaga Propriedade nenhuma, só recusa
+ * identificador inexistente, e é o banco que garante que nada fica órfão.
  *
  * As áreas são `numeric(16,4)`: quatro casas decimais em hectare são o metro quadrado, que
  * é a precisão do cadastro rural, e a coluna comporta mil vezes o teto que o domínio impõe.

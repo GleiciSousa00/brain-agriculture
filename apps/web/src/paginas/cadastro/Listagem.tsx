@@ -7,7 +7,12 @@ import { Paginacao } from '../../componentes/Paginacao';
 import { useCadastro } from './CadastroContexto';
 
 interface Props<T> {
-  /** Busca uma fatia. O tamanho vem de quem lista, e não de quem chama. */
+  /**
+   * Busca uma fatia. O tamanho vem de quem lista, e não de quem chama.
+   *
+   * Trocar o que a função fecha não refaz a busca: o efeito depende de página e versão, não
+   * dela. Para buscar de novo com uma chave nova, remonte o componente com `key`.
+   */
   listar: (pagina: number, tamanho: number) => Promise<Pagina<T>>;
   /** O que a tela diz enquanto a primeira página não volta. */
   carregando: string;
