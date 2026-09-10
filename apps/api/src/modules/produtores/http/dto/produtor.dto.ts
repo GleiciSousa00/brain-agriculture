@@ -36,9 +36,14 @@ export const propriedadeDoProdutorSchema = z.object({
   areaDeVegetacao: z.number().describe('Em hectares.'),
 });
 
-/** O cadastro inteiro: o Produtor e as Propriedades em nome dele. */
+/**
+ * O cadastro inteiro: o Produtor e uma fatia das Propriedades em nome dele.
+ *
+ * As Propriedades vêm no mesmo invólucro de fatia de toda listagem da API, e não num vetor
+ * solto, porque nada limita quantas um Produtor tem. Quem consome trata uma forma só.
+ */
 export const produtorDetalhadoSchema = produtorSchema.extend({
-  propriedades: z.array(propriedadeDoProdutorSchema),
+  propriedades: paginaSchema(propriedadeDoProdutorSchema),
 });
 
 export type ProdutorDetalhadoResposta = z.infer<typeof produtorDetalhadoSchema>;

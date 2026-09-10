@@ -45,7 +45,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Recupera um Produtor e suas Propriedades, com o Documento mascarado. */
+        /** Recupera um Produtor e uma fatia das Propriedades dele, com o Documento mascarado. */
         get: operations["ProdutoresController_buscar"];
         put?: never;
         post?: never;
@@ -256,18 +256,24 @@ export interface components {
             /** @enum {string} */
             tipoDeDocumento: "CPF" | "CNPJ";
             propriedades: {
-                /** Format: uuid */
-                id: string;
-                cidade: string;
-                /** @description A sigla da unidade federativa. */
-                estado: string;
-                /** @description Em hectares. */
-                areaTotal: number;
-                /** @description Em hectares. */
-                areaAgricultavel: number;
-                /** @description Em hectares. */
-                areaDeVegetacao: number;
-            }[];
+                itens: {
+                    /** Format: uuid */
+                    id: string;
+                    cidade: string;
+                    /** @description A sigla da unidade federativa. */
+                    estado: string;
+                    /** @description Em hectares. */
+                    areaTotal: number;
+                    /** @description Em hectares. */
+                    areaAgricultavel: number;
+                    /** @description Em hectares. */
+                    areaDeVegetacao: number;
+                }[];
+                /** @description Quantos registros existem ao todo. */
+                total: number;
+                pagina: number;
+                tamanho: number;
+            };
         };
         EditarProdutorDto: {
             /** @description Nome do Produtor. */
@@ -563,7 +569,7 @@ export interface operations {
     ProdutoresController_listar: {
         parameters: {
             query?: {
-                /** @description A página pedida. A primeira é a de número um. */
+                /** @description A página pedida. A primeira é a de número um, e a última é a 500. */
                 pagina?: number;
                 /** @description Quantos registros por página, no máximo 100. */
                 tamanho?: number;
@@ -636,7 +642,12 @@ export interface operations {
     };
     ProdutoresController_buscar: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description A página pedida. A primeira é a de número um, e a última é a 500. */
+                pagina?: number;
+                /** @description Quantos registros por página, no máximo 100. */
+                tamanho?: number;
+            };
             header?: never;
             path: {
                 id: string;
@@ -739,7 +750,7 @@ export interface operations {
     PropriedadesController_listar: {
         parameters: {
             query?: {
-                /** @description A página pedida. A primeira é a de número um. */
+                /** @description A página pedida. A primeira é a de número um, e a última é a 500. */
                 pagina?: number;
                 /** @description Quantos registros por página, no máximo 100. */
                 tamanho?: number;
@@ -1075,7 +1086,7 @@ export interface operations {
     PlantiosDaPropriedadeController_listar: {
         parameters: {
             query?: {
-                /** @description A página pedida. A primeira é a de número um. */
+                /** @description A página pedida. A primeira é a de número um, e a última é a 500. */
                 pagina?: number;
                 /** @description Quantos registros por página, no máximo 100. */
                 tamanho?: number;
