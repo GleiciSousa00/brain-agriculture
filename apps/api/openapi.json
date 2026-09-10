@@ -240,7 +240,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProdutorDto"
+                  "$ref": "#/components/schemas/ProdutorDetalhadoDto"
                 }
               }
             }
@@ -256,9 +256,199 @@
             }
           }
         },
-        "summary": "Recupera um Produtor, com o Documento mascarado.",
+        "summary": "Recupera um Produtor e suas Propriedades, com o Documento mascarado.",
         "tags": [
           "Produtores"
+        ]
+      }
+    },
+    "/propriedades": {
+      "post": {
+        "operationId": "PropriedadesController_criar",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarPropriedadeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropriedadeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A entrada não é válida, ou a soma da Área Agricultável com a Área de Vegetação passa da Área Total.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Não existe Produtor com esse identificador.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Registra uma Propriedade em nome de um Produtor.",
+        "tags": [
+          "Propriedades"
+        ]
+      },
+      "get": {
+        "operationId": "PropriedadesController_listar",
+        "parameters": [
+          {
+            "name": "pagina",
+            "required": false,
+            "in": "query",
+            "description": "A página pedida. A primeira é a de número um.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 9007199254740991,
+              "default": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "tamanho",
+            "required": false,
+            "in": "query",
+            "description": "Quantos registros por página, no máximo 100.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropriedadesPaginaDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Lista as Propriedades por cidade, em páginas.",
+        "tags": [
+          "Propriedades"
+        ]
+      }
+    },
+    "/propriedades/{id}": {
+      "put": {
+        "operationId": "PropriedadesController_editar",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditarPropriedadeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropriedadeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A entrada não é válida, ou a soma da Área Agricultável com a Área de Vegetação passa da Área Total.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Não existe Propriedade com esse identificador.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Atualiza a localização e as áreas de uma Propriedade.",
+        "tags": [
+          "Propriedades"
+        ]
+      },
+      "delete": {
+        "operationId": "PropriedadesController_excluir",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "A Propriedade foi excluída."
+          },
+          "404": {
+            "description": "Não existe Propriedade com esse identificador.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Exclui uma Propriedade, e com ela seus Plantios.",
+        "tags": [
+          "Propriedades"
         ]
       }
     },
@@ -503,6 +693,276 @@
           "type",
           "title",
           "status"
+        ]
+      },
+      "ProdutorDetalhadoDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "documento": {
+            "type": "string",
+            "description": "Mascarado. Os dois últimos grupos aparecem, o resto não."
+          },
+          "tipoDeDocumento": {
+            "type": "string",
+            "enum": [
+              "CPF",
+              "CNPJ"
+            ]
+          },
+          "propriedades": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "cidade": {
+                  "type": "string"
+                },
+                "estado": {
+                  "type": "string",
+                  "description": "A sigla da unidade federativa."
+                },
+                "areaTotal": {
+                  "type": "number",
+                  "description": "Em hectares."
+                },
+                "areaAgricultavel": {
+                  "type": "number",
+                  "description": "Em hectares."
+                },
+                "areaDeVegetacao": {
+                  "type": "number",
+                  "description": "Em hectares."
+                }
+              },
+              "required": [
+                "id",
+                "cidade",
+                "estado",
+                "areaTotal",
+                "areaAgricultavel",
+                "areaDeVegetacao"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "documento",
+          "tipoDeDocumento",
+          "propriedades"
+        ]
+      },
+      "CriarPropriedadeDto": {
+        "type": "object",
+        "properties": {
+          "produtorId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "O Produtor em nome de quem a Propriedade é registrada."
+          },
+          "cidade": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "estado": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "description": "A sigla da unidade federativa."
+          },
+          "areaTotal": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Em hectares, com até duas casas decimais."
+          },
+          "areaAgricultavel": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Em hectares, com até duas casas decimais."
+          },
+          "areaDeVegetacao": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Em hectares, com até duas casas decimais."
+          }
+        },
+        "required": [
+          "produtorId",
+          "cidade",
+          "estado",
+          "areaTotal",
+          "areaAgricultavel",
+          "areaDeVegetacao"
+        ]
+      },
+      "PropriedadeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "produtorId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "cidade": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string",
+            "description": "A sigla da unidade federativa."
+          },
+          "areaTotal": {
+            "type": "number",
+            "description": "Em hectares."
+          },
+          "areaAgricultavel": {
+            "type": "number",
+            "description": "Em hectares."
+          },
+          "areaDeVegetacao": {
+            "type": "number",
+            "description": "Em hectares."
+          }
+        },
+        "required": [
+          "id",
+          "produtorId",
+          "cidade",
+          "estado",
+          "areaTotal",
+          "areaAgricultavel",
+          "areaDeVegetacao"
+        ]
+      },
+      "PropriedadesPaginaDto": {
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "produtorId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "cidade": {
+                  "type": "string"
+                },
+                "estado": {
+                  "type": "string",
+                  "description": "A sigla da unidade federativa."
+                },
+                "areaTotal": {
+                  "type": "number",
+                  "description": "Em hectares."
+                },
+                "areaAgricultavel": {
+                  "type": "number",
+                  "description": "Em hectares."
+                },
+                "areaDeVegetacao": {
+                  "type": "number",
+                  "description": "Em hectares."
+                }
+              },
+              "required": [
+                "id",
+                "produtorId",
+                "cidade",
+                "estado",
+                "areaTotal",
+                "areaAgricultavel",
+                "areaDeVegetacao"
+              ]
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Quantos registros existem ao todo."
+          },
+          "pagina": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "tamanho": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "itens",
+          "total",
+          "pagina",
+          "tamanho"
+        ]
+      },
+      "EditarPropriedadeDto": {
+        "type": "object",
+        "properties": {
+          "cidade": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "estado": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "description": "A sigla da unidade federativa."
+          },
+          "areaTotal": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Em hectares, com até duas casas decimais."
+          },
+          "areaAgricultavel": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Em hectares, com até duas casas decimais."
+          },
+          "areaDeVegetacao": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Em hectares, com até duas casas decimais."
+          }
+        },
+        "required": [
+          "cidade",
+          "estado",
+          "areaTotal",
+          "areaAgricultavel",
+          "areaDeVegetacao"
         ]
       },
       "CriarSafraDto": {

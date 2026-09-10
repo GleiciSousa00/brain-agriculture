@@ -3,6 +3,9 @@ import { QueryFailedError } from 'typeorm';
 /** Código do Postgres para violação de restrição de unicidade. */
 const UNICIDADE_VIOLADA = '23505';
 
+/** Código do Postgres para violação de chave estrangeira. */
+const CHAVE_ESTRANGEIRA_VIOLADA = '23503';
+
 /**
  * Diz se a falha veio de uma restrição de unicidade do banco.
  *
@@ -10,8 +13,21 @@ const UNICIDADE_VIOLADA = '23505';
  * que é comum é reconhecer o código, não decidir o que ele significa.
  */
 export function violouUnicidade(erro: unknown): boolean {
-  return (
-    erro instanceof QueryFailedError &&
-    (erro.driverError as { code?: string } | undefined)?.code === UNICIDADE_VIOLADA
-  );
+  return codigoDe(erro) === UNICIDADE_VIOLADA;
+}
+
+/**
+ * Diz se a falha veio de uma chave estrangeira.
+ *
+ * Vale nos dois sentidos: gravar apontando para uma linha que não existe, e apagar uma
+ * linha que ainda é apontada. Quem sabe qual dos dois é, e o que dizer, é o repositório.
+ */
+export function violouChaveEstrangeira(erro: unknown): boolean {
+  return codigoDe(erro) === CHAVE_ESTRANGEIRA_VIOLADA;
+}
+
+function codigoDe(erro: unknown): string | undefined {
+  return erro instanceof QueryFailedError
+    ? (erro.driverError as { code?: string } | undefined)?.code
+    : undefined;
 }

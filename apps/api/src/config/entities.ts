@@ -1,5 +1,9 @@
 import { CULTURAS_ENTIDADES, CULTURAS_MIGRACOES } from '../modules/culturas/culturas.module';
 import { PRODUTORES_ENTIDADES, PRODUTORES_MIGRACOES } from '../modules/produtores/produtores.module';
+import {
+  PROPRIEDADES_ENTIDADES,
+  PROPRIEDADES_MIGRACOES,
+} from '../modules/propriedades/propriedades.module';
 import { SAFRAS_ENTIDADES, SAFRAS_MIGRACOES } from '../modules/safras/safras.module';
 
 /**
@@ -12,8 +16,24 @@ import { SAFRAS_ENTIDADES, SAFRAS_MIGRACOES } from '../modules/safras/safras.mod
  *
  * A lista é explícita em vez de varrer pasta por padrão de nome porque, empacotada na
  * imagem, a varredura depende de onde os arquivos caíram, e uma migração que não é
- * encontrada é uma migração que não roda. A ordem das migrações é a de execução.
+ * encontrada é uma migração que não roda.
+ *
+ * A ordem deste vetor não é a de execução: quem ordena é o ORM, pelo carimbo de tempo do
+ * nome da classe. O vetor só precisa estar completo, e é agrupado por módulo, na mesma
+ * ordem do catálogo de entidades, para ser lido. O módulo de Produtor tem duas migrações
+ * com carimbos que cercam os dos outros módulos, e por isso agrupar e executar em ordem
+ * de carimbo não são a mesma coisa.
  */
-export const ORM_ENTITIES = [...PRODUTORES_ENTIDADES, ...SAFRAS_ENTIDADES, ...CULTURAS_ENTIDADES];
+export const ORM_ENTITIES = [
+  ...PRODUTORES_ENTIDADES,
+  ...PROPRIEDADES_ENTIDADES,
+  ...SAFRAS_ENTIDADES,
+  ...CULTURAS_ENTIDADES,
+];
 
-export const ORM_MIGRATIONS = [...PRODUTORES_MIGRACOES, ...SAFRAS_MIGRACOES, ...CULTURAS_MIGRACOES];
+export const ORM_MIGRATIONS = [
+  ...PRODUTORES_MIGRACOES,
+  ...PROPRIEDADES_MIGRACOES,
+  ...SAFRAS_MIGRACOES,
+  ...CULTURAS_MIGRACOES,
+];

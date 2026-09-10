@@ -5,6 +5,11 @@ import type { Repository } from 'typeorm';
 import { BuscarProdutorUseCase } from './application/buscar-produtor.use-case';
 import { CriarProdutorUseCase } from './application/criar-produtor.use-case';
 import { PRODUTOR_REPOSITORY, type ProdutorRepository } from './domain/produtor.repository';
+import {
+  PROPRIEDADES_DO_PRODUTOR_REPOSITORY,
+  type PropriedadesDoProdutorRepository,
+} from './domain/propriedades-do-produtor.repository';
+import { PropriedadesModule } from '../propriedades/propriedades.module';
 import { DocumentoCrypto } from './infrastructure/crypto/documento-crypto';
 import { readSecretMaterial } from './infrastructure/crypto/secret-material';
 import { ProdutorMapper } from './infrastructure/produtor.mapper';
@@ -21,7 +26,9 @@ import { CriaProdutores1789040000000 } from './infrastructure/migrations/1789040
  * continuar testável sem Nest. Ver o registro 0005.
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([ProdutorOrmEntity])],
+  // O módulo de Propriedade entra aqui só para fornecer a implementação da porta que este
+  // módulo declara no próprio domínio. É a única coisa que ele exporta.
+  imports: [TypeOrmModule.forFeature([ProdutorOrmEntity]), PropriedadesModule],
   controllers: [ProdutoresController],
   providers: [
     {
@@ -51,8 +58,11 @@ import { CriaProdutores1789040000000 } from './infrastructure/migrations/1789040
     },
     {
       provide: BuscarProdutorUseCase,
-      inject: [PRODUTOR_REPOSITORY],
-      useFactory: (produtores: ProdutorRepository) => new BuscarProdutorUseCase(produtores),
+      inject: [PRODUTOR_REPOSITORY, PROPRIEDADES_DO_PRODUTOR_REPOSITORY],
+      useFactory: (
+        produtores: ProdutorRepository,
+        propriedades: PropriedadesDoProdutorRepository,
+      ) => new BuscarProdutorUseCase(produtores, propriedades),
     },
   ],
 })

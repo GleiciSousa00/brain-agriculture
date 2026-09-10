@@ -13,8 +13,13 @@ import { ProblemDetailsDto } from '../../../shared/http/dto/problem-details.dto'
 import { BuscarProdutorUseCase } from '../application/buscar-produtor.use-case';
 import { CriarProdutorUseCase } from '../application/criar-produtor.use-case';
 import { CriarProdutorDto } from './dto/criar-produtor.dto';
-import { ProdutorDto, type ProdutorResposta } from './dto/produtor.dto';
-import { paraResposta } from './produtor.presenter';
+import {
+  ProdutorDetalhadoDto,
+  ProdutorDto,
+  type ProdutorDetalhadoResposta,
+  type ProdutorResposta,
+} from './dto/produtor.dto';
+import { paraResposta, paraRespostaDetalhada } from './produtor.presenter';
 
 @ApiTags('Produtores')
 @Controller('produtores')
@@ -42,14 +47,16 @@ export class ProdutoresController {
   }
 
   @Get(':id')
-  @ZodSerializerDto(ProdutorDto)
-  @ApiOperation({ summary: 'Recupera um Produtor, com o Documento mascarado.' })
-  @ApiOkResponse({ type: ProdutorDto })
+  @ZodSerializerDto(ProdutorDetalhadoDto)
+  @ApiOperation({
+    summary: 'Recupera um Produtor e suas Propriedades, com o Documento mascarado.',
+  })
+  @ApiOkResponse({ type: ProdutorDetalhadoDto })
   @ApiNotFoundResponse({
     description: 'Não existe Produtor com esse identificador.',
     type: ProblemDetailsDto,
   })
-  async buscar(@Param('id', ParseUUIDPipe) id: string): Promise<ProdutorResposta> {
-    return paraResposta(await this.buscarProdutor.execute(id));
+  async buscar(@Param('id', ParseUUIDPipe) id: string): Promise<ProdutorDetalhadoResposta> {
+    return paraRespostaDetalhada(await this.buscarProdutor.execute(id));
   }
 }
