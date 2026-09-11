@@ -30,6 +30,7 @@ import { EditarProdutorUseCase } from '../application/editar-produtor.use-case';
 import { ExcluirProdutorUseCase } from '../application/excluir-produtor.use-case';
 import { ListarProdutoresUseCase } from '../application/listar-produtores.use-case';
 import { CriarProdutorDto } from './dto/criar-produtor.dto';
+import { ParametrosDeProdutoresDto } from './dto/listar-produtores.dto';
 import { EditarProdutorDto } from './dto/editar-produtor.dto';
 import {
   ProdutorDetalhadoDto,
@@ -75,14 +76,14 @@ export class ProdutoresController {
   @ZodSerializerDto(ProdutoresPaginaDto)
   @ApiOperation({
     summary:
-      'Lista Produtores por nome, em páginas, com o Documento mascarado. Recorta pela busca, quando houver.',
+      'Lista Produtores por nome, em páginas, com o Documento mascarado e quantas Propriedades cada um tem. Recorta pela busca e pelos identificadores, quando houver.',
   })
   @ApiOkResponse({ type: ProdutoresPaginaDto })
   @ApiBadRequestResponse({
     description: 'A página ou o tamanho pedido não é válido.',
     type: ProblemDetailsDto,
   })
-  async listar(@Query() parametros: ParametrosDeBuscaDto): Promise<ProdutoresPaginaResposta> {
+  async listar(@Query() parametros: ParametrosDeProdutoresDto): Promise<ProdutoresPaginaResposta> {
     return paraPagina(await this.listarProdutores.execute(parametros));
   }
 

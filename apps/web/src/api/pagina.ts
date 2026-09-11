@@ -10,12 +10,13 @@ export const PRIMEIRA_PAGINA = 1;
 export const TAMANHO_DA_PAGINA = 10;
 
 /**
- * Quantos registros um campo de escolha oferece.
+ * O teto de uma listagem da API.
  *
- * É o teto da API. Um campo de escolha precisa oferecer também o registro que a tabela
- * não está mostrando, senão a operadora não consegue apontar para ele.
+ * É quanto se pede quando se precisa de uma fatia inteira de uma vez, como ao resolver os
+ * nomes dos donos de uma página de Propriedades: a página não passa deste teto, e a lista
+ * de identificadores que sai dela também não.
  */
-export const TAMANHO_DO_CATALOGO = 100;
+export const TAMANHO_MAXIMO = 100;
 
 /** Quantas páginas o total ocupa. Uma base vazia continua tendo uma página. */
 export function quantasPaginas({ total, tamanho }: Pick<Pagina<unknown>, 'total' | 'tamanho'>): number {

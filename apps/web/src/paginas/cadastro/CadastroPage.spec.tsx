@@ -124,30 +124,27 @@ describe('a tela de cadastro', () => {
     expect(screen.getByRole('heading', { name: 'Propriedades', level: 2 })).toBeInTheDocument();
   });
 
-  it('avisa quando o cadastro passa do teto de cem e o catálogo vem cortado', async () => {
-    const muitos = Array.from({ length: 100 }, (_, indice) => ({
+  it('nomeia o recorte mesmo quando o Produtor está além do teto da listagem', async () => {
+    // O dono do recorte é o último de cento e cinquenta. A listagem não o alcança, e é por
+    // perguntar por ele pelo identificador que o rastro consegue nomeá-lo.
+    const enfileirados = Array.from({ length: 150 }, (_, indice) => ({
       ...ANA,
       id: `produtor-${String(indice)}`,
+      nome: `Produtor ${String(indice)}`,
     }));
-    servirRotas({
-      'GET /api/produtores': () => ({ corpo: { itens: muitos, total: 120, pagina: 1, tamanho: 100 } }),
-      'GET /api/propriedades': () => ({ corpo: { itens: [], total: 0, pagina: 1, tamanho: 100 } }),
-      'GET /api/culturas': () => ({ corpo: [] }),
-      'GET /api/safras': () => ({ corpo: [] }),
-      'GET /api/painel': () => ({ corpo: PAINEL_VAZIO }),
-    });
+    servirCadastro(
+      { ...BASE, produtores: [...enfileirados, ANA] },
+      {
+        'GET /api/painel': () => ({ corpo: PAINEL_VAZIO }),
+        'GET /api/produtores/:id': () => ({
+          corpo: { ...ANA, propriedades: { itens: [BOA_VISTA], total: 1, pagina: 1, tamanho: 10 } },
+        }),
+      },
+    );
 
-    abrirEm('/cadastro/propriedades');
+    abrirEm(`/cadastro/propriedades?produtor=${ANA.id}`);
 
-    expect(await screen.findByText(/A coluna de Produtor tem nome só para os cem primeiros/)).toBeInTheDocument();
-  });
-
-  it('cala sobre o teto quando o cadastro cabe nele', async () => {
-    servirCadastro(BASE, { 'GET /api/painel': () => ({ corpo: PAINEL_VAZIO }) });
-
-    abrirEm('/cadastro/propriedades');
-    await screen.findByRole('heading', { name: 'Propriedades', level: 2 });
-
-    expect(screen.queryByText(/A coluna de Produtor tem nome só para os cem primeiros/)).toBeNull();
+    const rastro = within(await screen.findByRole('navigation', { name: 'Contexto' }));
+    expect(rastro.getByText('Ana Lima')).toHaveAttribute('aria-current', 'location');
   });
 });

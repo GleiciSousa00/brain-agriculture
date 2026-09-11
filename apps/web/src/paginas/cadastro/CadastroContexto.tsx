@@ -6,7 +6,6 @@ import type {
   Cultura,
   EditarProdutor,
   EditarPropriedade,
-  Produtor,
   Propriedade,
   RegistrarPlantio,
   Safra,
@@ -22,7 +21,7 @@ import {
   listarCulturas,
   listarSafras,
 } from '../../api/catalogo';
-import { PRIMEIRA_PAGINA, TAMANHO_DO_CATALOGO } from '../../api/pagina';
+import { PRIMEIRA_PAGINA, TAMANHO_MAXIMO } from '../../api/pagina';
 import { excluirPlantio, registrarPlantio } from '../../api/plantios';
 import { criarProdutor, editarProdutor, excluirProdutor, listarProdutores } from '../../api/produtores';
 import {
@@ -31,46 +30,40 @@ import {
   excluirPropriedade,
   listarPropriedades,
 } from '../../api/propriedades';
+import { SEM_RECORTE, useHierarquia } from './hierarquia';
 
 /**
  * O que as seções do cadastro precisam umas das outras.
  *
- * O formulário de Propriedade escolhe um Produtor, e o de Plantio escolhe uma
- * Propriedade, uma Cultura e uma Safra. Nenhuma dessas listas pertence à seção que a
- * mostra, e é por isso que elas vivem aqui e não em cada tela.
+ * Cultura e Safra são catálogos de verdade: listas curtas e fechadas, que o formulário de
+ * Plantio oferece inteiras. As Propriedades vêm junto porque a seção de Plantios mostra os
+ * dados da que está escolhida.
  *
- * As listas são a primeira página no tamanho máximo que a API aceita: um campo de escolha
- * tem de oferecer também o registro que a tabela ao lado não está mostrando.
+ * Produtor não está aqui de propósito. Quem precisa de um Produtor o pede à API por nome ou
+ * por identificador: uma lista carregada de antemão pararia no teto da listagem, e quem
+ * viesse depois dele ficaria sem nome na tela.
  */
 export interface Catalogos {
-  produtores: Produtor[];
   propriedades: Propriedade[];
   culturas: Cultura[];
   safras: Safra[];
-  /**
-   * O cadastro passou do teto de cem e o catálogo veio cortado.
-   *
-   * A API não tem busca por texto, então não há como alcançar o que ficou de fora. Quem
-   * opera precisa saber disso, porque é o que explica o campo de escolha sem o Produtor
-   * que existe e a coluna de Produtor sem nome.
-   */
-  cortado: boolean;
+  /** Há ao menos um Produtor cadastrado. Sem nenhum, não há em nome de quem registrar. */
+  temProdutor: boolean;
 }
 
 /**
  * O que a tela põe no lugar do nome que não pôde ser resolvido.
  *
- * É o sintoma de `cortado`: o catálogo veio até cem e o registro apontado ficou de fora.
- * Quem explica o travessão é o aviso do alto do cadastro, e não a célula onde ele aparece.
+ * Vale para a Cultura e para a Safra de um Plantio que apontam para fora do catálogo, o que
+ * é sintoma de dado inconsistente e não de lista cortada.
  */
 export const FORA_DO_CATALOGO = '—';
 
 const CATALOGOS_VAZIOS: Catalogos = {
-  produtores: [],
   propriedades: [],
   culturas: [],
   safras: [],
-  cortado: false,
+  temProdutor: false,
 };
 
 export interface Cadastro extends Catalogos {
@@ -84,24 +77,15 @@ export interface Cadastro extends Catalogos {
    */
   versao: number;
   /**
-   * O nome de quem só chegou como identificador, ou o travessão.
+   * O nome do Produtor em cujo recorte se está, ou vazio.
    *
-   * A API entrega Propriedade e Plantio apontando para Produtor, Cultura e Safra, e quem
-   * tem o nome é o catálogo que já está aqui para os campos de escolha. Resolver o nome é
-   * do contexto, e não de cada tabela, porque o travessão é a mesma resposta em todas.
+   * Ele é pedido à API pelo identificador que está no endereço, e por isso alcança qualquer
+   * Produtor do cadastro. Vazio enquanto a resposta não chega, e vazio quando não há recorte
+   * nenhum: é o que faz o rastro se calar em vez de nomear o recorte com um travessão.
    */
-  nomeDoProdutor: (id: string) => string;
+  nomeDoDono: string;
   nomeDaCultura: (id: string) => string;
   anoDaSafra: (id: string) => string;
-  /**
-   * Quantas Propriedades um Produtor tem, contadas no catálogo que já está em memória.
-   *
-   * É o número que a coluna de Propriedades mostra, e é ele que distingue o Produtor sem
-   * Propriedade nenhuma — o único a quem a tela oferece registrar a primeira. Só vale com
-   * o catálogo inteiro em mãos: enquanto ele não chega, e quando `cortado` diz que ele
-   * veio pela metade, a conta é do que veio e a coluna deixa de contar.
-   */
-  quantasPropriedadesDe: (produtorId: string) => number;
   criarProdutor: (corpo: CriarProdutor) => Promise<void>;
   editarProdutor: (id: string, corpo: EditarProdutor) => Promise<void>;
   excluirProdutor: (id: string) => Promise<void>;
@@ -118,22 +102,25 @@ export interface Cadastro extends Catalogos {
 
 const CadastroContexto = createContext<Cadastro | undefined>(undefined);
 
-/** Os quatro catálogos, pedidos em paralelo e esperados de uma vez. */
+/**
+ * Os catálogos, pedidos em paralelo e esperados de uma vez.
+ *
+ * Dos Produtores só se pergunta se existe algum, e por isso a fatia pedida é de um: o que
+ * interessa é o total, e não as linhas.
+ */
 async function buscarCatalogos(): Promise<Catalogos> {
   const [produtores, propriedades, culturas, safras] = await Promise.all([
-    listarProdutores(PRIMEIRA_PAGINA, TAMANHO_DO_CATALOGO),
-    listarPropriedades(PRIMEIRA_PAGINA, TAMANHO_DO_CATALOGO),
+    listarProdutores(PRIMEIRA_PAGINA, 1),
+    listarPropriedades(PRIMEIRA_PAGINA, TAMANHO_MAXIMO),
     listarCulturas(),
     listarSafras(),
   ]);
 
   return {
-    produtores: produtores.itens,
     propriedades: propriedades.itens,
     culturas,
     safras,
-    cortado:
-      produtores.total > TAMANHO_DO_CATALOGO || propriedades.total > TAMANHO_DO_CATALOGO,
+    temProdutor: produtores.total > 0,
   };
 }
 
@@ -145,19 +132,21 @@ interface Props {
  * O estado compartilhado do cadastro.
  *
  * Toda escrita passa por aqui, e não pela seção que a disparou, para que os catálogos se
- * refaçam sozinhos: registrar um Produtor tem de aparecer na hora no campo de escolha do
- * formulário de Propriedade, que fica noutra seção.
+ * refaçam sozinhos: registrar uma Propriedade tem de aparecer na hora no campo de escolha do
+ * formulário de Plantio, que fica noutra seção.
  *
- * Depois de uma escrita os quatro catálogos são buscados de novo, e não só o que mudou.
- * É mais simples do que manter uma tabela de quem invalida quem, e é o que faz a exclusão
- * em cascata de um Produtor sumir também com as Propriedades dele da tela, conforme o
- * registro de decisão 0003.
+ * Depois de uma escrita os catálogos são buscados de novo, e não só o que mudou. É mais
+ * simples do que manter uma tabela de quem invalida quem, e é o que faz a exclusão em
+ * cascata de um Produtor sumir também com as Propriedades dele da tela, conforme o registro
+ * de decisão 0003.
  */
 export function CadastroProvider({ children }: Props) {
+  const { produtorId } = useHierarquia();
   const [catalogos, setCatalogos] = useState<Catalogos>(CATALOGOS_VAZIOS);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string>();
   const [versao, setVersao] = useState(0);
+  const [nomeDoDono, setNomeDoDono] = useState('');
 
   useEffect(() => {
     let cancelado = false;
@@ -185,6 +174,40 @@ export function CadastroProvider({ children }: Props) {
   }, []);
 
   /**
+   * Resolve o nome do dono do recorte, e o resolve de novo a cada escrita, porque uma delas
+   * pode ter sido a correção desse nome.
+   *
+   * A falha fica calada: quem não conseguiu nomear o recorte mostra a lista sem nomeá-lo, e
+   * as linhas dela vêm de outra chamada, que continua de pé. O aviso de erro do alto da tela
+   * é dos catálogos, e emprestá-lo daqui acusaria de quebrado o que está funcionando.
+   */
+  useEffect(() => {
+    if (produtorId === SEM_RECORTE) {
+      setNomeDoDono('');
+
+      return;
+    }
+
+    let cancelado = false;
+
+    listarProdutores(PRIMEIRA_PAGINA, 1, undefined, [produtorId])
+      .then((encontrados) => {
+        if (!cancelado) {
+          setNomeDoDono(encontrados.itens.at(0)?.nome ?? '');
+        }
+      })
+      .catch(() => {
+        if (!cancelado) {
+          setNomeDoDono('');
+        }
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [produtorId, versao]);
+
+  /**
    * Faz a escrita, refaz os catálogos e avisa as tabelas.
    *
    * A recusa da escrita sobe para quem chamou, que é quem sabe onde mostrá-la. A falha da
@@ -204,8 +227,8 @@ export function CadastroProvider({ children }: Props) {
   }, []);
 
   /**
-   * Escrita de Plantio: nenhum dos quatro catálogos muda com ela, então só as tabelas se
-   * refazem. A lista de Plantios de uma Propriedade não é catálogo de ninguém.
+   * Escrita de Plantio: nenhum catálogo muda com ela, então só as tabelas se refazem. A
+   * lista de Plantios de uma Propriedade não é catálogo de ninguém.
    */
   const escreverPlantio = useCallback(async (acao: () => Promise<unknown>): Promise<void> => {
     await acao();
@@ -218,8 +241,7 @@ export function CadastroProvider({ children }: Props) {
       carregando,
       erro,
       versao,
-      nomeDoProdutor: (id) =>
-        catalogos.produtores.find((produtor) => produtor.id === id)?.nome ?? FORA_DO_CATALOGO,
+      nomeDoDono,
       nomeDaCultura: (id) =>
         catalogos.culturas.find((cultura) => cultura.id === id)?.nome ?? FORA_DO_CATALOGO,
       anoDaSafra: (id) => {
@@ -227,9 +249,6 @@ export function CadastroProvider({ children }: Props) {
 
         return safra === undefined ? FORA_DO_CATALOGO : String(safra.ano);
       },
-      quantasPropriedadesDe: (produtorId) =>
-        catalogos.propriedades.filter((propriedade) => propriedade.produtorId === produtorId)
-          .length,
       criarProdutor: (corpo) => escrever(() => criarProdutor(corpo)),
       editarProdutor: (id, corpo) => escrever(() => editarProdutor(id, corpo)),
       excluirProdutor: (id) => escrever(() => excluirProdutor(id)),
@@ -243,7 +262,7 @@ export function CadastroProvider({ children }: Props) {
       registrarPlantio: (corpo) => escreverPlantio(() => registrarPlantio(corpo)),
       excluirPlantio: (id) => escreverPlantio(() => excluirPlantio(id)),
     }),
-    [catalogos, carregando, erro, versao, escrever, escreverPlantio],
+    [catalogos, carregando, erro, versao, nomeDoDono, escrever, escreverPlantio],
   );
 
   return <CadastroContexto.Provider value={valor}>{children}</CadastroContexto.Provider>;

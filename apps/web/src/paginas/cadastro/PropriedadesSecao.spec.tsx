@@ -46,17 +46,20 @@ describe('a seção de Propriedades', () => {
     expect(screen.getByRole('row', { name: /Sítio do Meio/ })).toBeInTheDocument();
   });
 
-  it('mostra um travessão quando o Produtor da Propriedade ficou fora do catálogo', async () => {
-    servirCadastro({
-      produtores: [AGRO_BETO],
-      propriedades: [BOA_VISTA],
-    });
+  it('nomeia o dono da Propriedade mesmo quando ele está além do teto da listagem', async () => {
+    // O dono é o último de cento e cinquenta: uma listagem só não o alcança, e o nome sai
+    // de perguntar pelos donos da página, pelos identificadores que ela trouxe.
+    const enfileirados = Array.from({ length: 150 }, (_, indice) => ({
+      ...AGRO_BETO,
+      id: `produtor-${String(indice)}`,
+      nome: `Agro ${String(indice)}`,
+    }));
+    servirCadastro({ produtores: [...enfileirados, ANA], propriedades: [BOA_VISTA] });
 
     renderizarNoCadastro(<PropriedadesSecao />);
 
     const linha = await screen.findByRole('row', { name: /Fazenda Boa Vista/ });
-    expect(within(linha).getByText('—')).toBeInTheDocument();
-    expect(within(linha).queryByText('Ana Lima')).toBeNull();
+    expect(within(linha).getByText('Ana Lima')).toBeInTheDocument();
   });
 
   it('procura o Produtor pelo nome e oferece só quem casa', async () => {
