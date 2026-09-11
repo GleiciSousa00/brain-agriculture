@@ -27,7 +27,7 @@ export function ControleDeSafra({ safras, safraId, aoEscolher }: Props) {
           aoEscolher(evento.target.value);
         }}
       >
-        <option value={TODAS_AS_SAFRAS}>Todas as Safras</option>
+        <option value={TODAS_AS_SAFRAS}>Todas</option>
         {safras.map((safra) => (
           <option key={safra.id} value={safra.id}>
             {safra.ano}

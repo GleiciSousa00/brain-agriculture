@@ -10,6 +10,9 @@ endereço desconhecido caem no painel.
 
 **Gráfico: `recharts`.** Os três gráficos de pizza usam `PieChart` com tamanho fixo. A
 legenda com os números não é a do Recharts: é uma lista escrita à mão, ao lado do desenho.
+Esta escolha foi revista pelo registro
+[`0011`](0011-cadastro-navegado-pela-hierarquia.md): o desenho passou a ser SVG escrito à
+mão e o Recharts saiu do pacote. A legenda em texto continua como está.
 
 **Teste: a interface web ganha Vitest com Testing Library.** Ela não tinha runner
 nenhum: o script `test` era um `echo`. O portão de cobertura da issue 20 continua valendo
@@ -65,5 +68,5 @@ um `rewrite` explícito; trocar um pelo outro sem trocar o outro quebra todas as
 
 Recharts não desenha nada num ambiente sem tamanho, e o `jsdom` é um desses. Por isso o
 gráfico tem tamanho fixo e a legenda em texto existe: é ela que o teste afirma, e é ela
-que um leitor de tela lê. Um gráfico que passe a depender de `ResponsiveContainer` fica
-invisível para os dois.
+que um leitor de tela lê. Com a saída do Recharts pelo registro `0011` a primeira parte
+deixou de valer; a segunda continua, e é o motivo de a legenda nunca ter sido do desenho.

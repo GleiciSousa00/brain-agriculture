@@ -35,7 +35,7 @@ export function BotaoDeExclusao({ rotulo, pergunta, aoConfirmar }: Props) {
     return (
       <button
         type="button"
-        className="perigo"
+        className="perigo miudo"
         onClick={() => {
           setPerguntando(true);
         }}
@@ -47,11 +47,13 @@ export function BotaoDeExclusao({ rotulo, pergunta, aoConfirmar }: Props) {
 
   return (
     <span className="confirmacao">
-      <span id={perguntaId}>{pergunta}</span>
+      <span className="pergunta" id={perguntaId}>
+        {pergunta}
+      </span>
       <button
         ref={confirmar}
         type="button"
-        className="perigo"
+        className="perigo principal miudo"
         aria-describedby={perguntaId}
         onClick={() => {
           setPerguntando(false);
@@ -62,6 +64,7 @@ export function BotaoDeExclusao({ rotulo, pergunta, aoConfirmar }: Props) {
       </button>
       <button
         type="button"
+        className="miudo"
         onClick={() => {
           setPerguntando(false);
         }}

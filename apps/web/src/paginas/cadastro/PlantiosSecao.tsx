@@ -1,100 +1,116 @@
-import { useId, useState } from 'react';
-import { Escolha, NADA_ESCOLHIDO } from '../../componentes/Escolha';
+import { useId } from 'react';
+import { Link, useNavigate } from 'react-router';
+import { NADA_ESCOLHIDO } from '../../componentes/Escolha';
+import { formatarHectares } from '../../formato';
 import { useCadastro } from './CadastroContexto';
+import { SEM_RECORTE, plantiosDe, propriedadesDe, useHierarquia } from './hierarquia';
 import { PlantiosDaPropriedade } from './PlantiosDaPropriedade';
-import { useTentativa } from './useTentativa';
 
-const SEM_PROPRIEDADE_ESCOLHIDA = 'Escolha uma Propriedade para ver e registrar os Plantios dela.';
 const SEM_PROPRIEDADE = 'Registre uma Propriedade antes: todo Plantio acontece em uma.';
+const FORA_DO_CATALOGO = 'Propriedade fora do catálogo';
 
 /**
  * Os Plantios de uma Propriedade de cada vez.
  *
- * A Propriedade escolhida no alto manda nas duas coisas: é a que a tabela mostra e é onde
- * o formulário registra. Um Plantio é a trinca de Propriedade, Cultura e Safra, e nenhuma
- * das três se digita: as três se apontam nas listas.
+ * Qual Propriedade é isso mora no endereço, e não em estado: chegar aqui pela coluna
+ * Plantios da lista de Propriedades e chegar pelo campo de escolha têm de dar no mesmo
+ * lugar, e esse lugar tem de sobreviver a recarregar a página.
  */
 export function PlantiosSecao() {
-  const { propriedades, culturas, safras, registrarPlantio } = useCadastro();
+  const { produtorId, propriedadeId, abrindo } = useHierarquia();
+  const { propriedades, nomeDoProdutor, carregando, erro } = useCadastro();
+  const navegar = useNavigate();
+  const campoId = useId();
 
-  const [propriedadeId, setPropriedadeId] = useState(NADA_ESCOLHIDO);
-  const [culturaId, setCulturaId] = useState(NADA_ESCOLHIDO);
-  const [safraId, setSafraId] = useState(NADA_ESCOLHIDO);
-  const { recusa, tentar, limpar } = useTentativa();
-  const tituloId = useId();
+  // O recorte por Produtor manda também aqui: vindo das Propriedades de alguém, a escolha
+  // não volta a oferecer o cadastro inteiro.
+  const oferecidas =
+    produtorId === ''
+      ? propriedades
+      : propriedades.filter((propriedade) => propriedade.produtorId === produtorId);
+  const escolhida = propriedades.find((propriedade) => propriedade.id === propriedadeId);
+  // A escolha vale mesmo quando o catálogo não a alcança: os Plantios se buscam pelo
+  // identificador, e quem chegou pela coluna Plantios de uma Propriedade da centésima
+  // primeira página em diante não pode cair numa tela que diz não haver escolha nenhuma.
+  const temEscolha = propriedadeId !== SEM_RECORTE;
 
-  /** A unicidade da trinca é regra da API. A tela repete o que ela respondeu. */
-  async function enviar(): Promise<void> {
-    if (await tentar(() => registrarPlantio({ propriedadeId, culturaId, safraId }))) {
-      setCulturaId(NADA_ESCOLHIDO);
-      setSafraId(NADA_ESCOLHIDO);
-    }
-  }
-
-  if (propriedades.length === 0) {
+  // Dizer que não há Propriedade nenhuma exige saber que não há: com o catálogo em voo,
+  // ou depois de ele falhar, a lista vazia é ausência de resposta e não de registro.
+  if (!temEscolha && !carregando && erro === undefined && propriedades.length === 0) {
     return (
-      <section className="secao" aria-labelledby={tituloId}>
-        <h2 id={tituloId}>Plantios</h2>
-        <p className="cartao vazio">{SEM_PROPRIEDADE}</p>
-      </section>
+      <div className="convite">
+        <p>{SEM_PROPRIEDADE}</p>
+        <Link to={propriedadesDe(produtorId)}>Ir para Propriedades</Link>
+      </div>
     );
   }
 
   return (
-    <section className="secao" aria-labelledby={tituloId}>
-      <h2 id={tituloId}>Plantios</h2>
+    <div className="secao">
+      <div className="seletor">
+        <label htmlFor={campoId}>Propriedade</label>
+        <select
+          id={campoId}
+          value={propriedadeId}
+          onChange={(evento) => {
+            const escolhido = evento.target.value;
+            const dona = propriedades.find((propriedade) => propriedade.id === escolhido);
 
-      <div className="cartao formulario">
-        <Escolha
-          rotulo="Propriedade"
-          valor={propriedadeId}
-          aoMudar={(valor) => {
-            setPropriedadeId(valor);
-            limpar();
+            // Escolher aqui é navegar: o endereço passa a ser o dessa Propriedade, e o
+            // rastro do alto se refaz com ela.
+            navegar(plantiosDe(escolhido, dona?.produtorId ?? produtorId));
           }}
-          vazia="Escolha uma Propriedade"
-          opcoes={propriedades.map((propriedade) => ({
-            valor: propriedade.id,
-            rotulo: propriedade.nome,
-          }))}
-        />
-
-        {propriedadeId !== NADA_ESCOLHIDO && (
-          <form
-            noValidate
-            onSubmit={(evento) => {
-              evento.preventDefault();
-              void enviar();
-            }}
-          >
-            <h3>Novo Plantio</h3>
-            <Escolha
-              rotulo="Cultura"
-              valor={culturaId}
-              aoMudar={setCulturaId}
-              vazia="Escolha uma Cultura"
-              opcoes={culturas.map((cultura) => ({ valor: cultura.id, rotulo: cultura.nome }))}
-            />
-            <Escolha
-              rotulo="Safra"
-              valor={safraId}
-              aoMudar={setSafraId}
-              vazia="Escolha uma Safra"
-              opcoes={safras.map((safra) => ({ valor: safra.id, rotulo: String(safra.ano) }))}
-            />
-            <p className="acoes">
-              <button type="submit">Registrar</button>
-            </p>
-            {recusa !== undefined && <p role="alert">{recusa}</p>}
-          </form>
+        >
+          <option value={NADA_ESCOLHIDO}>
+            {produtorId === ''
+              ? 'Escolha uma Propriedade'
+              : `Escolha uma Propriedade de ${nomeDoProdutor(produtorId)}`}
+          </option>
+          {/* O que manda é a lista oferecida, e não o catálogo inteiro: a escolha pode
+              ser de outro Produtor que não o do recorte, e um valor sem opção deixaria o
+              campo mostrando o texto neutro sobre uma lista que já tem dona. */}
+          {temEscolha && !oferecidas.some((propriedade) => propriedade.id === propriedadeId) && (
+            <option value={propriedadeId}>{escolhida?.nome ?? FORA_DO_CATALOGO}</option>
+          )}
+          {oferecidas.map((propriedade) => (
+            <option key={propriedade.id} value={propriedade.id}>
+              {produtorId === ''
+                ? `${propriedade.nome} · ${nomeDoProdutor(propriedade.produtorId)}`
+                : propriedade.nome}
+            </option>
+          ))}
+        </select>
+        {escolhida !== undefined && (
+          <span className="detalhe">
+            {escolhida.cidade}/{escolhida.estado} · {formatarHectares(escolhida.areaTotal)}
+          </span>
         )}
       </div>
 
-      {propriedadeId === NADA_ESCOLHIDO ? (
-        <p className="vazio">{SEM_PROPRIEDADE_ESCOLHIDA}</p>
+      {temEscolha ? (
+        <PlantiosDaPropriedade
+          key={propriedadeId}
+          propriedadeId={propriedadeId}
+          nome={escolhida?.nome}
+          abrindo={abrindo}
+        />
       ) : (
-        <PlantiosDaPropriedade key={propriedadeId} propriedadeId={propriedadeId} />
+        <SemPropriedadeEscolhida produtorId={produtorId} />
       )}
-    </section>
+    </div>
+  );
+}
+
+interface PropsDoConvite {
+  produtorId: string;
+}
+
+/** Ninguém escolheu nada ainda, e a tela diz os dois caminhos que existem para escolher. */
+function SemPropriedadeEscolhida({ produtorId }: PropsDoConvite) {
+  return (
+    <p className="convite">
+      Escolha uma Propriedade acima, ou venha pela coluna Plantios da lista de{' '}
+      <Link to={propriedadesDe(produtorId)}>Propriedades</Link>.
+    </p>
   );
 }

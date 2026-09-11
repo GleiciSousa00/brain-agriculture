@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
@@ -32,7 +32,8 @@ describe('a tela de cadastro', () => {
 
     abrirEm('/cadastro/plantios');
 
-    expect(await screen.findByRole('heading', { name: 'Plantios', level: 2 })).toBeInTheDocument();
+    // Sem Propriedade escolhida a seção não lista nada, e é a escolha que a identifica.
+    expect(await screen.findByLabelText('Propriedade')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Produtores', level: 2 })).toBeNull();
   });
 
@@ -44,9 +45,8 @@ describe('a tela de cadastro', () => {
 
     await userEvent.click(screen.getByRole('link', { name: 'Culturas e Safras' }));
 
-    expect(
-      await screen.findByRole('heading', { name: 'Culturas e Safras', level: 2 }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Culturas', level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Safras', level: 2 })).toBeInTheDocument();
   });
 
   it('busca os catálogos uma vez só, e não uma por seção visitada', async () => {
@@ -56,9 +56,52 @@ describe('a tela de cadastro', () => {
     await screen.findByRole('heading', { name: 'Produtores', level: 2 });
 
     await userEvent.click(screen.getByRole('link', { name: 'Culturas e Safras' }));
-    await screen.findByRole('heading', { name: 'Culturas e Safras', level: 2 });
+    await screen.findByRole('heading', { name: 'Culturas', level: 2 });
 
     expect(screen.getByText('Soja')).toBeInTheDocument();
+  });
+
+  it('mostra o rastro de onde se veio quando a lista está recortada', async () => {
+    servirCadastro(BASE, {
+      'GET /api/painel': () => ({ corpo: PAINEL_VAZIO }),
+      'GET /api/produtores/:id': () => ({
+        corpo: { ...ANA, propriedades: { itens: [BOA_VISTA], total: 1, pagina: 1, tamanho: 10 } },
+      }),
+    });
+
+    abrirEm(`/cadastro/propriedades?produtor=${ANA.id}`);
+
+    const rastro = within(await screen.findByRole('navigation', { name: 'Contexto' }));
+    expect(rastro.getByRole('link', { name: 'Todos os Produtores' })).toBeInTheDocument();
+    expect(rastro.getByText('Ana Lima')).toHaveAttribute('aria-current', 'location');
+  });
+
+  it('cala sobre o rastro quando não há recorte nenhum', async () => {
+    servirCadastro(BASE, { 'GET /api/painel': () => ({ corpo: PAINEL_VAZIO }) });
+
+    abrirEm('/cadastro/propriedades');
+    await screen.findByRole('heading', { name: 'Propriedades', level: 2 });
+
+    expect(screen.queryByRole('navigation', { name: 'Contexto' })).toBeNull();
+  });
+
+  it('leva o recorte junto ao trocar de seção pela trilha', async () => {
+    servirCadastro(BASE, {
+      'GET /api/painel': () => ({ corpo: PAINEL_VAZIO }),
+      'GET /api/produtores/:id': () => ({
+        corpo: { ...ANA, propriedades: { itens: [BOA_VISTA], total: 1, pagina: 1, tamanho: 10 } },
+      }),
+    });
+
+    abrirEm(`/cadastro/propriedades?produtor=${ANA.id}`);
+    await screen.findByRole('heading', { name: 'Propriedades de Ana Lima', level: 2 });
+
+    const trilha = within(screen.getByRole('navigation', { name: 'Seções do cadastro' }));
+    // Sair para os Plantios e voltar não pode obrigar a escolher o Produtor de novo.
+    expect(trilha.getByRole('link', { name: 'Plantios' })).toHaveAttribute(
+      'href',
+      `/cadastro/plantios?produtor=${ANA.id}`,
+    );
   });
 
   it('avisa quando os catálogos não vêm, sem deixar a tela em branco', async () => {

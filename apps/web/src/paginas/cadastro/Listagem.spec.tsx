@@ -10,6 +10,7 @@ import { ANA } from '../../teste/exemplos';
 import { useCadastro } from './CadastroContexto';
 import { Listagem } from './Listagem';
 
+const TITULO = 'Itens';
 const CARREGANDO = 'Carregando os itens…';
 const VAZIO = 'Nada por aqui ainda.';
 
@@ -76,7 +77,7 @@ function montar(
   renderizarNoCadastro(
     <>
       <Escrita antes={antes} />
-      <Listagem listar={listar} carregando={CARREGANDO} vazio={VAZIO}>
+      <Listagem titulo={TITULO} listar={listar} carregando={CARREGANDO} vazio={VAZIO}>
         {tabelaDe}
       </Listagem>
     </>,
@@ -200,6 +201,7 @@ describe('a listagem paginada do cadastro', () => {
           </button>
           <p>renderizações: {vezes}</p>
           <Listagem
+            titulo={TITULO}
             listar={(pagina, tamanho) => {
               buscas += 1;
 

@@ -12,7 +12,7 @@ import {
   SITIO_DO_MEIO,
   SOJA,
 } from '../../teste/exemplos';
-import { corpoEnviadoPara } from '../../teste/fetch-falso';
+import { corpoEnviadoPara, servirRotas } from '../../teste/fetch-falso';
 import { PlantiosSecao } from './PlantiosSecao';
 import type { RotaFalsa } from '../../teste/fetch-falso';
 
@@ -39,15 +39,18 @@ async function escolher(rotulo: string, valor: string): Promise<void> {
   await userEvent.selectOptions(screen.getByLabelText(rotulo), valor);
 }
 
+/** O formulário nasce fechado: quem vai registrar pede por ele antes. */
+async function abrirONovo(): Promise<void> {
+  await userEvent.click(await screen.findByRole('button', { name: 'Novo Plantio' }));
+}
+
 describe('a seção de Plantios', () => {
   it('pede uma Propriedade antes de mostrar Plantio nenhum', async () => {
     servirCadastro(BASE, rotaDosPlantios([]));
 
     renderizarNoCadastro(<PlantiosSecao />);
 
-    expect(
-      await screen.findByText('Escolha uma Propriedade para ver e registrar os Plantios dela.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Escolha uma Propriedade acima/)).toBeInTheDocument();
   });
 
   it('escolhe a Propriedade pelo nome, que é o que distingue duas na mesma cidade', async () => {
@@ -56,8 +59,14 @@ describe('a seção de Plantios', () => {
     renderizarNoCadastro(<PlantiosSecao />);
 
     const campo = await screen.findByLabelText('Propriedade');
-    expect(within(campo).getByRole('option', { name: 'Fazenda Boa Vista' })).toBeInTheDocument();
-    expect(within(campo).getByRole('option', { name: 'Sítio do Meio' })).toBeInTheDocument();
+    // O nome do Produtor vem junto: fora do recorte de um deles, o campo oferece o
+    // cadastro inteiro, e duas Propriedades podem ter nomes parecidos.
+    expect(
+      within(campo).getByRole('option', { name: 'Fazenda Boa Vista · Ana Lima' }),
+    ).toBeInTheDocument();
+    expect(
+      within(campo).getByRole('option', { name: 'Sítio do Meio · Ana Lima' }),
+    ).toBeInTheDocument();
   });
 
   it('mostra os Plantios da Propriedade escolhida, com Cultura e Safra por nome', async () => {
@@ -85,8 +94,9 @@ describe('a seção de Plantios', () => {
     renderizarNoCadastro(<PlantiosSecao />);
     await screen.findByLabelText('Propriedade');
     await escolher('Propriedade', BOA_VISTA.id);
+    await abrirONovo();
 
-    const cultura = await screen.findByLabelText('Cultura');
+    const cultura = screen.getByLabelText('Cultura');
     const safra = screen.getByLabelText('Safra');
     expect(cultura.tagName).toBe('SELECT');
     expect(safra.tagName).toBe('SELECT');
@@ -108,7 +118,7 @@ describe('a seção de Plantios', () => {
     renderizarNoCadastro(<PlantiosSecao />);
     await screen.findByLabelText('Propriedade');
     await escolher('Propriedade', BOA_VISTA.id);
-    await screen.findByLabelText('Cultura');
+    await abrirONovo();
 
     await escolher('Cultura', SOJA.id);
     await escolher('Safra', SAFRA_DE_2025.id);
@@ -138,7 +148,7 @@ describe('a seção de Plantios', () => {
     renderizarNoCadastro(<PlantiosSecao />);
     await screen.findByLabelText('Propriedade');
     await escolher('Propriedade', BOA_VISTA.id);
-    await screen.findByLabelText('Cultura');
+    await abrirONovo();
 
     await escolher('Cultura', SOJA.id);
     await escolher('Safra', SAFRA_DE_2025.id);
@@ -171,6 +181,46 @@ describe('a seção de Plantios', () => {
     expect(
       await screen.findByText('Nenhum Plantio registrado nesta Propriedade ainda.'),
     ).toBeInTheDocument();
+  });
+
+  it('lista os Plantios de uma Propriedade que o catálogo não alcança', async () => {
+    // Passando do centésimo registro a Propriedade fica fora do catálogo, mas a coluna
+    // Plantios da lista dela aponta para cá: o link não pode dar em tela sem saída.
+    const deFora = { ...SITIO_DO_MEIO, id: 'propriedade-101' };
+    servirCadastro(
+      { ...BASE, propriedades: [BOA_VISTA] },
+      rotaDosPlantios([plantioDe('pl1', deFora, MILHO, SAFRA_DE_2024)]),
+    );
+
+    renderizarNoCadastro(<PlantiosSecao />, `/cadastro/plantios?propriedade=${deFora.id}`);
+
+    const linha = await screen.findByRole('row', { name: /Milho/ });
+    expect(within(linha).getByText('2024')).toBeInTheDocument();
+    expect(screen.queryByText(/Escolha uma Propriedade acima/)).toBeNull();
+  });
+
+  it('não acusa cadastro vazio enquanto o catálogo não chega', async () => {
+    // Entrando direto no endereço de uma Propriedade, o catálogo ainda está em voo. Dizer
+    // "registre uma Propriedade antes" aí seria negar a que o próprio endereço aponta.
+    servirRotas({
+      'GET /api/produtores': () => new Promise(() => undefined),
+      'GET /api/propriedades': () => new Promise(() => undefined),
+      'GET /api/culturas': () => ({ corpo: [] }),
+      'GET /api/safras': () => ({ corpo: [] }),
+      ...rotaDosPlantios([plantioDe('pl1', BOA_VISTA, SOJA, SAFRA_DE_2025)]),
+    });
+
+    renderizarNoCadastro(<PlantiosSecao />, `/cadastro/plantios?propriedade=${BOA_VISTA.id}`);
+
+    // A lista é buscada pelo identificador, então ela vem; o nome, que mora no catálogo,
+    // é que ainda não veio.
+    expect(
+      await screen.findByRole('heading', { name: 'Plantios da Propriedade', level: 2 }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Registre uma Propriedade antes: todo Plantio acontece em uma.'),
+    ).toBeNull();
   });
 
   it('sem Propriedade cadastrada, diz o que falta em vez de mostrar lista vazia', async () => {
