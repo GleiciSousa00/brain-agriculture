@@ -6,7 +6,7 @@ import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { Campo } from '../../componentes/Campo';
 import { Escolha } from '../../componentes/Escolha';
 import { comoNumero, formatarArea, formatarHectares } from '../../formato';
-import { useCadastro } from './CadastroContexto';
+import { FORA_DO_CATALOGO, useCadastro } from './CadastroContexto';
 import {
   PRODUTORES,
   plantiosDe,
@@ -178,9 +178,12 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
   // pode ser recusado é pior do que um formulário que não aparece.
   const podeRegistrar = emEdicao !== undefined || produtores.length > 0;
   const recortado = produtorId !== '';
-  // Quem é o recorte só se sabe com o catálogo em mãos. Até lá a lista já é a dele, mas
-  // ainda não tem nome: escrever "Propriedades de —" seria pior do que não nomear.
-  const dono = recortado && !carregando ? nomeDoProdutor(produtorId) : '';
+  // Quem é o recorte só se sabe com o catálogo em mãos, e nem sempre se sabe: passando do
+  // centésimo Produtor, o dono da lista pode ser um dos que não vieram. Nos dois casos a
+  // lista já é a dele, mas ainda não tem nome, e escrever "Propriedades de —" seria pior
+  // do que não nomear o recorte.
+  const nome = recortado && !carregando ? nomeDoProdutor(produtorId) : FORA_DO_CATALOGO;
+  const dono = nome === FORA_DO_CATALOGO ? '' : nome;
 
   return (
     <div className="secao">

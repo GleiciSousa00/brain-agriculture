@@ -18,7 +18,7 @@ const FORA_DO_CATALOGO = 'Propriedade fora do catálogo';
  */
 export function PlantiosSecao() {
   const { produtorId, propriedadeId, abrindo } = useHierarquia();
-  const { propriedades, nomeDoProdutor } = useCadastro();
+  const { propriedades, nomeDoProdutor, carregando, erro } = useCadastro();
   const navegar = useNavigate();
   const campoId = useId();
 
@@ -34,7 +34,9 @@ export function PlantiosSecao() {
   // primeira página em diante não pode cair numa tela que diz não haver escolha nenhuma.
   const temEscolha = propriedadeId !== SEM_RECORTE;
 
-  if (propriedades.length === 0) {
+  // Dizer que não há Propriedade nenhuma exige saber que não há: com o catálogo em voo,
+  // ou depois de ele falhar, a lista vazia é ausência de resposta e não de registro.
+  if (!temEscolha && !carregando && erro === undefined && propriedades.length === 0) {
     return (
       <div className="convite">
         <p>{SEM_PROPRIEDADE}</p>
@@ -64,8 +66,11 @@ export function PlantiosSecao() {
               ? 'Escolha uma Propriedade'
               : `Escolha uma Propriedade de ${nomeDoProdutor(produtorId)}`}
           </option>
-          {temEscolha && escolhida === undefined && (
-            <option value={propriedadeId}>{FORA_DO_CATALOGO}</option>
+          {/* O que manda é a lista oferecida, e não o catálogo inteiro: a escolha pode
+              ser de outro Produtor que não o do recorte, e um valor sem opção deixaria o
+              campo mostrando o texto neutro sobre uma lista que já tem dona. */}
+          {temEscolha && !oferecidas.some((propriedade) => propriedade.id === propriedadeId) && (
+            <option value={propriedadeId}>{escolhida?.nome ?? FORA_DO_CATALOGO}</option>
           )}
           {oferecidas.map((propriedade) => (
             <option key={propriedade.id} value={propriedade.id}>

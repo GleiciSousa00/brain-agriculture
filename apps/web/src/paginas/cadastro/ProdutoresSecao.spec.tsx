@@ -294,6 +294,23 @@ describe('a seção de Produtores', () => {
     expect(descida).toHaveAttribute('href', `/cadastro/propriedades?produtor=${ANA.id}&novo=1`);
   });
 
+  it('não oferece registrar a primeira antes de o catálogo dizer quantas existem', async () => {
+    // A tabela vem de uma chamada e o catálogo de outra. Segurando o catálogo, a tabela
+    // pinta primeiro: contar aí seria contar zero e oferecer o que já existe.
+    servirRotas({
+      'GET /api/produtores': ({ url }) => ({ corpo: paginar([ANA], url) }),
+      'GET /api/propriedades': () => new Promise(() => undefined),
+      'GET /api/culturas': () => ({ corpo: [] }),
+      'GET /api/safras': () => ({ corpo: [] }),
+    });
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Ana Lima');
+
+    expect(screen.queryByText('Registrar a primeira')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Ver as Propriedades de Ana Lima' })).toBeInTheDocument();
+  });
+
   it('tira a tabela da tela quando a listagem falha, em vez de deixar linha velha', async () => {
     const produtores = [{ ...ANA }];
     let listagemQuebrada = false;

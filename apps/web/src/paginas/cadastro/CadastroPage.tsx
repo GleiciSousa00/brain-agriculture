@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router';
-import { CadastroProvider, useCadastro } from './CadastroContexto';
+import { FORA_DO_CATALOGO, CadastroProvider, useCadastro } from './CadastroContexto';
 import { CATALOGOS, PRODUTORES, plantiosDe, propriedadesDe, useHierarquia } from './hierarquia';
 
 const CORTADO =
@@ -38,9 +38,12 @@ function AvisoDosCatalogos() {
 function Rastro() {
   const { produtorId, propriedadeId } = useHierarquia();
   const { nomeDoProdutor, propriedades, carregando } = useCadastro();
+  const nomeDoDono = carregando ? FORA_DO_CATALOGO : nomeDoProdutor(produtorId);
 
-  // Sem catálogo ainda não há nome, e um rastro de travessões diria menos do que nada.
-  if (produtorId === '' || carregando) {
+  // Um rastro de travessões diz menos do que rastro nenhum, e a saída para o cadastro
+  // inteiro continua na faixa da lista. Cala-se enquanto o catálogo não chega e quando
+  // ele não alcança o Produtor do recorte.
+  if (produtorId === '' || nomeDoDono === FORA_DO_CATALOGO) {
     return null;
   }
 
@@ -53,10 +56,10 @@ function Rastro() {
         ›
       </span>
       {propriedade === undefined ? (
-        <span aria-current="location">{nomeDoProdutor(produtorId)}</span>
+        <span aria-current="location">{nomeDoDono}</span>
       ) : (
         <>
-          <Link to={propriedadesDe(produtorId)}>{nomeDoProdutor(produtorId)}</Link>
+          <Link to={propriedadesDe(produtorId)}>{nomeDoDono}</Link>
           <span aria-hidden="true" className="seta">
             ›
           </span>

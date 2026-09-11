@@ -4,7 +4,7 @@ import { listarPlantiosDaPropriedade } from '../../api/plantios';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { Escolha, NADA_ESCOLHIDO } from '../../componentes/Escolha';
 import { useCadastro } from './CadastroContexto';
-import { CATALOGOS } from './hierarquia';
+import { CATALOGOS, useEsquecerAbertura } from './hierarquia';
 import { Listagem } from './Listagem';
 import { useTentativa } from './useTentativa';
 
@@ -39,6 +39,7 @@ export function PlantiosDaPropriedade({ propriedadeId, nome, abrindo }: Props) {
   const { culturas, safras, nomeDaCultura, anoDaSafra, registrarPlantio, excluirPlantio } =
     useCadastro();
 
+  const esquecerAbertura = useEsquecerAbertura();
   const [aberto, setAberto] = useState(abrindo);
   const [culturaId, setCulturaId] = useState(NADA_ESCOLHIDO);
   const [safraId, setSafraId] = useState(NADA_ESCOLHIDO);
@@ -50,6 +51,7 @@ export function PlantiosDaPropriedade({ propriedadeId, nome, abrindo }: Props) {
     setCulturaId(NADA_ESCOLHIDO);
     setSafraId(NADA_ESCOLHIDO);
     tentativaDoFormulario.limpar();
+    esquecerAbertura();
   }
 
   /** A unicidade da trinca é regra da API. A tela repete o que ela respondeu. */

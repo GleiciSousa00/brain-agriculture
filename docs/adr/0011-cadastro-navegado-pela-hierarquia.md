@@ -85,4 +85,5 @@ A tipografia passou a ser a Albert Sans, e os dois arquivos variáveis dela fica
 estilo de terceiro bloqueando a primeira pintura, contra o que o registro `0009` decidiu
 sobre a interface falar só com a própria origem — num ambiente sem saída para a internet,
 a tela esperaria a requisição falhar antes de pintar. São 55 KB no pacote, e a pilha de
-sistema continua como reserva.
+sistema continua como reserva. A fonte é SIL Open Font License 1.1, e a licença fica em
+`apps/web/src/fontes/OFL.txt`: redistribuir os arquivos sem ela é o que a licença proíbe.

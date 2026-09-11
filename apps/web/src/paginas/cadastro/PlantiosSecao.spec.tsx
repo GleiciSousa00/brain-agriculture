@@ -12,7 +12,7 @@ import {
   SITIO_DO_MEIO,
   SOJA,
 } from '../../teste/exemplos';
-import { corpoEnviadoPara } from '../../teste/fetch-falso';
+import { corpoEnviadoPara, servirRotas } from '../../teste/fetch-falso';
 import { PlantiosSecao } from './PlantiosSecao';
 import type { RotaFalsa } from '../../teste/fetch-falso';
 
@@ -199,6 +199,30 @@ describe('a seção de Plantios', () => {
     const linha = await screen.findByRole('row', { name: /Milho/ });
     expect(within(linha).getByText('2024')).toBeInTheDocument();
     expect(screen.queryByText(/Escolha uma Propriedade acima/)).toBeNull();
+  });
+
+  it('não acusa cadastro vazio enquanto o catálogo não chega', async () => {
+    // Entrando direto no endereço de uma Propriedade, o catálogo ainda está em voo. Dizer
+    // "registre uma Propriedade antes" aí seria negar a que o próprio endereço aponta.
+    servirRotas({
+      'GET /api/produtores': () => new Promise(() => undefined),
+      'GET /api/propriedades': () => new Promise(() => undefined),
+      'GET /api/culturas': () => ({ corpo: [] }),
+      'GET /api/safras': () => ({ corpo: [] }),
+      ...rotaDosPlantios([plantioDe('pl1', BOA_VISTA, SOJA, SAFRA_DE_2025)]),
+    });
+
+    renderizarNoCadastro(<PlantiosSecao />, `/cadastro/plantios?propriedade=${BOA_VISTA.id}`);
+
+    // A lista é buscada pelo identificador, então ela vem; o nome, que mora no catálogo,
+    // é que ainda não veio.
+    expect(
+      await screen.findByRole('heading', { name: 'Plantios da Propriedade', level: 2 }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Registre uma Propriedade antes: todo Plantio acontece em uma.'),
+    ).toBeNull();
   });
 
   it('sem Propriedade cadastrada, diz o que falta em vez de mostrar lista vazia', async () => {

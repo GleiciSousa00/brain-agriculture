@@ -56,7 +56,7 @@ export interface Catalogos {
  * É o sintoma de `cortado`: o catálogo veio até cem e o registro apontado ficou de fora.
  * Quem explica o travessão é o aviso do alto do cadastro, e não a célula onde ele aparece.
  */
-const FORA_DO_CATALOGO = '—';
+export const FORA_DO_CATALOGO = '—';
 
 const CATALOGOS_VAZIOS: Catalogos = {
   produtores: [],
@@ -90,8 +90,9 @@ export interface Cadastro extends Catalogos {
    * Quantas Propriedades um Produtor tem, contadas no catálogo que já está em memória.
    *
    * É o número que a coluna de Propriedades mostra, e é ele que distingue o Produtor sem
-   * Propriedade nenhuma — o único a quem a tela oferece registrar a primeira. Passando do
-   * teto de cem, a conta é do que veio, e é isso que o aviso de `cortado` explica.
+   * Propriedade nenhuma — o único a quem a tela oferece registrar a primeira. Só vale com
+   * o catálogo inteiro em mãos: enquanto ele não chega, e quando `cortado` diz que ele
+   * veio pela metade, a conta é do que veio e a coluna deixa de contar.
    */
   quantasPropriedadesDe: (produtorId: string) => number;
   criarProdutor: (corpo: CriarProdutor) => Promise<void>;

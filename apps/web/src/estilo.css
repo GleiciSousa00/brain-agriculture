@@ -7,6 +7,9 @@
  * estilo de terceiro bloqueia a primeira pintura até responder — num ambiente sem saída
  * para a internet, até falhar. São dois arquivos variáveis, com os pesos de 400 a 700
  * dentro de cada um.
+ *
+ * Albert Sans, sob a SIL Open Font License 1.1. A licença viaja junto dos arquivos, em
+ * `fontes/OFL.txt`, que é o que ela exige de quem redistribui.
  */
 @font-face {
   font-family: 'Albert Sans';

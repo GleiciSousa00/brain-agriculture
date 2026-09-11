@@ -15,8 +15,14 @@ const VAZIO = 'Nenhum Produtor cadastrado ainda.';
 const PRIMEIRA_PROPRIEDADE = 'Registrar a primeira';
 
 export function ProdutoresSecao() {
-  const { criarProdutor, editarProdutor, excluirProdutor, quantasPropriedadesDe, cortado } =
-    useCadastro();
+  const {
+    criarProdutor,
+    editarProdutor,
+    excluirProdutor,
+    quantasPropriedadesDe,
+    cortado,
+    carregando,
+  } = useCadastro();
 
   // Fechado, o formulário não ocupa a tela de quem só veio consultar. Aberto, ele é o de
   // registro ou o de edição, e é o Produtor em edição que diz qual dos dois.
@@ -150,7 +156,11 @@ export function ProdutoresSecao() {
                   <td>
                     <PropriedadesDo
                       produtor={produtor}
-                      quantas={cortado ? undefined : quantasPropriedadesDe(produtor.id)}
+                      // A tabela vem de uma chamada, o catálogo de outra, e a tabela
+                      // costuma chegar primeiro. Contar antes dele seria contar zero.
+                      quantas={
+                        cortado || carregando ? undefined : quantasPropriedadesDe(produtor.id)
+                      }
                     />
                   </td>
                   <td className="acoes">
