@@ -8,6 +8,22 @@ O glossário do domínio está em [`CONTEXT.md`](CONTEXT.md), e as decisões dif
 [`docs/adr`](docs/adr), com uma linha por registro em
 [Registros de decisão](#registros-de-decisão).
 
+## No ar
+
+| O quê | Onde |
+|---|---|
+| Painel e cadastro | https://brain-ag-test.duckdns.org |
+| Especificação navegável | https://brain-ag-test.duckdns.org/api/docs |
+| Rota de saúde | https://brain-ag-test.duckdns.org/api/health |
+
+O site inteiro pede usuário e senha. O usuário é `brain-user`, e **a senha vai junto com o
+link na mensagem de entrega**, nunca aqui: o repositório é público, e uma senha commitada
+abriria o cadastro para a internet toda, com poder de apagar Produtor. Trocar a senha do
+lado de lá também não custa commit nenhum.
+
+É a mesma versão que está na `main`: cada push nela põe no ar. O runbook está em
+[`deploy/README.md`](deploy/README.md). Para rodar na sua máquina, é o comando logo abaixo.
+
 ## Subir tudo com um comando
 
 Requisito: Docker com Compose.
@@ -307,7 +323,7 @@ puxando as imagens que o CI publica a cada push na `main`. O Caddy que entrega a
 é o único proxy: termina o TLS, protege tudo com basic auth e repassa `/api`. Publicadas
 as imagens, a pipeline entra na VPS por SSH e sobe a versão nova, então push na `main` é
 deploy. O runbook, o que ficou de fora e por quê estão em
-[`deploy/README.md`](deploy/README.md).
+[`deploy/README.md`](deploy/README.md), e o endereço está em [No ar](#no-ar).
 
 ## Como rodar os testes
 
@@ -322,7 +338,7 @@ São três tipos, e **só um deles precisa de Docker**.
 | Integração, borda HTTP | `pnpm --filter @cadastro-rural/api test:integration test/http-edge.int-spec.ts` | não |
 | Integração, contra um Postgres de verdade | `pnpm test:integration` | **sim** |
 
-**Unidade.** São 249 testes na API e 119 na interface web. Os da API rodam sem banco, sem
+**Unidade.** São 257 testes na API e 119 na interface web. Os da API rodam sem banco, sem
 Nest e sem subir aplicação, que é o que torna o laço de TDD rápido. Os da interface usam
 Vitest com Testing Library e afirmam o comportamento da tela, incluindo a legenda em texto
 que fica ao lado de cada gráfico.
