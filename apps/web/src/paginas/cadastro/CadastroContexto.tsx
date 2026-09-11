@@ -21,7 +21,7 @@ import {
   listarCulturas,
   listarSafras,
 } from '../../api/catalogo';
-import { PRIMEIRA_PAGINA, TAMANHO_MAXIMO } from '../../api/pagina';
+import { PRIMEIRA_PAGINA } from '../../api/pagina';
 import { excluirPlantio, registrarPlantio } from '../../api/plantios';
 import {
   buscarProdutoresPorId,
@@ -31,6 +31,7 @@ import {
   listarProdutores,
 } from '../../api/produtores';
 import {
+  buscarPropriedadesPorId,
   criarPropriedade,
   editarPropriedade,
   excluirPropriedade,
@@ -41,19 +42,19 @@ import { SEM_RECORTE, useHierarquia } from './hierarquia';
 /**
  * O que as seções do cadastro precisam umas das outras.
  *
- * Cultura e Safra são catálogos de verdade: listas curtas e fechadas, que o formulário de
- * Plantio oferece inteiras. As Propriedades vêm junto porque a seção de Plantios mostra os
- * dados da que está escolhida.
+ * Cultura e Safra são os catálogos de verdade: listas curtas e fechadas, que o formulário
+ * de Plantio oferece inteiras.
  *
- * Produtor não está aqui de propósito: quem precisa de um o pede à API por nome ou por
- * identificador. Ver o registro 0012.
+ * Produtor e Propriedade não estão aqui de propósito: quem precisa de um o pede à API por
+ * nome ou por identificador. Ver os registros 0012 e 0013.
  */
 export interface Catalogos {
-  propriedades: Propriedade[];
   culturas: Cultura[];
   safras: Safra[];
   /** Há ao menos um Produtor cadastrado. Sem nenhum, não há em nome de quem registrar. */
   temProdutor: boolean;
+  /** Há ao menos uma Propriedade cadastrada. Sem nenhuma, não há onde plantar. */
+  temPropriedade: boolean;
 }
 
 /**
@@ -66,10 +67,10 @@ export interface Catalogos {
 export const FORA_DO_CATALOGO = '—';
 
 const CATALOGOS_VAZIOS: Catalogos = {
-  propriedades: [],
   culturas: [],
   safras: [],
   temProdutor: false,
+  temPropriedade: false,
 };
 
 export interface Cadastro extends Catalogos {
@@ -90,6 +91,14 @@ export interface Cadastro extends Catalogos {
    * nenhum: é o que faz o rastro se calar em vez de nomear o recorte com um travessão.
    */
   nomeDoDono: string;
+  /**
+   * A Propriedade cujos Plantios a tela mostra, ou nenhuma.
+   *
+   * Ela é pedida à API pelo identificador que está no endereço, e por isso alcança qualquer
+   * Propriedade do cadastro. Indefinida enquanto a resposta não chega, e indefinida quando
+   * não há escolha nenhuma. Ver o registro 0013.
+   */
+  propriedadeEscolhida?: Propriedade;
   nomeDaCultura: (id: string) => string;
   anoDaSafra: (id: string) => string;
   criarProdutor: (corpo: CriarProdutor) => Promise<void>;
@@ -111,22 +120,22 @@ const CadastroContexto = createContext<Cadastro | undefined>(undefined);
 /**
  * Os catálogos, pedidos em paralelo e esperados de uma vez.
  *
- * Dos Produtores só se pergunta se existe algum, e por isso a fatia pedida é de um: o que
- * interessa é o total, e não as linhas.
+ * De Produtor e de Propriedade só se pergunta se existe algum, e por isso a fatia pedida é
+ * de um: o que interessa é o total, e não as linhas.
  */
 async function buscarCatalogos(): Promise<Catalogos> {
   const [produtores, propriedades, culturas, safras] = await Promise.all([
     listarProdutores(PRIMEIRA_PAGINA, 1),
-    listarPropriedades(PRIMEIRA_PAGINA, TAMANHO_MAXIMO),
+    listarPropriedades(PRIMEIRA_PAGINA, 1),
     listarCulturas(),
     listarSafras(),
   ]);
 
   return {
-    propriedades: propriedades.itens,
     culturas,
     safras,
     temProdutor: produtores.total > 0,
+    temPropriedade: propriedades.total > 0,
   };
 }
 
@@ -147,12 +156,16 @@ interface Props {
  * de decisão 0003.
  */
 export function CadastroProvider({ children }: Props) {
-  const { produtorId } = useHierarquia();
+  const { produtorId, propriedadeId } = useHierarquia();
   const [catalogos, setCatalogos] = useState<Catalogos>(CATALOGOS_VAZIOS);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string>();
   const [versao, setVersao] = useState(0);
   const [nomeDoDono, setNomeDoDono] = useState('');
+  const [resolvida, setResolvida] = useState<Propriedade>();
+  // A resolvida só vale enquanto for a que o endereço aponta. Sem isto, trocar de escolha
+  // mostraria o nome da anterior até a resposta nova chegar, e nome errado é pior que nenhum.
+  const propriedadeEscolhida = resolvida?.id === propriedadeId ? resolvida : undefined;
 
   useEffect(() => {
     let cancelado = false;
@@ -214,6 +227,40 @@ export function CadastroProvider({ children }: Props) {
   }, [produtorId, versao]);
 
   /**
+   * Resolve a Propriedade escolhida pelo identificador que está no endereço, e a resolve de
+   * novo a cada escrita, porque uma delas pode ter sido a correção do nome dela.
+   *
+   * A falha fica calada, pelo mesmo motivo do nome do dono: quem não conseguiu nomear a
+   * escolha mostra os Plantios dela mesmo assim, porque eles vêm de outra chamada, que
+   * continua de pé. É o que faz o identificador inventado no endereço não render dois avisos.
+   */
+  useEffect(() => {
+    if (propriedadeId === SEM_RECORTE) {
+      setResolvida(undefined);
+
+      return;
+    }
+
+    let cancelado = false;
+
+    buscarPropriedadesPorId([propriedadeId])
+      .then((encontradas) => {
+        if (!cancelado) {
+          setResolvida(encontradas.at(0));
+        }
+      })
+      .catch(() => {
+        if (!cancelado) {
+          setResolvida(undefined);
+        }
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [propriedadeId, versao]);
+
+  /**
    * Faz a escrita, refaz os catálogos e avisa as tabelas.
    *
    * A recusa da escrita sobe para quem chamou, que é quem sabe onde mostrá-la. A falha da
@@ -248,6 +295,7 @@ export function CadastroProvider({ children }: Props) {
       erro,
       versao,
       nomeDoDono,
+      propriedadeEscolhida,
       nomeDaCultura: (id) =>
         catalogos.culturas.find((cultura) => cultura.id === id)?.nome ?? FORA_DO_CATALOGO,
       anoDaSafra: (id) => {
@@ -268,7 +316,16 @@ export function CadastroProvider({ children }: Props) {
       registrarPlantio: (corpo) => escreverPlantio(() => registrarPlantio(corpo)),
       excluirPlantio: (id) => escreverPlantio(() => excluirPlantio(id)),
     }),
-    [catalogos, carregando, erro, versao, nomeDoDono, escrever, escreverPlantio],
+    [
+      catalogos,
+      carregando,
+      erro,
+      versao,
+      nomeDoDono,
+      propriedadeEscolhida,
+      escrever,
+      escreverPlantio,
+    ],
   );
 
   return <CadastroContexto.Provider value={valor}>{children}</CadastroContexto.Provider>;

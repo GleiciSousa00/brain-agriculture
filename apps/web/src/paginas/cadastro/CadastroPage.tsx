@@ -23,16 +23,14 @@ function AvisoDosCatalogos() {
  * cada degrau, oferece a saída para o de cima.
  */
 function Rastro() {
-  const { produtorId, propriedadeId } = useHierarquia();
-  const { nomeDoDono, propriedades } = useCadastro();
+  const { produtorId } = useHierarquia();
+  const { nomeDoDono, propriedadeEscolhida: propriedade } = useCadastro();
 
   // Um rastro de travessões diz menos do que rastro nenhum, e a saída para o cadastro
   // inteiro continua na faixa da lista. Cala-se enquanto o nome do recorte não chega.
   if (nomeDoDono === '') {
     return null;
   }
-
-  const propriedade = propriedades.find((candidata) => candidata.id === propriedadeId);
 
   return (
     <nav aria-label="Contexto" className="migalhas">

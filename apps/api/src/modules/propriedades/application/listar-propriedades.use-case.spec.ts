@@ -125,4 +125,25 @@ describe('ListarPropriedadesUseCase', () => {
     expect(pagina.itens).toEqual([]);
     expect(pagina.total).toBe(5);
   });
+
+  it('recorta pelos identificadores pedidos, e o total é o do recorte', async () => {
+    const { repository, useCase } = await cenarioCom(0);
+    const escolhida = propriedadeChamada('Fazenda Boa Vista');
+    await repository.save(escolhida);
+    await repository.save(propriedadeChamada('Sítio Boa Esperança'));
+
+    const pagina = await useCase.execute({ pagina: 1, tamanho: 10, ids: [escolhida.id] });
+
+    expect(pagina.itens.map((propriedade) => propriedade.nome)).toEqual(['Fazenda Boa Vista']);
+    expect(pagina.total).toBe(1);
+  });
+
+  it('não devolve nenhuma quando a lista de identificadores vem vazia', async () => {
+    const { useCase } = await cenarioCom(5);
+
+    const pagina = await useCase.execute({ pagina: 1, tamanho: 10, ids: [] });
+
+    expect(pagina.itens).toEqual([]);
+    expect(pagina.total).toBe(0);
+  });
 });

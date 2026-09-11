@@ -40,6 +40,26 @@ export default tseslint.config(
     },
   },
   {
+    // Quem pede identificador no caminho usa o pipe que recusa em português. O do Nest
+    // recusa em inglês, e a interface mostra o `detail` da API sem reescrita: uma rota
+    // esquecida põe texto de biblioteca na tela. O próprio pipe é quem o estende.
+    files: ['apps/api/src/**/*.controller.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@nestjs/common',
+              importNames: ['ParseUUIDPipe'],
+              message: 'Use o IdentificadorPipe, de shared/http/identificador.pipe.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['**/*.cjs'],
     languageOptions: {
       sourceType: 'commonjs',

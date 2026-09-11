@@ -645,6 +645,21 @@
               "maxLength": 120,
               "type": "string"
             }
+          },
+          {
+            "name": "ids",
+            "required": false,
+            "in": "query",
+            "description": "Recorta a listagem a estas Propriedades. Ausente, lista todas.",
+            "schema": {
+              "maxItems": 100,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              }
+            }
           }
         ],
         "responses": {
@@ -659,7 +674,7 @@
             }
           },
           "400": {
-            "description": "A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`.",
+            "description": "A página, o tamanho ou algum identificador pedido não é válido.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -679,7 +694,7 @@
             }
           }
         },
-        "summary": "Lista as Propriedades por nome, em páginas. Recorta pela busca, quando houver.",
+        "summary": "Lista as Propriedades por nome, em páginas. Recorta pela busca e pelos identificadores, quando houver.",
         "tags": [
           "Propriedades"
         ]
