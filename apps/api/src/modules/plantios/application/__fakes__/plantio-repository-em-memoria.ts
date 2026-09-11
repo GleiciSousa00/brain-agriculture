@@ -70,14 +70,15 @@ export class PlantioRepositoryEmMemoria implements PlantioRepository {
     this.plantios.delete(id);
   }
 
+  /** O `Map` guarda na ordem de inserção, e a porta promete o mais novo primeiro. */
   async listByPropriedade({
     propriedadeId,
     deslocamento,
     limite,
   }: RecorteDePlantios): Promise<Recortados<Plantio>> {
-    const daPropriedade = [...this.plantios.values()].filter(
-      (plantio) => plantio.propriedadeId === propriedadeId,
-    );
+    const daPropriedade = [...this.plantios.values()]
+      .filter((plantio) => plantio.propriedadeId === propriedadeId)
+      .reverse();
 
     return {
       itens: daPropriedade.slice(deslocamento, deslocamento + limite),

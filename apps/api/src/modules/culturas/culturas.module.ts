@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import type { Repository } from 'typeorm';
 import { AcrescentarCulturaUseCase } from './application/acrescentar-cultura.use-case';
+import { ExcluirCulturaUseCase } from './application/excluir-cultura.use-case';
 import { ListarCulturasUseCase } from './application/listar-culturas.use-case';
 import { CULTURAS_DO_PAINEL_REPOSITORY } from '../painel/domain/culturas-do-painel.repository';
 import { CULTURA_REPOSITORY, type CulturaRepository } from './domain/cultura.repository';
@@ -39,6 +40,11 @@ import { TypeormCulturasDoPainelRepository } from './infrastructure/typeorm-cult
       provide: ListarCulturasUseCase,
       inject: [CULTURA_REPOSITORY],
       useFactory: (culturas: CulturaRepository) => new ListarCulturasUseCase(culturas),
+    },
+    {
+      provide: ExcluirCulturaUseCase,
+      inject: [CULTURA_REPOSITORY],
+      useFactory: (culturas: CulturaRepository) => new ExcluirCulturaUseCase(culturas),
     },
   ],
   exports: [CULTURAS_DO_PAINEL_REPOSITORY],

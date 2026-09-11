@@ -490,6 +490,18 @@ a:hover {
   font-size: 0.875rem;
 }
 
+/* O que a tela diz quando a escrita passou. Verde para não se confundir com a recusa. */
+.acerto {
+  margin: 0 0 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--verde);
+  border-radius: var(--curva-miuda);
+  background: var(--verde-fraco);
+  color: var(--verde-fundo);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
 .vazio {
   margin: 0;
   padding: 3rem 1.5rem;
@@ -882,8 +894,11 @@ button.ligacao:hover {
   list-style: none;
 }
 
+/* O nome de um lado, a exclusão do outro. A confirmação de dois toques cabe na quebra. */
 .catalogo li {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
   padding: 0.6875rem 1.5rem;

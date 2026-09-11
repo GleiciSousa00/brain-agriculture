@@ -16,10 +16,15 @@ export const criarProdutorSchema = z.object({
   documento: z
     .string()
     .trim()
-    .min(DOCUMENTO_TAMANHO_MINIMO)
-    .max(DOCUMENTO_TAMANHO_MAXIMO)
+    .min(DOCUMENTO_TAMANHO_MINIMO, 'Informe o Documento: onze caracteres no CPF, catorze no CNPJ.')
+    .max(DOCUMENTO_TAMANHO_MAXIMO, 'O Documento passou do tamanho de um CNPJ com máscara.')
     .describe('CPF ou CNPJ, com ou sem máscara. Letra minúscula é recusada.'),
-  nome: z.string().trim().min(1).max(NOME_TAMANHO_MAXIMO).describe('Nome do Produtor.'),
+  nome: z
+    .string()
+    .trim()
+    .min(1, 'Informe o nome do Produtor.')
+    .max(NOME_TAMANHO_MAXIMO, `O nome do Produtor não passa de ${String(NOME_TAMANHO_MAXIMO)} caracteres.`)
+    .describe('Nome do Produtor.'),
 });
 
 export class CriarProdutorDto extends createZodDto(criarProdutorSchema) {}

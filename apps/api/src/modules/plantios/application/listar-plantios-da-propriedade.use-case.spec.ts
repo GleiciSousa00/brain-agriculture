@@ -30,7 +30,7 @@ function cenario() {
 }
 
 describe('ListarPlantiosDaPropriedadeUseCase', () => {
-  it('devolve os Plantios da Propriedade na ordem em que foram registrados', async () => {
+  it('devolve os Plantios da Propriedade do registrado por último ao primeiro', async () => {
     const { registrar, listar } = cenario();
     await registrar.execute({ propriedadeId: PROPRIEDADE, culturaId: SOJA, safraId: SAFRA_2026 });
     await registrar.execute({ propriedadeId: PROPRIEDADE, culturaId: CAFE, safraId: SAFRA_2026 });
@@ -40,12 +40,23 @@ describe('ListarPlantiosDaPropriedadeUseCase', () => {
     const pagina = await listar.execute(PROPRIEDADE, { pagina: 1, tamanho: 20 });
 
     expect(pagina.itens.map((plantio) => [plantio.culturaId, plantio.safraId])).toEqual([
-      [SOJA, SAFRA_2026],
-      [CAFE, SAFRA_2026],
-      [SOJA, SAFRA_2025],
       [MILHO, SAFRA_2026],
+      [SOJA, SAFRA_2025],
+      [CAFE, SAFRA_2026],
+      [SOJA, SAFRA_2026],
     ]);
     expect(pagina).toMatchObject({ total: 4, pagina: 1, tamanho: 20 });
+  });
+
+  it('põe o Plantio recém-registrado na primeira página, e não na última', async () => {
+    const { registrar, listar } = cenario();
+    await registrar.execute({ propriedadeId: PROPRIEDADE, culturaId: CAFE, safraId: SAFRA_2025 });
+    await registrar.execute({ propriedadeId: PROPRIEDADE, culturaId: MILHO, safraId: SAFRA_2025 });
+    await registrar.execute({ propriedadeId: PROPRIEDADE, culturaId: SOJA, safraId: SAFRA_2026 });
+
+    const primeira = await listar.execute(PROPRIEDADE, { pagina: 1, tamanho: 2 });
+
+    expect(primeira.itens[0]).toMatchObject({ culturaId: SOJA, safraId: SAFRA_2026 });
   });
 
   it('não mistura os Plantios de outra Propriedade', async () => {
@@ -90,7 +101,7 @@ describe('ListarPlantiosDaPropriedadeUseCase', () => {
 
     const segunda = await listar.execute(PROPRIEDADE, { pagina: 2, tamanho: 2 });
 
-    expect(segunda.itens.map((plantio) => plantio.culturaId)).toEqual([SOJA]);
+    expect(segunda.itens.map((plantio) => plantio.culturaId)).toEqual([CAFE]);
     expect(segunda).toMatchObject({ total: 3, pagina: 2, tamanho: 2 });
   });
 });

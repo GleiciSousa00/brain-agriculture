@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import type { Repository } from 'typeorm';
 import { CriarSafraUseCase } from './application/criar-safra.use-case';
+import { ExcluirSafraUseCase } from './application/excluir-safra.use-case';
 import { ListarSafrasUseCase } from './application/listar-safras.use-case';
 import { SAFRA_REPOSITORY, type SafraRepository } from './domain/safra.repository';
 import { SafrasController } from './http/safras.controller';
@@ -27,6 +28,11 @@ import { TypeormSafraRepository } from './infrastructure/typeorm-safra.repositor
       provide: ListarSafrasUseCase,
       inject: [SAFRA_REPOSITORY],
       useFactory: (safras: SafraRepository) => new ListarSafrasUseCase(safras),
+    },
+    {
+      provide: ExcluirSafraUseCase,
+      inject: [SAFRA_REPOSITORY],
+      useFactory: (safras: SafraRepository) => new ExcluirSafraUseCase(safras),
     },
   ],
 })

@@ -14,7 +14,14 @@ import type {
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { mensagemDe } from '../../api/chamada';
-import { acrescentarCultura, criarSafra, listarCulturas, listarSafras } from '../../api/catalogo';
+import {
+  acrescentarCultura,
+  criarSafra,
+  excluirCultura,
+  excluirSafra,
+  listarCulturas,
+  listarSafras,
+} from '../../api/catalogo';
 import { PRIMEIRA_PAGINA, TAMANHO_DO_CATALOGO } from '../../api/pagina';
 import { excluirPlantio, registrarPlantio } from '../../api/plantios';
 import { criarProdutor, editarProdutor, excluirProdutor, listarProdutores } from '../../api/produtores';
@@ -102,7 +109,9 @@ export interface Cadastro extends Catalogos {
   editarPropriedade: (id: string, corpo: EditarPropriedade) => Promise<void>;
   excluirPropriedade: (id: string) => Promise<void>;
   acrescentarCultura: (corpo: AcrescentarCultura) => Promise<void>;
+  excluirCultura: (id: string) => Promise<void>;
   criarSafra: (corpo: CriarSafra) => Promise<void>;
+  excluirSafra: (id: string) => Promise<void>;
   registrarPlantio: (corpo: RegistrarPlantio) => Promise<void>;
   excluirPlantio: (id: string) => Promise<void>;
 }
@@ -228,7 +237,9 @@ export function CadastroProvider({ children }: Props) {
       editarPropriedade: (id, corpo) => escrever(() => editarPropriedade(id, corpo)),
       excluirPropriedade: (id) => escrever(() => excluirPropriedade(id)),
       acrescentarCultura: (corpo) => escrever(() => acrescentarCultura(corpo)),
+      excluirCultura: (id) => escrever(() => excluirCultura(id)),
       criarSafra: (corpo) => escrever(() => criarSafra(corpo)),
+      excluirSafra: (id) => escrever(() => excluirSafra(id)),
       registrarPlantio: (corpo) => escreverPlantio(() => registrarPlantio(corpo)),
       excluirPlantio: (id) => escreverPlantio(() => excluirPlantio(id)),
     }),

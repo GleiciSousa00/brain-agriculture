@@ -885,6 +885,71 @@
         ]
       }
     },
+    "/safras/{id}": {
+      "delete": {
+        "description": "A Safra com Plantio registrado nela é recusada: o Plantio é registro do que aconteceu na terra, e não some porque alguém arrumou a lista de Safras.",
+        "operationId": "SafrasController_excluir",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "A Safra saiu do cadastro."
+          },
+          "400": {
+            "description": "A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Não existe Safra com esse identificador.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Essa Safra tem pelo menos um Plantio registrado nela.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Tira uma Safra do cadastro.",
+        "tags": [
+          "Safras"
+        ]
+      }
+    },
     "/culturas": {
       "post": {
         "operationId": "CulturasController_acrescentar",
@@ -972,6 +1037,71 @@
           }
         },
         "summary": "Lista o catálogo em ordem alfabética.",
+        "tags": [
+          "Culturas"
+        ]
+      }
+    },
+    "/culturas/{id}": {
+      "delete": {
+        "description": "A Cultura registrada em algum Plantio é recusada: o Plantio é registro do que aconteceu na terra, e não some porque alguém arrumou o catálogo.",
+        "operationId": "CulturasController_excluir",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "A Cultura saiu do catálogo."
+          },
+          "400": {
+            "description": "A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Não existe Cultura com esse identificador.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Essa Cultura está registrada em pelo menos um Plantio.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Tira uma espécie do catálogo.",
         "tags": [
           "Culturas"
         ]
@@ -1566,17 +1696,17 @@
           "areaTotal": {
             "type": "number",
             "minimum": 0,
-            "description": "Em hectares, com até duas casas decimais."
+            "description": "Em hectares, com até quatro casas decimais, que é o metro quadrado. Uma medida mais fina que isso é arredondada, não recusada."
           },
           "areaAgricultavel": {
             "type": "number",
             "minimum": 0,
-            "description": "Em hectares, com até duas casas decimais."
+            "description": "Em hectares, com até quatro casas decimais, que é o metro quadrado. Uma medida mais fina que isso é arredondada, não recusada."
           },
           "areaDeVegetacao": {
             "type": "number",
             "minimum": 0,
-            "description": "Em hectares, com até duas casas decimais."
+            "description": "Em hectares, com até quatro casas decimais, que é o metro quadrado. Uma medida mais fina que isso é arredondada, não recusada."
           }
         },
         "required": [
@@ -1736,17 +1866,17 @@
           "areaTotal": {
             "type": "number",
             "minimum": 0,
-            "description": "Em hectares, com até duas casas decimais."
+            "description": "Em hectares, com até quatro casas decimais, que é o metro quadrado. Uma medida mais fina que isso é arredondada, não recusada."
           },
           "areaAgricultavel": {
             "type": "number",
             "minimum": 0,
-            "description": "Em hectares, com até duas casas decimais."
+            "description": "Em hectares, com até quatro casas decimais, que é o metro quadrado. Uma medida mais fina que isso é arredondada, não recusada."
           },
           "areaDeVegetacao": {
             "type": "number",
             "minimum": 0,
-            "description": "Em hectares, com até duas casas decimais."
+            "description": "Em hectares, com até quatro casas decimais, que é o metro quadrado. Uma medida mais fina que isso é arredondada, não recusada."
           }
         },
         "required": [

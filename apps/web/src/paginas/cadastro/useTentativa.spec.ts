@@ -86,4 +86,70 @@ describe('a tentativa de escrita de uma seção', () => {
 
     expect(result.current.recusa).toBeUndefined();
   });
+
+  it('guarda o aviso de acerto quando a escrita passa', async () => {
+    const { result } = renderHook(() => useTentativa());
+
+    await act(async () => {
+      await result.current.tentar(() => Promise.resolve(), 'Produtor Ana Lima registrado.');
+    });
+
+    expect(result.current.aviso).toBe('Produtor Ana Lima registrado.');
+    expect(result.current.recusa).toBeUndefined();
+  });
+
+  it('fica calado quando a escrita passa sem aviso pedido', async () => {
+    const { result } = renderHook(() => useTentativa());
+
+    await act(async () => {
+      await result.current.tentar(() => Promise.resolve());
+    });
+
+    expect(result.current.aviso).toBeUndefined();
+  });
+
+  it('não anuncia acerto de escrita que a API recusou', async () => {
+    const { result } = renderHook(() => useTentativa());
+
+    await act(async () => {
+      await result.current.tentar(
+        () => Promise.reject(new ErroDaApi('O nome não pode ser vazio.')),
+        'Produtor registrado.',
+      );
+    });
+
+    expect(result.current.aviso).toBeUndefined();
+    expect(result.current.recusa).toBe('O nome não pode ser vazio.');
+  });
+
+  it('leva embora o aviso anterior antes de saber o desfecho da nova tentativa', async () => {
+    const { result } = renderHook(() => useTentativa());
+
+    await act(async () => {
+      await result.current.tentar(() => Promise.resolve(), 'Produtor registrado.');
+    });
+    expect(result.current.aviso).toBe('Produtor registrado.');
+
+    await act(async () => {
+      await result.current.tentar(() =>
+        Promise.reject(new ErroDaApi('Já existe Produtor com esse Documento.')),
+      );
+    });
+
+    expect(result.current.aviso).toBeUndefined();
+  });
+
+  it('zera o aviso quando quem o recebeu sai da tela', async () => {
+    const { result } = renderHook(() => useTentativa());
+
+    await act(async () => {
+      await result.current.tentar(() => Promise.resolve(), 'Produtor registrado.');
+    });
+
+    act(() => {
+      result.current.limpar();
+    });
+
+    expect(result.current.aviso).toBeUndefined();
+  });
 });
