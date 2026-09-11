@@ -96,8 +96,9 @@ export const PROPRIEDADES_ENTIDADES = [PropriedadeOrmEntity];
  * As vinte e sete siglas, publicadas para fora do módulo.
  *
  * Quem está fora não alcança as quatro camadas, e o arquivo de módulo é a face que o módulo
- * mostra. A carga de volume distribui as Propriedades sintéticas entre os estados e precisa
- * da lista; copiá-la para lá criaria duas listas que divergem. Ver o registro 0005.
+ * mostra. A carga de volume situa as Propriedades sintéticas numa lista de localidades, e o
+ * teste dela confere cada sigla contra esta lista; copiá-la para lá criaria duas listas que
+ * divergem. Ver o registro 0005.
  */
 export { UNIDADES_FEDERATIVAS } from './domain/propriedade';
 

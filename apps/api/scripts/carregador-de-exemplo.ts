@@ -57,14 +57,7 @@ export async function carregarDadosDeExemplo(servidor: Servidor): Promise<Resumo
   };
 
   for (const produtor of PRODUTORES_DE_EXEMPLO) {
-    const { id: produtorId } = await enviar<ComIdentificador>(
-      request(servidor).post('/produtores').send({
-        documento: produtor.documento,
-        nome: produtor.nome,
-      }),
-      201,
-      `o Produtor ${produtor.nome}`,
-    );
+    const produtorId = await criarProdutor(servidor, produtor);
     resumo.produtores += 1;
 
     for (const propriedade of produtor.propriedades) {
@@ -80,6 +73,28 @@ export async function carregarDadosDeExemplo(servidor: Servidor): Promise<Resumo
   }
 
   return resumo;
+}
+
+/**
+ * Cria um Produtor pela API e devolve o identificador.
+ *
+ * As duas cargas passam por aqui. É por isso que a de volume também tem Documento válido e
+ * cifrado em repouso: ela cria os próprios Produtores pelo mesmo caminho, e não por SQL.
+ */
+export async function criarProdutor(
+  servidor: Servidor,
+  produtor: { documento: string; nome: string },
+): Promise<string> {
+  const { id } = await enviar<ComIdentificador>(
+    request(servidor).post('/produtores').send({
+      documento: produtor.documento,
+      nome: produtor.nome,
+    }),
+    201,
+    `o Produtor ${produtor.nome}`,
+  );
+
+  return id;
 }
 
 /** O catálogo já vem semeado pela migração. Quem carrega procura o identificador pelo nome. */
@@ -194,7 +209,7 @@ async function enviar<T>(
 
   if (resposta.status !== esperado) {
     throw new Error(
-      `A carga de exemplo parou em ${oQue}: a API respondeu ${resposta.status}. ${detalhe(resposta)}`,
+      `A carga parou em ${oQue}: a API respondeu ${resposta.status}. ${detalhe(resposta)}`,
     );
   }
 
