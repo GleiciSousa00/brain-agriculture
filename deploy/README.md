@@ -6,6 +6,25 @@ descrito aqui, porque é dele que se precisa quando o automático falha. Tudo o 
 operação precisa saber está neste arquivo. Não há registro de decisão sobre
 infraestrutura, de propósito: ela não é o que está sendo avaliado.
 
+## O ambiente que está de pé
+
+| O quê | Valor |
+|---|---|
+| Endereço | https://brain-ag-test.duckdns.org |
+| Provedor | Vultr, x86, Ubuntu LTS |
+| Raiz na VPS | `/opt/cadastro-rural` |
+| Usuário do basic auth | `brain-user` |
+
+A senha não está neste repositório, que é público. Ela vive no `.env` da VPS e é entregue
+fora do git, na mensagem que leva o link. Para trocá-la, mude `BASIC_AUTH_PASSWORD` no
+`.env` e rode `docker compose up -d web`: o hash é gerado no arranque do contêiner, então
+não há o que recalcular à mão.
+
+O acesso por IP, sem TLS, existiu por algumas horas em 2026-09-10, enquanto o certificado
+não saía. Ele não existe mais: o `Caddyfile` tem um endereço só, o do domínio, e o IP em
+HTTP só responde o redirecionamento que o Caddy faz para HTTPS, onde não há certificado
+que sirva para ele. Um endereço `http://` escrito à mão aqui é um furo e não pode voltar.
+
 ## O que sobe
 
 Três contêineres. O Postgres 17, que guarda os dados num volume e não publica porta. A API,
