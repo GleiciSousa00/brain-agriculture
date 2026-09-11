@@ -14,12 +14,16 @@ export interface PlantioRepository {
   findByLigacao(ligacao: LigacaoDoPlantio): Promise<Plantio | null>;
   delete(id: string): Promise<void>;
   /**
-   * Lista os Plantios de uma Propriedade, na ordem em que foram registrados.
+   * Lista os Plantios de uma Propriedade, do registrado por último ao primeiro.
    *
    * Ordenar pelos identificadores de Cultura e de Safra também seria estável, mas eles são
    * opacos, e a ordem não diria nada a quem opera. A ordem de registro diz. Como ela não
    * está no domínio, quem a guarda é a coluna de criação, e o identificador desempata as
    * linhas gravadas na mesma transação.
+   *
+   * O mais novo vem primeiro porque quem acabou de registrar um Plantio olha para a
+   * primeira página. Do mais antigo para o mais novo, a linha recém-gravada nascia na
+   * última página de todas, e sumia da vista de quem a criou.
    */
   listByPropriedade(recorte: RecorteDePlantios): Promise<Recortados<Plantio>>;
 }
