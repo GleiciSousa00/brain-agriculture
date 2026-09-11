@@ -238,3 +238,32 @@ jobs:
             fi
             docker push --all-tags "$nome"
           done
+
+  # Põe no ar o que acabou de ser publicado. A chave que a pipeline usa tem comando
+  # forçado do lado da VPS, então esta sessão SSH não escolhe o que roda lá.
+  deploy:
+    name: deploy
+    needs: [publish]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Não há repositório a ler nem pacote a escrever: o trabalho só abre uma sessão SSH.
+    permissions: {}
+    # Fora do cancelamento por branch: interromper um deploy no meio deixa a VPS a meio caminho.
+    concurrency:
+      group: deploy-producao
+      cancel-in-progress: false
+    steps:
+      - name: Atualizar a VPS
+        # Os segredos entram por variável de ambiente, e não interpolados no script: o que
+        # `${{ }}` monta vira texto do próprio comando antes de o shell existir.
+        env:
+          CHAVE: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOSTS_CONHECIDOS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DESTINO: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+        run: |
+          install -m 700 -d ~/.ssh
+          umask 077
+          printf '%s\n' "$CHAVE" > ~/.ssh/id_ed25519
+          printf '%s\n' "$HOSTS_CONHECIDOS" > ~/.ssh/known_hosts
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
+            -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 "$DESTINO" atualizar
