@@ -20,7 +20,7 @@ describe('formatarHectares', () => {
     expect(formatarHectares(40)).toBe('40 ha');
   });
 
-  it('para em duas casas, como a coluna do banco', () => {
+  it('arredonda a exibição em duas casas, ainda que o cadastro guarde quatro', () => {
     expect(formatarHectares(1.239)).toBe('1,24 ha');
   });
 });

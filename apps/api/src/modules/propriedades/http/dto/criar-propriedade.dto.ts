@@ -9,7 +9,13 @@ import { CIDADE_TAMANHO_MAXIMO, NOME_TAMANHO_MAXIMO } from '../../domain/proprie
  * Agricultável com a Área de Vegetação cabe na Área Total, quem responde é a entidade
  * `Propriedade`. Ver o registro 0007.
  */
-const areaSchema = z.number().nonnegative().describe('Em hectares, com até duas casas decimais.');
+const areaSchema = z
+  .number()
+  .nonnegative()
+  .describe(
+    'Em hectares, com até quatro casas decimais, que é o metro quadrado. ' +
+      'Uma medida mais fina que isso é arredondada, não recusada.',
+  );
 
 export const criarPropriedadeSchema = z.object({
   produtorId: z.uuid().describe('O Produtor em nome de quem a Propriedade é registrada.'),
