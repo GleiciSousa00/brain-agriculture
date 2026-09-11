@@ -371,7 +371,7 @@ São três tipos, e **só um deles precisa de Docker**.
 | Integração, borda HTTP | `pnpm --filter @cadastro-rural/api test:integration test/http-edge.int-spec.ts` | não |
 | Integração, contra um Postgres de verdade | `pnpm test:integration` | **sim** |
 
-**Unidade.** São 257 testes na API e 119 na interface web. Os da API rodam sem banco, sem
+**Unidade.** São 293 testes na API e 142 na interface web. Os da API rodam sem banco, sem
 Nest e sem subir aplicação, que é o que torna o laço de TDD rápido. Os da interface usam
 Vitest com Testing Library e afirmam o comportamento da tela, incluindo a legenda em texto
 que fica ao lado de cada gráfico.
