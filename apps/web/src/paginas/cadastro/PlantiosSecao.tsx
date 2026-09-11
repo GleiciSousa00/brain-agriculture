@@ -1,6 +1,9 @@
-import { useId } from 'react';
+import { useRef } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { NADA_ESCOLHIDO } from '../../componentes/Escolha';
+import { PRIMEIRA_PAGINA, TAMANHO_DA_BUSCA } from '../../api/pagina';
+import { listarPropriedades, listarPropriedadesDoProdutor } from '../../api/propriedades';
+import type { Opcao } from '../../componentes/Escolha';
+import { EscolhaComBusca } from '../../componentes/EscolhaComBusca';
 import { formatarHectares } from '../../formato';
 import { useCadastro } from './CadastroContexto';
 import { SEM_RECORTE, plantiosDe, propriedadesDe, useHierarquia } from './hierarquia';
@@ -20,19 +23,45 @@ export function PlantiosSecao() {
   const { produtorId, propriedadeId, abrindo } = useHierarquia();
   const { propriedades, nomeDoProdutor, carregando, erro } = useCadastro();
   const navegar = useNavigate();
-  const campoId = useId();
-
-  // O recorte por Produtor manda também aqui: vindo das Propriedades de alguém, a escolha
-  // não volta a oferecer o cadastro inteiro.
-  const oferecidas =
-    produtorId === ''
-      ? propriedades
-      : propriedades.filter((propriedade) => propriedade.produtorId === produtorId);
+  // De quem é cada Propriedade que a busca ofereceu. Escolher é navegar, e navegar pede o
+  // Produtor: a Propriedade achada pela busca pode ser uma que o catálogo não alcança.
+  const donaDe = useRef(new Map<string, string>());
   const escolhida = propriedades.find((propriedade) => propriedade.id === propriedadeId);
   // A escolha vale mesmo quando o catálogo não a alcança: os Plantios se buscam pelo
   // identificador, e quem chegou pela coluna Plantios de uma Propriedade da centésima
   // primeira página em diante não pode cair numa tela que diz não haver escolha nenhuma.
   const temEscolha = propriedadeId !== SEM_RECORTE;
+
+  /**
+   * Quem a busca oferece: as Propriedades cujo nome casa com o que se digitou.
+   *
+   * Vindo do recorte de um Produtor, procura só entre as dele: a escolha aqui não volta a
+   * oferecer o cadastro inteiro só porque passou a procurar. De quem é cada uma fica
+   * guardado, porque é o Produtor que compõe o endereço da escolha.
+   */
+  async function procurarPropriedade(busca: string): Promise<Opcao[]> {
+    const encontradas =
+      produtorId === ''
+        ? await listarPropriedades(PRIMEIRA_PAGINA, TAMANHO_DA_BUSCA, busca)
+        : await listarPropriedadesDoProdutor(produtorId, PRIMEIRA_PAGINA, TAMANHO_DA_BUSCA, busca);
+
+    return encontradas.itens.map((propriedade) => {
+      donaDe.current.set(propriedade.id, propriedade.produtorId);
+
+      return {
+        valor: propriedade.id,
+        rotulo:
+          produtorId === ''
+            ? `${propriedade.nome} · ${nomeDoProdutor(propriedade.produtorId)}`
+            : propriedade.nome,
+      };
+    });
+  }
+
+  /** Escolher aqui é navegar: o endereço passa a ser o dessa Propriedade, e o rastro se refaz. */
+  function escolherPropriedade({ valor }: Opcao): void {
+    navegar(plantiosDe(valor, donaDe.current.get(valor) ?? produtorId));
+  }
 
   // Dizer que não há Propriedade nenhuma exige saber que não há: com o catálogo em voo,
   // ou depois de ele falhar, a lista vazia é ausência de resposta e não de registro.
@@ -48,38 +77,18 @@ export function PlantiosSecao() {
   return (
     <div className="secao">
       <div className="seletor">
-        <label htmlFor={campoId}>Propriedade</label>
-        <select
-          id={campoId}
-          value={propriedadeId}
-          onChange={(evento) => {
-            const escolhido = evento.target.value;
-            const dona = propriedades.find((propriedade) => propriedade.id === escolhido);
-
-            // Escolher aqui é navegar: o endereço passa a ser o dessa Propriedade, e o
-            // rastro do alto se refaz com ela.
-            navegar(plantiosDe(escolhido, dona?.produtorId ?? produtorId));
-          }}
-        >
-          <option value={NADA_ESCOLHIDO}>
-            {produtorId === ''
-              ? 'Escolha uma Propriedade'
-              : `Escolha uma Propriedade de ${nomeDoProdutor(produtorId)}`}
-          </option>
-          {/* O que manda é a lista oferecida, e não o catálogo inteiro: a escolha pode
-              ser de outro Produtor que não o do recorte, e um valor sem opção deixaria o
-              campo mostrando o texto neutro sobre uma lista que já tem dona. */}
-          {temEscolha && !oferecidas.some((propriedade) => propriedade.id === propriedadeId) && (
-            <option value={propriedadeId}>{escolhida?.nome ?? FORA_DO_CATALOGO}</option>
-          )}
-          {oferecidas.map((propriedade) => (
-            <option key={propriedade.id} value={propriedade.id}>
-              {produtorId === ''
-                ? `${propriedade.nome} · ${nomeDoProdutor(propriedade.produtorId)}`
-                : propriedade.nome}
-            </option>
-          ))}
-        </select>
+        <EscolhaComBusca
+          rotulo="Propriedade"
+          valor={propriedadeId}
+          nomeDoValor={temEscolha ? (escolhida?.nome ?? FORA_DO_CATALOGO) : undefined}
+          aoMudar={escolherPropriedade}
+          vazia={
+            produtorId === ''
+              ? 'Procure uma Propriedade pelo nome'
+              : `Procure uma Propriedade de ${nomeDoProdutor(produtorId)}`
+          }
+          procurar={procurarPropriedade}
+        />
         {escolhida !== undefined && (
           <span className="detalhe">
             {escolhida.cidade}/{escolhida.estado} · {formatarHectares(escolhida.areaTotal)}

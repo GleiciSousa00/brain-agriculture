@@ -139,7 +139,7 @@ describe('a tela de cadastro', () => {
 
     abrirEm('/cadastro/propriedades');
 
-    expect(await screen.findByText(/mostram só os cem primeiros/)).toBeInTheDocument();
+    expect(await screen.findByText(/A coluna de Produtor tem nome só para os cem primeiros/)).toBeInTheDocument();
   });
 
   it('cala sobre o teto quando o cadastro cabe nele', async () => {
@@ -148,6 +148,6 @@ describe('a tela de cadastro', () => {
     abrirEm('/cadastro/propriedades');
     await screen.findByRole('heading', { name: 'Propriedades', level: 2 });
 
-    expect(screen.queryByText(/mostram só os cem primeiros/)).toBeNull();
+    expect(screen.queryByText(/A coluna de Produtor tem nome só para os cem primeiros/)).toBeNull();
   });
 });

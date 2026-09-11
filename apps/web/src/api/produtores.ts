@@ -4,8 +4,12 @@ import { api } from './cliente';
 import type { Pagina } from './pagina';
 
 /** Uma fatia de Produtores, ordenada por nome. */
-export async function listarProdutores(pagina: number, tamanho: number): Promise<Pagina<Produtor>> {
-  return colher(() => api.GET('/produtores', { params: { query: { pagina, tamanho } } }));
+export async function listarProdutores(
+  pagina: number,
+  tamanho: number,
+  busca?: string,
+): Promise<Pagina<Produtor>> {
+  return colher(() => api.GET('/produtores', { params: { query: { pagina, tamanho, busca } } }));
 }
 
 /** Registra um Produtor. O Documento pode ir com ou sem máscara. */
