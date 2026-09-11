@@ -1,6 +1,6 @@
-import { GraficoDePizza } from '../../componentes/GraficoDePizza';
+import { Rosca } from '../../componentes/Rosca';
 import { Totais } from '../../componentes/Totais';
-import { formatarHectares } from '../../formato';
+import { formatarArea, formatarHectares, formatarQuantidade } from '../../formato';
 import { ControleDeSafra } from './ControleDeSafra';
 import { TODAS_AS_SAFRAS, usePainel } from './usePainel';
 
@@ -18,7 +18,7 @@ interface EstadoDaCultura {
 }
 
 /**
- * O que o cartão da Cultura diz quando não há pizza.
+ * O que o cartão da Cultura diz quando não há rosca.
  *
  * São quatro situações diferentes, e nenhuma delas pode virar gráfico em branco: o
  * recorte em voo, o recorte que falhou, a base sem Plantio nenhum, e a Safra sem Plantio.
@@ -56,25 +56,34 @@ export function PainelPage() {
     return <p role="alert">{erro}</p>;
   }
 
+  const plantios = (porCultura ?? []).reduce((soma, linha) => soma + linha.plantios, 0);
+
   return (
     <>
       <h1>Painel</h1>
       <Totais propriedades={painel.totais.propriedades} areaTotal={painel.totais.areaTotal} />
       <div className="graficos">
-        <GraficoDePizza
+        <Rosca
           titulo="Propriedades por estado"
           fatias={painel.propriedadesPorEstado.map((linha) => ({
             nome: linha.estado,
             valor: linha.propriedades,
           }))}
+          centro={{
+            numero: formatarQuantidade(painel.totais.propriedades),
+            unidade: 'propriedades',
+          }}
           vazio={SEM_PROPRIEDADE}
         />
-        <GraficoDePizza
+        <Rosca
           titulo="Plantios por Cultura"
           fatias={(porCultura ?? []).map((linha) => ({
             nome: linha.cultura,
             valor: linha.plantios,
           }))}
+          // O que o furo conta é o recorte em tela, e não a base inteira: o filtro de
+          // Safra está logo ao lado, e um número que o ignorasse contradiria as fatias.
+          centro={{ numero: formatarQuantidade(plantios), unidade: 'plantios' }}
           vazio={textoVazioDaCultura({
             recortando,
             falhou: erroDoRecorte !== undefined,
@@ -85,12 +94,17 @@ export function PainelPage() {
           }
           aviso={erroDoRecorte}
         />
-        <GraficoDePizza
+        <Rosca
           titulo="Uso do solo"
           fatias={[
             { nome: 'Área agricultável', valor: painel.usoDoSolo.areaAgricultavel },
             { nome: 'Área de vegetação', valor: painel.usoDoSolo.areaDeVegetacao },
           ]}
+          // As duas fatias repartem a Área Total, e podem não cobri-la inteira. Medi-las
+          // contra ela deixa o vão à mostra na rosca, em vez de fechar a volta com duas
+          // fatias que somam menos do que o número escrito no furo.
+          total={painel.totais.areaTotal}
+          centro={{ numero: formatarArea(painel.totais.areaTotal), unidade: 'hectares' }}
           vazio={SEM_AREA}
           formatarValor={formatarHectares}
         />

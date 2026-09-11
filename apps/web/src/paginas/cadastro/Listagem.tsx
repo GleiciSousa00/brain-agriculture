@@ -3,10 +3,16 @@ import type { ReactNode } from 'react';
 import { mensagemDe } from '../../api/chamada';
 import type { Pagina } from '../../api/pagina';
 import { PRIMEIRA_PAGINA, TAMANHO_DA_PAGINA, quantasPaginas } from '../../api/pagina';
+import { Lista } from '../../componentes/Lista';
 import { Paginacao } from '../../componentes/Paginacao';
+import { formatarContagem } from '../../formato';
 import { useCadastro } from './CadastroContexto';
 
 interface Props<T> {
+  /** O que a lista mostra, como "Produtores" ou "Propriedades de Ana Lima". */
+  titulo: string;
+  /** O que se pode fazer com a lista inteira, como abrir o formulário de registro. */
+  acoes?: ReactNode;
   /**
    * Busca uma fatia. O tamanho vem de quem lista, e não de quem chama.
    *
@@ -22,7 +28,7 @@ interface Props<T> {
 }
 
 /**
- * Uma tabela paginada do cadastro, inteira.
+ * Uma lista paginada do cadastro, inteira.
  *
  * Ela é dona da página em que se está, da busca que a preenche e dos quatro estados em
  * que ela aparece. Os estados são exclusivos de propósito: falhou, e nada mais aparece;
@@ -30,10 +36,13 @@ interface Props<T> {
  * cascata, e repetida ela divergia — a falha de uma delas deixava as linhas anteriores na
  * tela sob o aviso.
  *
+ * A contagem da faixa é o total que a API devolve na fatia, e não o que coube na página:
+ * é a resposta a "quanto existe", e é por isso que ela mora aqui, junto de quem o recebe.
+ *
  * `versao` é lida aqui, e não passada pelo chamador: é o número que o contexto sobe a
  * cada escrita, e esquecê-lo quebrava o refresh sem erro de tipo nenhum.
  */
-export function Listagem<T>({ listar, carregando, vazio, children }: Props<T>) {
+export function Listagem<T>({ titulo, acoes, listar, carregando, vazio, children }: Props<T>) {
   const { versao } = useCadastro();
   const [pagina, setPagina] = useState(PRIMEIRA_PAGINA);
   const [conteudo, setConteudo] = useState<Pagina<T>>();
@@ -76,22 +85,29 @@ export function Listagem<T>({ listar, carregando, vazio, children }: Props<T>) {
     };
   }, [pagina, versao]);
 
-  if (erro !== undefined) {
-    return <p role="alert">{erro}</p>;
-  }
-
-  if (conteudo === undefined) {
-    return <p role="status">{carregando}</p>;
-  }
-
-  if (conteudo.itens.length === 0) {
-    return <p className="vazio">{vazio}</p>;
-  }
-
   return (
-    <>
-      {children(conteudo.itens)}
-      <Paginacao pagina={pagina} paginas={quantasPaginas(conteudo)} irPara={setPagina} />
-    </>
+    <Lista
+      titulo={titulo}
+      // Enquanto a fatia não volta não se sabe quanto existe, e um zero de espera seria
+      // um número errado por alguns instantes.
+      contagem={
+        conteudo === undefined ? undefined : formatarContagem(conteudo.total, 'registro', 'registros')
+      }
+      acoes={acoes}
+    >
+      {erro !== undefined && <p role="alert">{erro}</p>}
+      {erro === undefined && conteudo === undefined && (
+        <p className="vazio" role="status">
+          {carregando}
+        </p>
+      )}
+      {conteudo !== undefined && conteudo.itens.length === 0 && <p className="vazio">{vazio}</p>}
+      {conteudo !== undefined && conteudo.itens.length > 0 && (
+        <>
+          <div className="rolagem">{children(conteudo.itens)}</div>
+          <Paginacao pagina={pagina} paginas={quantasPaginas(conteudo)} irPara={setPagina} />
+        </>
+      )}
+    </Lista>
   );
 }

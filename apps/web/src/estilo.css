@@ -1,13 +1,61 @@
 /* Estilo da interface. Sem framework: são duas telas, e o CSS cabe num arquivo. */
 
+/*
+ * A fonte vem do próprio pacote, e não do Google Fonts.
+ *
+ * O registro 0009 pôs a interface para falar só com a própria origem, e uma folha de
+ * estilo de terceiro bloqueia a primeira pintura até responder — num ambiente sem saída
+ * para a internet, até falhar. São dois arquivos variáveis, com os pesos de 400 a 700
+ * dentro de cada um.
+ *
+ * Albert Sans, sob a SIL Open Font License 1.1. A licença viaja junto dos arquivos, em
+ * `fontes/OFL.txt`, que é o que ela exige de quem redistribui.
+ */
+@font-face {
+  font-family: 'Albert Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('./fontes/albert-sans-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Albert Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('./fontes/albert-sans-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 :root {
   --verde: #2f7d32;
-  --tinta: #1f2421;
-  --tinta-fraca: #5c6660;
-  --papel: #f6f7f5;
+  --verde-fundo: #286b2b;
+  --verde-fraco: #f1f7f2;
+  --tinta: #182019;
+  --tinta-fraca: #64716a;
+  --tinta-apagada: #9aa59f;
+  --papel: #f4f6f5;
   --cartao: #ffffff;
-  --borda: #e0e4e0;
-  --alerta: #c62828;
+  --cartao-fraco: #fafbfa;
+  --borda: #e3e8e5;
+  --fio: #eef1ef;
+  --borda-do-campo: #d9dedb;
+  --trilho: #eceff0;
+  --alerta: #b3261e;
+  --alerta-tinta: #8f1d16;
+  --alerta-borda: #e8c9c6;
+  --alerta-fundo: #fdf0ef;
+  --atencao-tinta: #6b4d00;
+  --atencao-borda: #f0dcaa;
+  --atencao-fundo: #fdf6e3;
+  --curva: 12px;
+  --curva-miuda: 8px;
   color-scheme: light;
 }
 
@@ -19,142 +67,257 @@ body {
   margin: 0;
   background: var(--papel);
   color: var(--tinta);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Albert Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.5;
 }
 
+input,
+select,
+button {
+  font: inherit;
+}
+
+/* O controle de número do navegador rouba espaço da unidade que fica dentro do campo. */
+input[type='number'] {
+  appearance: textfield;
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+:where(input, select, button, a):focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+}
+
+.aplicacao {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Cabeçalho: a marca e as duas telas. */
+
 .cabecalho {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 1.5rem;
-  padding: 1rem 1.5rem;
-  background: var(--verde);
-  color: #fff;
+  gap: 2.5rem;
+  height: 60px;
+  padding: 0 2.5rem;
+  background: var(--cartao);
+  border-bottom: 1px solid var(--borda);
+  position: sticky;
+  top: 0;
+  z-index: 3;
 }
 
 .marca-do-produto {
-  font-size: 1.125rem;
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.marca-do-produto::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--verde);
 }
 
 .cabecalho nav {
   display: flex;
-  gap: 1rem;
+  gap: 0.25rem;
+  align-self: stretch;
 }
 
 .cabecalho a {
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 0.875rem;
+  color: var(--tinta-fraca);
+  font-size: 0.9375rem;
+  font-weight: 500;
   text-decoration: none;
 }
 
-.cabecalho a:hover,
-.cabecalho a:focus-visible {
-  background: rgb(255 255 255 / 18%);
+.cabecalho a:hover {
+  color: var(--tinta);
 }
 
+/* Sublinhado por dentro, e não fundo colorido: a tela ativa se marca sem virar botão. */
 .cabecalho a.active {
-  background: rgb(255 255 255 / 28%);
+  color: var(--verde);
   font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--verde);
 }
 
 main {
-  max-width: 1100px;
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 2.25rem 2.5rem 3.5rem;
 }
 
 h1 {
-  margin: 0 0 1.25rem;
-  font-size: 1.5rem;
+  margin: 0 0 1.5rem;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
 }
 
 h2 {
-  margin: 0 0 0.75rem;
+  margin: 0;
   font-size: 1rem;
-  color: var(--tinta-fraca);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+a {
+  color: var(--verde);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
 }
 
 .cartao {
-  padding: 1rem 1.25rem;
+  padding: 1.375rem 1.625rem 1.5rem;
   border: 1px solid var(--borda);
-  border-radius: 8px;
+  border-radius: var(--curva);
   background: var(--cartao);
 }
 
+/* Painel: os dois totais e os três gráficos. */
+
 .totais {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-  margin: 0 0 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin: 0 0 1.25rem;
 }
 
 .totais dt {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--tinta-fraca);
 }
 
 .totais dd {
-  margin: 0.25rem 0 0;
-  font-size: 1.75rem;
+  margin: 0.625rem 0 0;
+  font-size: 2.75rem;
   font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.totais .unidade {
+  font-size: 1.375rem;
+  font-weight: 500;
+  color: var(--tinta-fraca);
 }
 
 .graficos {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1rem;
+  gap: 1.25rem;
   align-items: start;
 }
 
-.controle {
+.grafico-cabeca {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 0.75rem;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 1.125rem;
 }
 
-.controle label {
-  font-size: 0.875rem;
+/* A rosca e o número que ela totaliza, no meio dela. */
+
+.rosca {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 1.125rem;
+}
+
+.rosca-moldura {
+  position: relative;
+  width: 150px;
+  height: 150px;
+}
+
+.rosca-centro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.rosca-centro .numero {
+  font-size: 2.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Área total tem casa decimal e unidade: no mesmo corpo do resto, estouraria o furo. */
+.rosca-centro .numero.longo {
+  font-size: 1.5rem;
+}
+
+.rosca-centro .unidade {
+  margin-top: 0.375rem;
+  font-size: 0.75rem;
   color: var(--tinta-fraca);
 }
 
-.controle select {
-  padding: 0.35rem 0.5rem;
-  border: 1px solid var(--borda);
-  border-radius: 4px;
-  background: var(--cartao);
-  font: inherit;
-}
-
 .legenda {
-  margin: 0.5rem 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.legenda li {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.2rem 0;
-  font-size: 0.9rem;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.marca {
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 2px;
-  flex: none;
+/* Marca, nome e número na primeira linha; a barra atravessa por baixo dos dois últimos. */
+.legenda li {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  gap: 0 0.625rem;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.legenda .marca {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
 }
 
 .legenda .rotulo {
-  flex: 1;
+  font-weight: 500;
 }
 
 .legenda .valor {
@@ -162,112 +325,375 @@ h2 {
   font-variant-numeric: tabular-nums;
 }
 
-.vazio {
-  margin: 0;
-  padding: 2rem 0;
-  color: var(--tinta-fraca);
-  text-align: center;
+.legenda .valor strong {
+  color: var(--tinta);
+  font-weight: 600;
 }
 
-.aviso {
-  margin: 0 0 0.75rem;
-  color: var(--alerta);
+.legenda .barra {
+  grid-column: 2 / span 2;
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--fio);
+  overflow: hidden;
+}
+
+.legenda .barra span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+}
+
+.controle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.controle label {
+  font-size: 0.8125rem;
+  color: var(--tinta-fraca);
+}
+
+.controle select {
+  padding: 0.3125rem 0.5rem;
+  border: 1px solid var(--borda-do-campo);
+  border-radius: 7px;
+  background: var(--cartao);
+  font-size: 0.8125rem;
+  color: var(--tinta);
+}
+
+/* Cadastro: a trilha das seções, o rastro do contexto e os recados. */
+
+.cabeca-do-cadastro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin: 0 0 1.5rem;
+}
+
+.cabeca-do-cadastro h1 {
+  margin: 0;
+}
+
+.secoes {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.degrau {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* O trilho segurando as seções: é ele que mostra que as três são uma sequência. */
+.trilha {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border: 1px solid var(--borda);
+  border-radius: 9px;
+  background: var(--trilho);
+}
+
+.trilha a {
+  padding: 0.375rem 0.875rem;
+  border-radius: 7px;
+  color: var(--tinta-fraca);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.trilha a:hover {
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.trilha a.active {
+  background: var(--cartao);
+  color: var(--tinta);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+}
+
+.trilha .seta {
+  padding: 0 0.375rem;
+  color: var(--tinta-apagada);
+  font-size: 0.875rem;
+}
+
+.rotulo-do-grupo {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tinta-fraca);
+}
+
+.grupo-de-secoes {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+/* O rastro: de onde se veio até o registro que está filtrando a tela. */
+.migalhas {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+  margin: -0.375rem 0 1.375rem;
+  font-size: 0.90625rem;
+}
+
+.migalhas .seta {
+  color: var(--tinta-apagada);
+}
+
+.migalhas [aria-current] {
+  font-weight: 600;
+}
+
+.recado {
+  margin: 0 0 1.25rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--atencao-borda);
+  border-radius: var(--curva-miuda);
+  background: var(--atencao-fundo);
+  color: var(--atencao-tinta);
   font-size: 0.875rem;
 }
 
 [role='alert'] {
-  color: var(--alerta);
+  margin: 0;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #f0c9c5;
+  border-radius: var(--curva-miuda);
+  background: var(--alerta-fundo);
+  color: var(--alerta-tinta);
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
 
-/* Cadastro: menu das seções, formulários, tabelas e paginação. */
-
-.secoes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0 0 1.5rem;
-  border-bottom: 1px solid var(--borda);
-  padding-bottom: 0.5rem;
+.aviso {
+  margin: 0 0 0.75rem;
+  color: var(--alerta-tinta);
+  font-size: 0.875rem;
 }
 
-.secoes a {
-  padding: 0.35rem 0.75rem;
-  border-radius: 4px;
+.vazio {
+  margin: 0;
+  padding: 3rem 1.5rem;
   color: var(--tinta-fraca);
-  text-decoration: none;
+  text-align: center;
 }
 
-.secoes a:hover,
-.secoes a:focus-visible {
-  background: rgb(47 125 50 / 10%);
+.convite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 3rem 1.5rem;
+  border: 1px dashed var(--borda-do-campo);
+  border-radius: var(--curva);
+  color: var(--tinta-fraca);
+  text-align: center;
 }
 
-.secoes a.active {
-  background: var(--verde);
-  color: #fff;
-  font-weight: 600;
+.convite p {
+  margin: 0;
 }
+
+.secao {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* A lista de uma seção: cabeça com contagem e o botão que abre o formulário. */
+
+.lista {
+  border: 1px solid var(--borda);
+  border-radius: var(--curva);
+  background: var(--cartao);
+  overflow: hidden;
+}
+
+.lista > .faixa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1.5rem;
+  border-bottom: 1px solid var(--borda);
+}
+
+.faixa-lado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.875rem;
+  font-size: 0.8125rem;
+  color: var(--tinta-fraca);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Formulários. */
 
 .formulario {
-  margin: 0 0 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem 1.25rem;
+  align-items: start;
 }
 
-.formulario h3 {
-  margin: 0 0 0.75rem;
-  font-size: 1rem;
+.formulario h3,
+.formulario .largura-inteira {
+  grid-column: 1 / -1;
 }
 
 .campo {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  margin: 0 0 0.75rem;
-  max-width: 26rem;
+  gap: 0.375rem;
+  margin: 0;
 }
 
 .campo label,
 .rotulo-fixo {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
   color: var(--tinta-fraca);
 }
 
 .campo input,
 .campo select {
-  padding: 0.4rem 0.5rem;
-  border: 1px solid var(--borda);
-  border-radius: 4px;
+  width: 100%;
+  padding: 0.5625rem 0.75rem;
+  border: 1px solid var(--borda-do-campo);
+  border-radius: var(--curva-miuda);
   background: var(--cartao);
-  font: inherit;
+  font-size: 0.9375rem;
+  color: var(--tinta);
+  outline: none;
+}
+
+.campo input[type='number'] {
+  font-variant-numeric: tabular-nums;
+}
+
+.campo input:focus,
+.campo select:focus {
+  border-color: var(--verde);
+  box-shadow: 0 0 0 3px rgb(47 125 50 / 18%);
+}
+
+/* O valor que não se edita fica com cara de valor, e não de campo desabilitado. */
+.valor-fixo {
+  padding: 0.5625rem 0.75rem;
+  border: 1px solid var(--fio);
+  border-radius: var(--curva-miuda);
+  background: var(--papel);
+  font-size: 0.9375rem;
+  color: var(--tinta-fraca);
 }
 
 .ajuda {
-  font-size: 0.8rem;
+  font-size: 0.78125rem;
+  color: var(--tinta-fraca);
+}
+
+.medidas {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.medidas legend {
+  padding: 0;
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--tinta-fraca);
+}
+
+.medidas .trio {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 220px));
+  gap: 0.625rem;
+}
+
+.medidas label {
+  font-size: 0.78125rem;
+  font-weight: 400;
+}
+
+/* A unidade dentro do campo: o número não fica órfão de medida enquanto se digita. */
+.com-unidade {
+  position: relative;
+  display: block;
+}
+
+.com-unidade input {
+  padding-right: 2.125rem;
+}
+
+.com-unidade .unidade {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8125rem;
   color: var(--tinta-fraca);
 }
 
 .acoes {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
-  margin: 0.75rem 0 0;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+  margin: 0.25rem 0 0;
 }
 
+/* Botões. */
+
 button {
-  padding: 0.4rem 0.9rem;
-  border: 1px solid var(--borda);
-  border-radius: 4px;
+  padding: 0.5625rem 0.875rem;
+  border: 1px solid var(--borda-do-campo);
+  border-radius: var(--curva-miuda);
   background: var(--cartao);
   color: var(--tinta);
-  font: inherit;
   cursor: pointer;
 }
 
-button[type='submit'] {
+button:hover {
+  border-color: #b9c2bd;
+}
+
+button[type='submit'],
+button.principal {
+  padding: 0.5625rem 1.125rem;
   border-color: var(--verde);
   background: var(--verde);
   color: #fff;
   font-weight: 600;
+}
+
+button[type='submit']:hover,
+button.principal:hover {
+  border-color: var(--verde-fundo);
+  background: var(--verde-fundo);
 }
 
 button:disabled {
@@ -275,77 +701,288 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* O botão que abre um formulário mora na cabeça da lista, e é miúdo por isso. */
+button.abridor {
+  padding: 0.375rem 0.875rem;
+  border-color: var(--verde);
+  background: var(--verde);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+button.abridor:hover {
+  border-color: var(--verde-fundo);
+  background: var(--verde-fundo);
+}
+
+button.miudo {
+  padding: 0.3125rem 0.75rem;
+  border-radius: 7px;
+  font-size: 0.84375rem;
+  font-weight: 500;
+}
+
 button.perigo {
-  border-color: var(--alerta);
+  border-color: var(--alerta-borda);
   color: var(--alerta);
+}
+
+button.perigo:hover {
+  border-color: var(--alerta-borda);
+  background: var(--alerta-fundo);
+}
+
+button.perigo.principal {
+  border-color: var(--alerta);
+  background: var(--alerta);
+  color: #fff;
+}
+
+button.perigo.principal:hover {
+  border-color: var(--alerta);
+  background: var(--alerta);
+}
+
+/* Um botão que age como link: leva a outro lugar da tela sem parecer uma ação. */
+a.ligacao,
+button.ligacao {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--verde);
+  font: inherit;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.ligacao:hover,
+button.ligacao:hover {
+  border: 0;
+  text-decoration: underline;
 }
 
 .confirmacao {
   display: inline-flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  flex-wrap: wrap;
 }
 
-.confirmacao [role='status'] {
-  font-size: 0.875rem;
+.confirmacao .pergunta {
+  max-width: 24rem;
+  color: var(--alerta-tinta);
+  font-size: 0.84375rem;
+  text-align: left;
+  line-height: 1.35;
+}
+
+/* Tabelas. */
+
+.rolagem {
+  overflow-x: auto;
 }
 
 .tabela {
   width: 100%;
   border-collapse: collapse;
-  background: var(--cartao);
-  border: 1px solid var(--borda);
-  border-radius: 8px;
-}
-
-.tabela th,
-.tabela td {
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--borda);
-  text-align: left;
-  vertical-align: middle;
+  font-size: 0.90625rem;
 }
 
 .tabela th {
-  font-size: 0.8rem;
-  color: var(--tinta-fraca);
+  padding: 0.625rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: var(--tinta-fraca);
 }
 
-.tabela tr:last-child td {
-  border-bottom: none;
+.tabela td {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--fio);
+  vertical-align: middle;
 }
 
-.tabela .acoes {
+.tabela th:first-child,
+.tabela td:first-child {
+  padding-left: 1.5rem;
+}
+
+.tabela th:last-child,
+.tabela td:last-child {
+  padding-right: 1.5rem;
+}
+
+.tabela td:first-child {
+  font-weight: 500;
+}
+
+.tabela .numero {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tabela .tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.tabela .apagado {
+  color: var(--tinta-fraca);
+}
+
+.tabela .documento {
+  color: var(--tinta-fraca);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tabela td.acoes {
   margin: 0;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+/* A linha que o formulário aberto está editando, para que os dois se achem. */
+.tabela tr.em-edicao {
+  background: var(--verde-fraco);
 }
 
 .paginacao {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin: 0.75rem 0 0;
+  margin: 0;
+  padding: 0.875rem 1.5rem;
+  border-top: 1px solid var(--fio);
   font-size: 0.875rem;
   color: var(--tinta-fraca);
 }
 
+/* Catálogos: duas listas curtas, lado a lado. */
+
 .catalogos {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.5rem;
   align-items: start;
 }
 
 .catalogo {
-  margin: 0.75rem 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid var(--borda);
 }
 
 .catalogo li {
-  padding: 0.35rem 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6875rem 1.5rem;
+  border-top: 1px solid var(--fio);
+  font-size: 0.90625rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* O formulário que sai da cabeça da lista fica preso a ela, e não solto por cima. */
+.formulario-embutido {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 1.125rem 1.5rem;
   border-bottom: 1px solid var(--borda);
+  background: var(--cartao-fraco);
+}
+
+.formulario-embutido .linha {
+  display: flex;
+  gap: 0.625rem;
+}
+
+.formulario-embutido input {
+  flex: 1;
+  min-width: 0;
+}
+
+.formulario-embutido .estreito {
+  flex: none;
+  width: 140px;
+}
+
+/* A escolha da Propriedade cujos Plantios a tela mostra. */
+.seletor {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.875rem 1.5rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--curva);
+  background: var(--cartao);
+}
+
+.seletor label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--tinta-fraca);
+}
+
+.seletor select {
+  min-width: 320px;
+  max-width: 100%;
+  padding: 0.5625rem 0.75rem;
+  border: 1px solid var(--borda-do-campo);
+  border-radius: var(--curva-miuda);
+  background: var(--cartao);
+  font-size: 0.9375rem;
+  color: var(--tinta);
+}
+
+.seletor .detalhe {
+  font-size: 0.875rem;
+  color: var(--tinta-fraca);
+}
+
+@media (max-width: 640px) {
+  .cabecalho {
+    padding: 0 1rem;
+    gap: 1.25rem;
+  }
+
+  main {
+    padding: 1.5rem 1rem 2.5rem;
+  }
+
+  .lista > .faixa,
+  .paginacao,
+  .catalogo li,
+  .formulario-embutido,
+  .seletor {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .tabela th:first-child,
+  .tabela td:first-child {
+    padding-left: 1rem;
+  }
+
+  .tabela th:last-child,
+  .tabela td:last-child {
+    padding-right: 1rem;
+  }
+
+  .seletor select {
+    min-width: 0;
+    width: 100%;
+  }
 }

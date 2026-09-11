@@ -10,6 +10,8 @@ interface Props {
   passo?: string;
   /** Dica curta sob o campo, como o formato aceito. Nunca mensagem de recusa. */
   ajuda?: string;
+  /** A medida do que se digita, escrita dentro do campo, como o "ha" das áreas. */
+  unidade?: string;
 }
 
 /**
@@ -18,23 +20,37 @@ interface Props {
  * Nenhum campo valida: quem recusa é a API, e a tela mostra o texto que ela mandou. Ver
  * o critério de não duplicar mensagem de erro no cliente.
  */
-export function Campo({ rotulo, valor, aoMudar, tipo = 'text', passo, ajuda }: Props) {
+export function Campo({ rotulo, valor, aoMudar, tipo = 'text', passo, ajuda, unidade }: Props) {
   const campoId = useId();
   const ajudaId = useId();
+
+  const entrada = (
+    <input
+      id={campoId}
+      type={tipo}
+      step={passo}
+      value={valor}
+      aria-describedby={ajuda === undefined ? undefined : ajudaId}
+      onChange={(evento) => {
+        aoMudar(evento.target.value);
+      }}
+    />
+  );
 
   return (
     <p className="campo">
       <label htmlFor={campoId}>{rotulo}</label>
-      <input
-        id={campoId}
-        type={tipo}
-        step={passo}
-        value={valor}
-        aria-describedby={ajuda === undefined ? undefined : ajudaId}
-        onChange={(evento) => {
-          aoMudar(evento.target.value);
-        }}
-      />
+      {/* A unidade fica dentro do campo, e escondida de quem ouve: o rótulo já a diz. */}
+      {unidade === undefined ? (
+        entrada
+      ) : (
+        <span className="com-unidade">
+          {entrada}
+          <span className="unidade" aria-hidden="true">
+            {unidade}
+          </span>
+        </span>
+      )}
       {ajuda !== undefined && (
         <span className="ajuda" id={ajudaId}>
           {ajuda}

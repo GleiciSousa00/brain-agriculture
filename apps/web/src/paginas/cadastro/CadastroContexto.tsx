@@ -56,7 +56,7 @@ export interface Catalogos {
  * É o sintoma de `cortado`: o catálogo veio até cem e o registro apontado ficou de fora.
  * Quem explica o travessão é o aviso do alto do cadastro, e não a célula onde ele aparece.
  */
-const FORA_DO_CATALOGO = '—';
+export const FORA_DO_CATALOGO = '—';
 
 const CATALOGOS_VAZIOS: Catalogos = {
   produtores: [],
@@ -86,6 +86,15 @@ export interface Cadastro extends Catalogos {
   nomeDoProdutor: (id: string) => string;
   nomeDaCultura: (id: string) => string;
   anoDaSafra: (id: string) => string;
+  /**
+   * Quantas Propriedades um Produtor tem, contadas no catálogo que já está em memória.
+   *
+   * É o número que a coluna de Propriedades mostra, e é ele que distingue o Produtor sem
+   * Propriedade nenhuma — o único a quem a tela oferece registrar a primeira. Só vale com
+   * o catálogo inteiro em mãos: enquanto ele não chega, e quando `cortado` diz que ele
+   * veio pela metade, a conta é do que veio e a coluna deixa de contar.
+   */
+  quantasPropriedadesDe: (produtorId: string) => number;
   criarProdutor: (corpo: CriarProdutor) => Promise<void>;
   editarProdutor: (id: string, corpo: EditarProdutor) => Promise<void>;
   excluirProdutor: (id: string) => Promise<void>;
@@ -209,6 +218,9 @@ export function CadastroProvider({ children }: Props) {
 
         return safra === undefined ? FORA_DO_CATALOGO : String(safra.ano);
       },
+      quantasPropriedadesDe: (produtorId) =>
+        catalogos.propriedades.filter((propriedade) => propriedade.produtorId === produtorId)
+          .length,
       criarProdutor: (corpo) => escrever(() => criarProdutor(corpo)),
       editarProdutor: (id, corpo) => escrever(() => editarProdutor(id, corpo)),
       excluirProdutor: (id) => escrever(() => excluirProdutor(id)),

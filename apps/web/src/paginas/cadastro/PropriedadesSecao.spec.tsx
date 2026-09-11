@@ -13,14 +13,20 @@ async function preencher(rotulo: string, texto: string): Promise<void> {
   await userEvent.type(campo, texto);
 }
 
+/** O formulário nasce fechado: quem vai registrar pede por ele antes. */
+async function abrirANova(): Promise<void> {
+  await userEvent.click(screen.getByRole('button', { name: 'Nova Propriedade' }));
+}
+
 async function preencherAPropriedade(): Promise<void> {
+  await abrirANova();
   await userEvent.selectOptions(screen.getByLabelText('Produtor'), ANA.id);
   await preencher('Nome', 'Fazenda Boa Vista');
   await preencher('Cidade', 'Uberaba');
-  await preencher('Estado', 'MG');
-  await preencher('Área total', '100');
-  await preencher('Área agricultável', '60');
-  await preencher('Área de vegetação', '30');
+  await userEvent.selectOptions(screen.getByLabelText('Estado'), 'MG');
+  await preencher('Total', '100');
+  await preencher('Agricultável', '60');
+  await preencher('Vegetação', '30');
 }
 
 describe('a seção de Propriedades', () => {
@@ -56,8 +62,10 @@ describe('a seção de Propriedades', () => {
     servirCadastro({ produtores: [ANA, AGRO_BETO], propriedades: [] });
 
     renderizarNoCadastro(<PropriedadesSecao />);
+    await screen.findByText('Nenhuma Propriedade cadastrada ainda.');
+    await abrirANova();
 
-    const campo = await screen.findByLabelText('Produtor');
+    const campo = screen.getByLabelText('Produtor');
     expect(campo.tagName).toBe('SELECT');
     expect(within(campo).getByRole('option', { name: 'Ana Lima' })).toBeInTheDocument();
     expect(within(campo).getByRole('option', { name: 'Agro Beto' })).toBeInTheDocument();
@@ -113,7 +121,7 @@ describe('a seção de Propriedades', () => {
     await screen.findByText('Nenhuma Propriedade cadastrada ainda.');
 
     await preencherAPropriedade();
-    await preencher('Área de vegetação', '90');
+    await preencher('Vegetação', '90');
     await userEvent.click(screen.getByRole('button', { name: 'Registrar' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -185,6 +193,9 @@ describe('a seção de Propriedades', () => {
     servirCadastro({ produtores: [], propriedades: [] });
 
     renderizarNoCadastro(<PropriedadesSecao />);
+    await screen.findByText('Nenhuma Propriedade cadastrada ainda.');
+
+    await abrirANova();
 
     await waitFor(() => {
       expect(
@@ -194,11 +205,93 @@ describe('a seção de Propriedades', () => {
     expect(screen.queryByRole('button', { name: 'Registrar' })).toBeNull();
   });
 
+  it('leva de cada Propriedade aos Plantios dela', async () => {
+    servirCadastro({ produtores: [ANA], propriedades: [BOA_VISTA] });
+
+    renderizarNoCadastro(<PropriedadesSecao />);
+    await screen.findByText('Fazenda Boa Vista');
+
+    expect(screen.getByRole('link', { name: 'Ver os Plantios de Fazenda Boa Vista' })).toHaveAttribute(
+      'href',
+      `/cadastro/plantios?propriedade=${BOA_VISTA.id}&produtor=${ANA.id}`,
+    );
+  });
+
+  it('põe a conta das áreas na frente de quem a está fazendo de cabeça', async () => {
+    servirCadastro({ produtores: [ANA], propriedades: [] });
+
+    renderizarNoCadastro(<PropriedadesSecao />);
+    await screen.findByText('Nenhuma Propriedade cadastrada ainda.');
+    await abrirANova();
+    await preencher('Total', '100');
+    await preencher('Agricultável', '60');
+    await preencher('Vegetação', '30');
+
+    // A conta é só informação: quem recusa continua sendo a API.
+    expect(
+      screen.getByText('Agricultável mais vegetação: 90 ha de 100 ha no total.'),
+    ).toBeInTheDocument();
+  });
+
+  describe('recortada por um Produtor', () => {
+    /** O endereço com o recorte, que é de onde a seção tira o Produtor. */
+    const RECORTE = `/cadastro/propriedades?produtor=${ANA.id}`;
+
+    /** A rota que recorta: a listagem geral não aceita filtro, a do Produtor sim. */
+    function servirODeAna() {
+      servirCadastro(
+        { produtores: [ANA, AGRO_BETO], propriedades: [BOA_VISTA, SITIO_DO_MEIO] },
+        {
+          'GET /api/produtores/:id': () => ({
+            corpo: {
+              ...ANA,
+              propriedades: { itens: [BOA_VISTA], total: 1, pagina: 1, tamanho: 10 },
+            },
+          }),
+        },
+      );
+    }
+
+    it('lista só as Propriedades dele, e diz de quem é o recorte', async () => {
+      servirODeAna();
+
+      renderizarNoCadastro(<PropriedadesSecao />, RECORTE);
+
+      expect(
+        await screen.findByRole('heading', { name: 'Propriedades de Ana Lima', level: 2 }),
+      ).toBeInTheDocument();
+      expect(screen.getByText('Fazenda Boa Vista')).toBeInTheDocument();
+      expect(screen.queryByText('Sítio do Meio')).toBeNull();
+    });
+
+    it('oferece a saída para o cadastro inteiro', async () => {
+      servirODeAna();
+
+      renderizarNoCadastro(<PropriedadesSecao />, RECORTE);
+      await screen.findByText('Fazenda Boa Vista');
+
+      expect(screen.getByRole('link', { name: 'Ver todas' })).toHaveAttribute(
+        'href',
+        '/cadastro/propriedades',
+      );
+    });
+
+    it('registra em nome dele sem pedir que se escolha o Produtor de novo', async () => {
+      servirODeAna();
+
+      renderizarNoCadastro(<PropriedadesSecao />, `${RECORTE}&novo=1`);
+
+      // Chegou-se aqui pedindo para registrar, então o formulário já está aberto.
+      expect(await screen.findByLabelText('Produtor')).toHaveValue(ANA.id);
+    });
+  });
+
   it('não deixa o navegador barrar o envio no lugar da API', async () => {
     servirCadastro({ produtores: [ANA], propriedades: [] });
 
     renderizarNoCadastro(<PropriedadesSecao />);
     await screen.findByText('Nenhuma Propriedade cadastrada ainda.');
+    await abrirANova();
 
     const formulario = screen.getByRole('button', { name: 'Registrar' }).closest('form');
     expect(formulario).toHaveAttribute('novalidate');

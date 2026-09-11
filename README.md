@@ -65,20 +65,27 @@ e as dependências instaladas. Ver [Desenvolver sem Docker](#desenvolver-sem-doc
 ## As duas telas
 
 O painel fica em `/painel` e mostra o total de Propriedades cadastradas, a soma da Área
-Total em hectares, e três distribuições em gráfico de pizza: Propriedades por estado,
+Total em hectares, e três distribuições em gráfico de rosca: Propriedades por estado,
 Plantios por Cultura e o Uso do Solo. A distribuição por Cultura aceita recorte por Safra.
+Cada rosca vem com a legenda dos números ao lado, que é o que um leitor de tela lê.
 
 O cadastro fica em `/cadastro` e se reparte em quatro seções, cada uma com endereço
 próprio: `/cadastro/produtores`, `/cadastro/propriedades`, `/cadastro/plantios` e
 `/cadastro/catalogos`. Entrar em `/cadastro` sem seção cai em Produtores, porque
 Propriedade e Plantio dependem dele para existir.
 
+As três primeiras se encadeiam pela hierarquia do domínio, e o recorte viaja no endereço:
+`/cadastro/propriedades?produtor=<id>` são as Propriedades de um Produtor, e
+`/cadastro/plantios?propriedade=<id>` são os Plantios de uma Propriedade. Da lista de
+Produtores se desce para as Propriedades de cada um, e dali para os Plantios de cada uma.
+
 O navegador nunca chama a porta da API direto. A interface fala com ela pela própria
 origem, sob `/api`, e quem repassa é o servidor que entrega a tela: o Caddy no Docker e o
 Vite em desenvolvimento. Nas duas pontas o prefixo é cortado, então `/api/painel` chega na
 API como `/painel`. As duas telas estão nos registros
-[`0009`](docs/adr/0009-interface-web-roteador-grafico-e-mesma-origem.md) e
-[`0010`](docs/adr/0010-cadastro-em-sub-rotas-com-um-contexto-so.md).
+[`0009`](docs/adr/0009-interface-web-roteador-grafico-e-mesma-origem.md),
+[`0010`](docs/adr/0010-cadastro-em-sub-rotas-com-um-contexto-so.md) e
+[`0011`](docs/adr/0011-cadastro-navegado-pela-hierarquia.md).
 
 Nenhum campo é conferido na interface. O Documento inválido, a soma de áreas que não fecha
 e o Plantio repetido são recusados pela API, e a tela mostra o texto que ela devolveu, sem
@@ -313,7 +320,7 @@ São três tipos, e **só um deles precisa de Docker**.
 | Integração, borda HTTP | `pnpm --filter @cadastro-rural/api test:integration test/http-edge.int-spec.ts` | não |
 | Integração, contra um Postgres de verdade | `pnpm test:integration` | **sim** |
 
-**Unidade.** São 245 testes na API e 90 na interface web. Os da API rodam sem banco, sem
+**Unidade.** São 249 testes na API e 119 na interface web. Os da API rodam sem banco, sem
 Nest e sem subir aplicação, que é o que torna o laço de TDD rápido. Os da interface usam
 Vitest com Testing Library e afirmam o comportamento da tela, incluindo a legenda em texto
 que fica ao lado de cada gráfico.
@@ -428,3 +435,4 @@ rejeitado no caminho.
 | [`0008`](docs/adr/0008-validacao-de-documento-segue-a-norma-da-receita.md) | Por que a validação de CPF e CNPJ diverge das bibliotecas de npm em dois pontos |
 | [`0009`](docs/adr/0009-interface-web-roteador-grafico-e-mesma-origem.md) | Roteador, gráfico e o motivo de o navegador nunca chamar a porta da API direto |
 | [`0010`](docs/adr/0010-cadastro-em-sub-rotas-com-um-contexto-so.md) | Por que o cadastro se reparte em sub-rotas, com um contexto só e listas paginadas na API |
+| [`0011`](docs/adr/0011-cadastro-navegado-pela-hierarquia.md) | Por que o recorte da hierarquia mora no endereço, por que a contagem sai do catálogo e por que o Recharts saiu |
