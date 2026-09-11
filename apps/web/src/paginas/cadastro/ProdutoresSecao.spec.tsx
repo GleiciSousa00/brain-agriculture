@@ -336,3 +336,38 @@ describe('a seção de Produtores', () => {
     expect(screen.queryByText('Nenhum Produtor cadastrado ainda.')).toBeNull();
   });
 });
+
+describe('os campos do formulário de Produtor', () => {
+  it('para no teto da API em vez de deixar escrever o que vai ser recusado', async () => {
+    servirCadastro({ produtores: [] });
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Nenhum Produtor cadastrado ainda.');
+    await abrirONovo();
+
+    expect(screen.getByLabelText('Nome')).toHaveAttribute('maxlength', '200');
+    expect(screen.getByLabelText('Documento')).toHaveAttribute('maxlength', '18');
+  });
+
+  it('abre o teclado numérico no Documento, que só se preenche com dígitos', async () => {
+    servirCadastro({ produtores: [] });
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Nenhum Produtor cadastrado ainda.');
+    await abrirONovo();
+
+    expect(screen.getByLabelText('Documento')).toHaveAttribute('inputmode', 'numeric');
+    expect(screen.getByLabelText('Nome')).not.toHaveAttribute('inputmode');
+  });
+
+  it('anuncia os dois campos como obrigatórios a quem ouve a tela', async () => {
+    servirCadastro({ produtores: [] });
+
+    renderizarNoCadastro(<ProdutoresSecao />);
+    await screen.findByText('Nenhum Produtor cadastrado ainda.');
+    await abrirONovo();
+
+    expect(screen.getByLabelText('Nome')).toBeRequired();
+    expect(screen.getByLabelText('Documento')).toBeRequired();
+  });
+});

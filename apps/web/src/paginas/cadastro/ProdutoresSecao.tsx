@@ -14,6 +14,10 @@ const CARREGANDO = 'Carregando os Produtores…';
 const VAZIO = 'Nenhum Produtor cadastrado ainda.';
 const PRIMEIRA_PROPRIEDADE = 'Registrar a primeira';
 
+/** Os tetos são da API, repetidos aqui para o navegador parar de aceitar caractere neles. */
+const NOME_TAMANHO_MAXIMO = 200;
+const DOCUMENTO_TAMANHO_MAXIMO = 18;
+
 export function ProdutoresSecao() {
   const {
     criarProdutor,
@@ -98,13 +102,22 @@ export function ProdutoresSecao() {
           }}
         >
           <h3>{emEdicao === undefined ? 'Novo Produtor' : `Editar ${emEdicao.nome}`}</h3>
-          <Campo rotulo="Nome" valor={nome} aoMudar={setNome} />
+          <Campo
+            rotulo="Nome"
+            valor={nome}
+            aoMudar={setNome}
+            tamanhoMaximo={NOME_TAMANHO_MAXIMO}
+            obrigatorio
+          />
           {emEdicao === undefined ? (
             <Campo
               rotulo="Documento"
               valor={documento}
               aoMudar={setDocumento}
               ajuda="CPF ou CNPJ, com ou sem máscara."
+              tamanhoMaximo={DOCUMENTO_TAMANHO_MAXIMO}
+              obrigatorio
+              tecladoNumerico
             />
           ) : (
             <p className="campo">

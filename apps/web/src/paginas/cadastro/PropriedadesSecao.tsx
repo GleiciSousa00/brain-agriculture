@@ -28,6 +28,13 @@ const AJUDA_DAS_AREAS =
   'Até o metro quadrado, que são quatro casas decimais. ' +
   'A área agricultável mais a de vegetação não passam do total.';
 
+/** O salto do controle de área: o metro quadrado, que é a medida mais fina que a API guarda. */
+const PASSO_DA_AREA = '0.0001';
+
+/** Os tetos são da API, repetidos aqui para o navegador parar de aceitar caractere neles. */
+const NOME_TAMANHO_MAXIMO = 200;
+const CIDADE_TAMANHO_MAXIMO = 120;
+
 /** O que o formulário guarda enquanto se digita: texto, como o campo devolve. */
 interface Rascunho {
   produtorId: string;
@@ -263,8 +270,20 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
                 <span className="ajuda">Uma Propriedade não muda de Produtor.</span>
               </p>
             )}
-            <Campo rotulo="Nome" valor={rascunho.nome} aoMudar={campo('nome')} />
-            <Campo rotulo="Cidade" valor={rascunho.cidade} aoMudar={campo('cidade')} />
+            <Campo
+              rotulo="Nome"
+              valor={rascunho.nome}
+              aoMudar={campo('nome')}
+              tamanhoMaximo={NOME_TAMANHO_MAXIMO}
+              obrigatorio
+            />
+            <Campo
+              rotulo="Cidade"
+              valor={rascunho.cidade}
+              aoMudar={campo('cidade')}
+              tamanhoMaximo={CIDADE_TAMANHO_MAXIMO}
+              obrigatorio
+            />
             <Escolha
               rotulo="Estado"
               valor={rascunho.estado}
@@ -278,7 +297,7 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
                 <Campo
                   rotulo="Total"
                   tipo="number"
-                  passo="0.01"
+                  passo={PASSO_DA_AREA}
                   unidade="ha"
                   valor={rascunho.areaTotal}
                   aoMudar={campo('areaTotal')}
@@ -286,7 +305,7 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
                 <Campo
                   rotulo="Agricultável"
                   tipo="number"
-                  passo="0.01"
+                  passo={PASSO_DA_AREA}
                   unidade="ha"
                   valor={rascunho.areaAgricultavel}
                   aoMudar={campo('areaAgricultavel')}
@@ -294,7 +313,7 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
                 <Campo
                   rotulo="Vegetação"
                   tipo="number"
-                  passo="0.01"
+                  passo={PASSO_DA_AREA}
                   unidade="ha"
                   valor={rascunho.areaDeVegetacao}
                   aoMudar={campo('areaDeVegetacao')}
