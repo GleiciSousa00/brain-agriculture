@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { Lista } from '../../componentes/Lista';
 import { comoNumero, formatarContagem } from '../../formato';
 import { useCadastro } from './CadastroContexto';
@@ -7,47 +8,87 @@ import { useTentativa } from './useTentativa';
 const SEM_CULTURA = 'Nenhuma Cultura no catálogo ainda.';
 const SEM_SAFRA = 'Nenhuma Safra registrada ainda.';
 const AJUDA_DA_CULTURA =
-  'A espécie, como Soja, Milho ou Café. Uma vez acrescentada, não se edita nem se exclui.';
+  'A espécie, como Soja, Milho ou Café. O nome não se edita: para corrigi-lo, exclua e acrescente de novo.';
 const AJUDA_DA_SAFRA = 'O ano do ciclo agrícola, como 2026.';
 
 /**
  * Os dois catálogos que o Plantio consome.
  *
  * Nenhum dos dois é paginado na API, então aqui a lista é a lista inteira, sem controle de
- * página. Também não se editam nem se excluem: a API não oferece as duas operações,
- * porque um Plantio já registrado aponta para eles.
+ * página. Nenhum dos dois se edita: a API não oferece a operação, e o conserto de um nome
+ * digitado errado é excluir e acrescentar de novo.
+ *
+ * A exclusão existe para esse conserto, e a API a recusa quando algum Plantio aponta para
+ * a linha: o Plantio é registro do que aconteceu na terra, e não some porque alguém
+ * arrumou o catálogo. A recusa aparece aqui com o texto que ela mandou.
  *
  * A Safra não está nos critérios da issue, mas o formulário de Plantio escolhe a Safra de
  * uma lista, e numa base recém-criada essa lista está vazia. Sem esta seção não haveria
  * como registrar Plantio nenhum pela interface.
  */
 export function CatalogosSecao() {
-  const { culturas, safras, carregando, acrescentarCultura, criarSafra } = useCadastro();
+  const {
+    culturas,
+    safras,
+    carregando,
+    acrescentarCultura,
+    excluirCultura,
+    criarSafra,
+    excluirSafra,
+  } = useCadastro();
 
   const [nomeDaCultura, setNomeDaCultura] = useState('');
   const [anoDaSafra, setAnoDaSafra] = useState('');
   const [aberto, setAberto] = useState<'cultura' | 'safra'>();
   const tentativaDaCultura = useTentativa();
   const tentativaDaSafra = useTentativa();
+  // A exclusão tem tentativa própria porque o formulário some enquanto ela acontece, e a
+  // recusa dela iria junto.
+  const exclusaoDaCultura = useTentativa();
+  const exclusaoDaSafra = useTentativa();
 
-  function fechar(): void {
+  /** Só o estado dos formulários. O desfecho da última escrita sobrevive ao fechamento. */
+  function esvaziar(): void {
     setAberto(undefined);
     setNomeDaCultura('');
     setAnoDaSafra('');
+  }
+
+  function fechar(): void {
+    esvaziar();
     tentativaDaCultura.limpar();
     tentativaDaSafra.limpar();
   }
 
   async function enviarCultura(): Promise<void> {
-    if (await tentativaDaCultura.tentar(() => acrescentarCultura({ nome: nomeDaCultura }))) {
-      fechar();
+    const passou = await tentativaDaCultura.tentar(
+      () => acrescentarCultura({ nome: nomeDaCultura }),
+      `Cultura ${nomeDaCultura} acrescentada ao catálogo.`,
+    );
+
+    if (passou) {
+      esvaziar();
     }
   }
 
   async function enviarSafra(): Promise<void> {
-    if (await tentativaDaSafra.tentar(() => criarSafra({ ano: comoNumero(anoDaSafra) }))) {
-      fechar();
+    const passou = await tentativaDaSafra.tentar(
+      () => criarSafra({ ano: comoNumero(anoDaSafra) }),
+      `Safra de ${anoDaSafra} registrada.`,
+    );
+
+    if (passou) {
+      esvaziar();
     }
+  }
+
+  /** A recusa da linha em uso vem da API, e é o texto dela que aparece na lista. */
+  async function apagarCultura(id: string, nome: string): Promise<void> {
+    await exclusaoDaCultura.tentar(() => excluirCultura(id), `Cultura ${nome} tirada do catálogo.`);
+  }
+
+  async function apagarSafra(id: string, ano: number): Promise<void> {
+    await exclusaoDaSafra.tentar(() => excluirSafra(id), `Safra de ${ano} tirada do cadastro.`);
   }
 
   return (
@@ -85,12 +126,33 @@ export function CatalogosSecao() {
           )
         }
       >
+        {/* Fora do formulário, que some assim que a escrita passa. */}
+        {exclusaoDaCultura.recusa !== undefined && <p role="alert">{exclusaoDaCultura.recusa}</p>}
+        {tentativaDaCultura.aviso !== undefined && (
+          <p className="acerto" role="status">
+            {tentativaDaCultura.aviso}
+          </p>
+        )}
+        {exclusaoDaCultura.aviso !== undefined && (
+          <p className="acerto" role="status">
+            {exclusaoDaCultura.aviso}
+          </p>
+        )}
         {culturas.length === 0 ? (
           <p className="vazio">{SEM_CULTURA}</p>
         ) : (
           <ul className="catalogo">
             {culturas.map((cultura) => (
-              <li key={cultura.id}>{cultura.nome}</li>
+              <li key={cultura.id}>
+                <span>{cultura.nome}</span>
+                <BotaoDeExclusao
+                  rotulo={`Excluir ${cultura.nome}`}
+                  pergunta={`Tirar ${cultura.nome} do catálogo?`}
+                  aoConfirmar={() => {
+                    void apagarCultura(cultura.id, cultura.nome);
+                  }}
+                />
+              </li>
             ))}
           </ul>
         )}
@@ -130,12 +192,32 @@ export function CatalogosSecao() {
           )
         }
       >
+        {exclusaoDaSafra.recusa !== undefined && <p role="alert">{exclusaoDaSafra.recusa}</p>}
+        {tentativaDaSafra.aviso !== undefined && (
+          <p className="acerto" role="status">
+            {tentativaDaSafra.aviso}
+          </p>
+        )}
+        {exclusaoDaSafra.aviso !== undefined && (
+          <p className="acerto" role="status">
+            {exclusaoDaSafra.aviso}
+          </p>
+        )}
         {safras.length === 0 ? (
           <p className="vazio">{SEM_SAFRA}</p>
         ) : (
           <ul className="catalogo">
             {safras.map((safra) => (
-              <li key={safra.id}>{safra.ano}</li>
+              <li key={safra.id}>
+                <span className="tabular">{safra.ano}</span>
+                <BotaoDeExclusao
+                  rotulo={`Excluir a Safra de ${String(safra.ano)}`}
+                  pergunta={`Tirar a Safra de ${String(safra.ano)} do cadastro?`}
+                  aoConfirmar={() => {
+                    void apagarSafra(safra.id, safra.ano);
+                  }}
+                />
+              </li>
             ))}
           </ul>
         )}

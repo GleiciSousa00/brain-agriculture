@@ -46,27 +46,36 @@ export function PlantiosDaPropriedade({ propriedadeId, nome, abrindo }: Props) {
   const tentativaDoFormulario = useTentativa();
   const tentativaDaExclusao = useTentativa();
 
-  function fechar(): void {
+  /** Só o estado do formulário. O desfecho da última escrita sobrevive ao fechamento. */
+  function esvaziar(): void {
     setAberto(false);
     setCulturaId(NADA_ESCOLHIDO);
     setSafraId(NADA_ESCOLHIDO);
-    tentativaDoFormulario.limpar();
     esquecerAbertura();
+  }
+
+  function fechar(): void {
+    esvaziar();
+    tentativaDoFormulario.limpar();
   }
 
   /** A unicidade da trinca é regra da API. A tela repete o que ela respondeu. */
   async function enviar(): Promise<void> {
-    const passou = await tentativaDoFormulario.tentar(() =>
-      registrarPlantio({ propriedadeId, culturaId, safraId }),
+    const passou = await tentativaDoFormulario.tentar(
+      () => registrarPlantio({ propriedadeId, culturaId, safraId }),
+      `Plantio de ${nomeDaCultura(culturaId)} em ${anoDaSafra(safraId)} registrado.`,
     );
 
     if (passou) {
-      fechar();
+      esvaziar();
     }
   }
 
-  async function excluir(id: string): Promise<void> {
-    await tentativaDaExclusao.tentar(() => excluirPlantio(id));
+  async function excluir(id: string, cultura: string, safra: string): Promise<void> {
+    await tentativaDaExclusao.tentar(
+      () => excluirPlantio(id),
+      `Plantio de ${cultura} em ${safra} excluído.`,
+    );
   }
 
   // Sem uma Cultura e uma Safra no catálogo não há trinca a formar, e os dois campos de
@@ -122,6 +131,24 @@ export function PlantiosDaPropriedade({ propriedadeId, nome, abrindo }: Props) {
         <p role="alert">{tentativaDaExclusao.recusa}</p>
       )}
 
+      {/*
+        Os dois avisos ficam fora do formulário porque ele some quando a escrita passa.
+        Aqui eles são o que mais importa: a lista vem do mais novo para o mais antigo, mas
+        a Propriedade com muitos Plantios ainda tem páginas, e a linha nova não prova nada
+        a quem está na terceira delas.
+      */}
+      {tentativaDoFormulario.aviso !== undefined && (
+        <p className="acerto" role="status">
+          {tentativaDoFormulario.aviso}
+        </p>
+      )}
+
+      {tentativaDaExclusao.aviso !== undefined && (
+        <p className="acerto" role="status">
+          {tentativaDaExclusao.aviso}
+        </p>
+      )}
+
       <Listagem
         titulo={nome === undefined ? 'Plantios da Propriedade' : `Plantios de ${nome}`}
         acoes={
@@ -164,7 +191,7 @@ export function PlantiosDaPropriedade({ propriedadeId, nome, abrindo }: Props) {
                         rotulo={`Excluir ${cultura} em ${safra}`}
                         pergunta={`Excluir o Plantio de ${cultura} em ${safra}?`}
                         aoConfirmar={() => {
-                          void excluir(plantio.id);
+                          void excluir(plantio.id, cultura, safra);
                         }}
                       />
                     </td>

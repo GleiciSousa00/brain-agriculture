@@ -3,6 +3,9 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE, DiscoveryModule } fro
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
+// A recusa de esquema fala português a partir daqui. O módulo é só efeito, e vem antes
+// de qualquer DTO porque a configuração do Zod é global.
+import './config/zod-em-portugues';
 import { databaseOptions } from './config/database.config';
 import { CulturasModule } from './modules/culturas/culturas.module';
 import { HealthModule } from './health/health.module';

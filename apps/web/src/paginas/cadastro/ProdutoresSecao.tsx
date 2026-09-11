@@ -14,6 +14,10 @@ const CARREGANDO = 'Carregando os Produtores…';
 const VAZIO = 'Nenhum Produtor cadastrado ainda.';
 const PRIMEIRA_PROPRIEDADE = 'Registrar a primeira';
 
+/** Os tetos são da API, repetidos aqui para o navegador parar de aceitar caractere neles. */
+const NOME_TAMANHO_MAXIMO = 200;
+const DOCUMENTO_TAMANHO_MAXIMO = 18;
+
 export function ProdutoresSecao() {
   const {
     criarProdutor,
@@ -33,11 +37,16 @@ export function ProdutoresSecao() {
   const tentativaDoFormulario = useTentativa();
   const tentativaDaExclusao = useTentativa();
 
-  function fechar(): void {
+  /** Só o estado do formulário. O desfecho da última escrita sobrevive ao fechamento. */
+  function esvaziar(): void {
     setAberto(false);
     setEmEdicao(undefined);
     setNome('');
     setDocumento('');
+  }
+
+  function fechar(): void {
+    esvaziar();
     tentativaDoFormulario.limpar();
   }
 
@@ -56,21 +65,29 @@ export function ProdutoresSecao() {
 
   /** Nenhum campo é conferido aqui: quem recusa é a API, e o texto dela é o que aparece. */
   async function enviar(): Promise<void> {
-    const passou = await tentativaDoFormulario.tentar(async () => {
-      if (emEdicao === undefined) {
-        await criarProdutor({ nome, documento });
-      } else {
-        await editarProdutor(emEdicao.id, { nome });
-      }
-    });
+    const registrando = emEdicao === undefined;
+
+    const passou = await tentativaDoFormulario.tentar(
+      async () => {
+        if (registrando) {
+          await criarProdutor({ nome, documento });
+        } else {
+          await editarProdutor(emEdicao.id, { nome });
+        }
+      },
+      registrando ? `Produtor ${nome} registrado.` : `Nome corrigido para ${nome}.`,
+    );
 
     if (passou) {
-      fechar();
+      esvaziar();
     }
   }
 
-  async function excluir(id: string): Promise<void> {
-    await tentativaDaExclusao.tentar(() => excluirProdutor(id));
+  async function excluir(produtor: Produtor): Promise<void> {
+    await tentativaDaExclusao.tentar(
+      () => excluirProdutor(produtor.id),
+      `Produtor ${produtor.nome} excluído.`,
+    );
   }
 
   return (
@@ -85,13 +102,22 @@ export function ProdutoresSecao() {
           }}
         >
           <h3>{emEdicao === undefined ? 'Novo Produtor' : `Editar ${emEdicao.nome}`}</h3>
-          <Campo rotulo="Nome" valor={nome} aoMudar={setNome} />
+          <Campo
+            rotulo="Nome"
+            valor={nome}
+            aoMudar={setNome}
+            tamanhoMaximo={NOME_TAMANHO_MAXIMO}
+            obrigatorio
+          />
           {emEdicao === undefined ? (
             <Campo
               rotulo="Documento"
               valor={documento}
               aoMudar={setDocumento}
               ajuda="CPF ou CNPJ, com ou sem máscara."
+              tamanhoMaximo={DOCUMENTO_TAMANHO_MAXIMO}
+              obrigatorio
+              tecladoNumerico
             />
           ) : (
             <p className="campo">
@@ -116,6 +142,19 @@ export function ProdutoresSecao() {
 
       {tentativaDaExclusao.recusa !== undefined && (
         <p role="alert">{tentativaDaExclusao.recusa}</p>
+      )}
+
+      {/* Os dois avisos ficam fora do formulário porque ele some quando a escrita passa. */}
+      {tentativaDoFormulario.aviso !== undefined && (
+        <p className="acerto" role="status">
+          {tentativaDoFormulario.aviso}
+        </p>
+      )}
+
+      {tentativaDaExclusao.aviso !== undefined && (
+        <p className="acerto" role="status">
+          {tentativaDaExclusao.aviso}
+        </p>
       )}
 
       <Listagem
@@ -170,7 +209,7 @@ export function ProdutoresSecao() {
                       rotulo={`Excluir ${produtor.nome}`}
                       pergunta={`Excluir ${produtor.nome}? As Propriedades e os Plantios desse Produtor vão junto.`}
                       aoConfirmar={() => {
-                        void excluir(produtor.id);
+                        void excluir(produtor);
                       }}
                     />
                   </td>

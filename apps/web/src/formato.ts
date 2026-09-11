@@ -9,6 +9,10 @@ const IDIOMA = 'pt-BR';
 
 const QUANTIDADE = new Intl.NumberFormat(IDIOMA, { maximumFractionDigits: 0 });
 
+/**
+ * O cadastro guarda a área até o metro quadrado, que são quatro casas. A tela mostra
+ * duas: as duas últimas não mudam nenhuma decisão de quem lê uma listagem.
+ */
 const HECTARES = new Intl.NumberFormat(IDIOMA, { maximumFractionDigits: 2 });
 
 const PARTICIPACAO = new Intl.NumberFormat(IDIOMA, { maximumFractionDigits: 1 });

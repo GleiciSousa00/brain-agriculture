@@ -25,7 +25,15 @@ const CARREGANDO = 'Carregando as Propriedades…';
 const VAZIO = 'Nenhuma Propriedade cadastrada ainda.';
 const SEM_PRODUTOR = 'Registre um Produtor antes: toda Propriedade é registrada em nome de um.';
 const AJUDA_DAS_AREAS =
-  'Até duas casas decimais. A área agricultável mais a de vegetação não passam do total.';
+  'Até o metro quadrado, que são quatro casas decimais. ' +
+  'A área agricultável mais a de vegetação não passam do total.';
+
+/** O salto do controle de área: o metro quadrado, que é a medida mais fina que a API guarda. */
+const PASSO_DA_AREA = '0.0001';
+
+/** Os tetos são da API, repetidos aqui para o navegador parar de aceitar caractere neles. */
+const NOME_TAMANHO_MAXIMO = 200;
+const CIDADE_TAMANHO_MAXIMO = 120;
 
 /** O que o formulário guarda enquanto se digita: texto, como o campo devolve. */
 interface Rascunho {
@@ -166,12 +174,17 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
     setRascunho((anterior) => ({ ...anterior, produtorId: valor, produtorNome: rotulo }));
   }
 
-  function fechar(): void {
+  /** Só o estado do formulário. O desfecho da última escrita sobrevive ao fechamento. */
+  function esvaziar(): void {
     setAberto(false);
     setEmEdicao(undefined);
     setRascunho({ ...RASCUNHO_LIMPO, produtorId });
-    tentativaDoFormulario.limpar();
     esquecerAbertura();
+  }
+
+  function fechar(): void {
+    esvaziar();
+    tentativaDoFormulario.limpar();
   }
 
   function abrirParaRegistrar(): void {
@@ -188,21 +201,31 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
 
   /** A regra das áreas mora na API. Aqui só se mostra a recusa que ela mandou. */
   async function enviar(): Promise<void> {
-    const passou = await tentativaDoFormulario.tentar(async () => {
-      if (emEdicao === undefined) {
-        await criarPropriedade({ produtorId: rascunho.produtorId, ...corpoDe(rascunho) });
-      } else {
-        await editarPropriedade(emEdicao.id, corpoDe(rascunho));
-      }
-    });
+    const registrando = emEdicao === undefined;
+
+    const passou = await tentativaDoFormulario.tentar(
+      async () => {
+        if (registrando) {
+          await criarPropriedade({ produtorId: rascunho.produtorId, ...corpoDe(rascunho) });
+        } else {
+          await editarPropriedade(emEdicao.id, corpoDe(rascunho));
+        }
+      },
+      registrando
+        ? `Propriedade ${rascunho.nome} registrada.`
+        : `Propriedade ${rascunho.nome} atualizada.`,
+    );
 
     if (passou) {
-      fechar();
+      esvaziar();
     }
   }
 
-  async function excluir(id: string): Promise<void> {
-    await tentativaDaExclusao.tentar(() => excluirPropriedade(id));
+  async function excluir(propriedade: Propriedade): Promise<void> {
+    await tentativaDaExclusao.tentar(
+      () => excluirPropriedade(propriedade.id),
+      `Propriedade ${propriedade.nome} excluída.`,
+    );
   }
 
   // O nome de quem está escolhido: o que a busca trouxe, ou o do recorte, que chega como
@@ -247,8 +270,20 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
                 <span className="ajuda">Uma Propriedade não muda de Produtor.</span>
               </p>
             )}
-            <Campo rotulo="Nome" valor={rascunho.nome} aoMudar={campo('nome')} />
-            <Campo rotulo="Cidade" valor={rascunho.cidade} aoMudar={campo('cidade')} />
+            <Campo
+              rotulo="Nome"
+              valor={rascunho.nome}
+              aoMudar={campo('nome')}
+              tamanhoMaximo={NOME_TAMANHO_MAXIMO}
+              obrigatorio
+            />
+            <Campo
+              rotulo="Cidade"
+              valor={rascunho.cidade}
+              aoMudar={campo('cidade')}
+              tamanhoMaximo={CIDADE_TAMANHO_MAXIMO}
+              obrigatorio
+            />
             <Escolha
               rotulo="Estado"
               valor={rascunho.estado}
@@ -262,7 +297,7 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
                 <Campo
                   rotulo="Total"
                   tipo="number"
-                  passo="0.01"
+                  passo={PASSO_DA_AREA}
                   unidade="ha"
                   valor={rascunho.areaTotal}
                   aoMudar={campo('areaTotal')}
@@ -270,7 +305,7 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
                 <Campo
                   rotulo="Agricultável"
                   tipo="number"
-                  passo="0.01"
+                  passo={PASSO_DA_AREA}
                   unidade="ha"
                   valor={rascunho.areaAgricultavel}
                   aoMudar={campo('areaAgricultavel')}
@@ -278,7 +313,7 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
                 <Campo
                   rotulo="Vegetação"
                   tipo="number"
-                  passo="0.01"
+                  passo={PASSO_DA_AREA}
                   unidade="ha"
                   valor={rascunho.areaDeVegetacao}
                   aoMudar={campo('areaDeVegetacao')}
@@ -310,6 +345,19 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
 
       {tentativaDaExclusao.recusa !== undefined && (
         <p role="alert">{tentativaDaExclusao.recusa}</p>
+      )}
+
+      {/* Os dois avisos ficam fora do formulário porque ele some quando a escrita passa. */}
+      {tentativaDoFormulario.aviso !== undefined && (
+        <p className="acerto" role="status">
+          {tentativaDoFormulario.aviso}
+        </p>
+      )}
+
+      {tentativaDaExclusao.aviso !== undefined && (
+        <p className="acerto" role="status">
+          {tentativaDaExclusao.aviso}
+        </p>
       )}
 
       <Listagem
@@ -387,7 +435,7 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
                       rotulo={`Excluir ${propriedade.nome}`}
                       pergunta={`Excluir ${propriedade.nome}? Os Plantios dessa Propriedade vão junto.`}
                       aoConfirmar={() => {
-                        void excluir(propriedade.id);
+                        void excluir(propriedade);
                       }}
                     />
                   </td>

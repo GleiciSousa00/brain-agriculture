@@ -50,7 +50,7 @@ export class TypeormPlantioRepository implements PlantioRepository {
   }: RecorteDePlantios): Promise<Recortados<Plantio>> {
     const [linhas, total] = await this.linhas.findAndCount({
       where: { propriedadeId },
-      order: { criadoEm: 'ASC', id: 'ASC' },
+      order: { criadoEm: 'DESC', id: 'DESC' },
       skip: deslocamento,
       take: limite,
     });
