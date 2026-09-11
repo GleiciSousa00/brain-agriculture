@@ -54,4 +54,14 @@ export class CulturasModule {}
 /** O que o módulo publica para a raiz de composição montar o catálogo do ORM. */
 export const CULTURAS_ENTIDADES = [CulturaOrmEntity];
 
+/**
+ * A ordem da carga inicial do catálogo, publicada para fora do módulo.
+ *
+ * A lista vai da espécie mais comum na produção brasileira para a menos comum, e é essa
+ * ordem que a carga de volume usa para decidir o que cada Propriedade planta. Quem está
+ * fora não alcança as quatro camadas, e o arquivo de módulo é a face que o módulo mostra;
+ * copiar a lista para a carga criaria duas que divergem. Ver o registro 0005.
+ */
+export { CULTURAS_INICIAIS } from './infrastructure/culturas-iniciais';
+
 export const CULTURAS_MIGRACOES = [CriaCulturas1789060000000];

@@ -21,7 +21,12 @@ const LIMITE_DE_COBERTURA = { statements: 98, branches: 92, functions: 98, lines
 const config: Config = {
   rootDir: '.',
   testEnvironment: 'node',
-  roots: ['<rootDir>/src'],
+  /**
+   * `scripts` entra junto de `src` porque a carga de volume decide o formato do conjunto
+   * que vai para produção, e esse formato se prova sem banco. O que a pasta tem de banco
+   * fica de fora por não casar com `.spec.ts`.
+   */
+  roots: ['<rootDir>/src', '<rootDir>/scripts'],
   testRegex: String.raw`\.spec\.ts$`,
   transform: {
     [String.raw`^.+\.ts$`]: ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }],
