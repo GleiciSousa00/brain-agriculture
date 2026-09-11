@@ -6,7 +6,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
 import {
@@ -21,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { ProblemDetailsDto } from '../../../shared/http/dto/problem-details.dto';
+import { IdentificadorPipe } from '../../../shared/http/identificador.pipe';
 import { CriarSafraUseCase } from '../application/criar-safra.use-case';
 import { ExcluirSafraUseCase } from '../application/excluir-safra.use-case';
 import { ListarSafrasUseCase } from '../application/listar-safras.use-case';
@@ -73,7 +73,7 @@ export class SafrasController {
     description: 'Essa Safra tem pelo menos um Plantio registrado nela.',
     type: ProblemDetailsDto,
   })
-  async excluir(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  async excluir(@Param('id', IdentificadorPipe) id: string): Promise<void> {
     await this.excluirSafra.execute(id);
   }
 }
