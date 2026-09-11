@@ -304,8 +304,10 @@ interface o importa pelo `dist`. Sem essa compilação a tela sobe em branco.
 
 O sistema sobe numa VPS com os mesmos três containers da composição de desenvolvimento,
 puxando as imagens que o CI publica a cada push na `main`. O Caddy que entrega a interface
-é o único proxy: termina o TLS, protege tudo com basic auth e repassa `/api`. O runbook, o
-que ficou de fora e por quê estão em [`deploy/README.md`](deploy/README.md).
+é o único proxy: termina o TLS, protege tudo com basic auth e repassa `/api`. Publicadas
+as imagens, a pipeline entra na VPS por SSH e sobe a versão nova, então push na `main` é
+deploy. O runbook, o que ficou de fora e por quê estão em
+[`deploy/README.md`](deploy/README.md).
 
 ## Como rodar os testes
 
