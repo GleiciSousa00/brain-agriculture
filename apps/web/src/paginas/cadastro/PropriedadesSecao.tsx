@@ -25,7 +25,8 @@ const CARREGANDO = 'Carregando as Propriedades…';
 const VAZIO = 'Nenhuma Propriedade cadastrada ainda.';
 const SEM_PRODUTOR = 'Registre um Produtor antes: toda Propriedade é registrada em nome de um.';
 const AJUDA_DAS_AREAS =
-  'Até duas casas decimais. A área agricultável mais a de vegetação não passam do total.';
+  'Até o metro quadrado, que são quatro casas decimais. ' +
+  'A área agricultável mais a de vegetação não passam do total.';
 
 /** O que o formulário guarda enquanto se digita: texto, como o campo devolve. */
 interface Rascunho {
@@ -166,12 +167,17 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
     setRascunho((anterior) => ({ ...anterior, produtorId: valor, produtorNome: rotulo }));
   }
 
-  function fechar(): void {
+  /** Só o estado do formulário. O desfecho da última escrita sobrevive ao fechamento. */
+  function esvaziar(): void {
     setAberto(false);
     setEmEdicao(undefined);
     setRascunho({ ...RASCUNHO_LIMPO, produtorId });
-    tentativaDoFormulario.limpar();
     esquecerAbertura();
+  }
+
+  function fechar(): void {
+    esvaziar();
+    tentativaDoFormulario.limpar();
   }
 
   function abrirParaRegistrar(): void {
@@ -188,21 +194,31 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
 
   /** A regra das áreas mora na API. Aqui só se mostra a recusa que ela mandou. */
   async function enviar(): Promise<void> {
-    const passou = await tentativaDoFormulario.tentar(async () => {
-      if (emEdicao === undefined) {
-        await criarPropriedade({ produtorId: rascunho.produtorId, ...corpoDe(rascunho) });
-      } else {
-        await editarPropriedade(emEdicao.id, corpoDe(rascunho));
-      }
-    });
+    const registrando = emEdicao === undefined;
+
+    const passou = await tentativaDoFormulario.tentar(
+      async () => {
+        if (registrando) {
+          await criarPropriedade({ produtorId: rascunho.produtorId, ...corpoDe(rascunho) });
+        } else {
+          await editarPropriedade(emEdicao.id, corpoDe(rascunho));
+        }
+      },
+      registrando
+        ? `Propriedade ${rascunho.nome} registrada.`
+        : `Propriedade ${rascunho.nome} atualizada.`,
+    );
 
     if (passou) {
-      fechar();
+      esvaziar();
     }
   }
 
-  async function excluir(id: string): Promise<void> {
-    await tentativaDaExclusao.tentar(() => excluirPropriedade(id));
+  async function excluir(propriedade: Propriedade): Promise<void> {
+    await tentativaDaExclusao.tentar(
+      () => excluirPropriedade(propriedade.id),
+      `Propriedade ${propriedade.nome} excluída.`,
+    );
   }
 
   // O nome de quem está escolhido: o que a busca trouxe, ou o do recorte, que chega como
@@ -312,6 +328,19 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
         <p role="alert">{tentativaDaExclusao.recusa}</p>
       )}
 
+      {/* Os dois avisos ficam fora do formulário porque ele some quando a escrita passa. */}
+      {tentativaDoFormulario.aviso !== undefined && (
+        <p className="acerto" role="status">
+          {tentativaDoFormulario.aviso}
+        </p>
+      )}
+
+      {tentativaDaExclusao.aviso !== undefined && (
+        <p className="acerto" role="status">
+          {tentativaDaExclusao.aviso}
+        </p>
+      )}
+
       <Listagem
         titulo={dono === '' ? 'Propriedades' : `Propriedades de ${dono}`}
         acoes={
@@ -387,7 +416,7 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
                       rotulo={`Excluir ${propriedade.nome}`}
                       pergunta={`Excluir ${propriedade.nome}? Os Plantios dessa Propriedade vão junto.`}
                       aoConfirmar={() => {
-                        void excluir(propriedade.id);
+                        void excluir(propriedade);
                       }}
                     />
                   </td>
