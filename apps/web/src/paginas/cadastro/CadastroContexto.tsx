@@ -162,7 +162,10 @@ export function CadastroProvider({ children }: Props) {
   const [erro, setErro] = useState<string>();
   const [versao, setVersao] = useState(0);
   const [nomeDoDono, setNomeDoDono] = useState('');
-  const [propriedadeEscolhida, setPropriedadeEscolhida] = useState<Propriedade>();
+  const [resolvida, setResolvida] = useState<Propriedade>();
+  // A resolvida só vale enquanto for a que o endereço aponta. Sem isto, trocar de escolha
+  // mostraria o nome da anterior até a resposta nova chegar, e nome errado é pior que nenhum.
+  const propriedadeEscolhida = resolvida?.id === propriedadeId ? resolvida : undefined;
 
   useEffect(() => {
     let cancelado = false;
@@ -233,7 +236,7 @@ export function CadastroProvider({ children }: Props) {
    */
   useEffect(() => {
     if (propriedadeId === SEM_RECORTE) {
-      setPropriedadeEscolhida(undefined);
+      setResolvida(undefined);
 
       return;
     }
@@ -243,12 +246,12 @@ export function CadastroProvider({ children }: Props) {
     buscarPropriedadesPorId([propriedadeId])
       .then((encontradas) => {
         if (!cancelado) {
-          setPropriedadeEscolhida(encontradas.at(0));
+          setResolvida(encontradas.at(0));
         }
       })
       .catch(() => {
         if (!cancelado) {
-          setPropriedadeEscolhida(undefined);
+          setResolvida(undefined);
         }
       });
 

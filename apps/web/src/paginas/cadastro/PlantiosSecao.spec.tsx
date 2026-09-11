@@ -36,6 +36,15 @@ function rotaDosPlantios(plantios: Plantio[]): Record<string, RotaFalsa> {
   };
 }
 
+/** As Propriedades que o pedido recorta, para a rota servida à mão não perder o recorte. */
+function recortarPedidas(url: URL) {
+  const ids = url.searchParams.getAll('ids');
+
+  return ids.length === 0
+    ? BASE.propriedades
+    : BASE.propriedades.filter((propriedade) => ids.includes(propriedade.id));
+}
+
 async function escolher(rotulo: string, valor: string): Promise<void> {
   await userEvent.selectOptions(screen.getByLabelText(rotulo), valor);
 }
@@ -89,6 +98,36 @@ describe('a seção de Plantios', () => {
     expect(screen.queryByText('Propriedade fora do catálogo')).toBeNull();
     expect(
       await screen.findByRole('heading', { name: /Plantios de Fazenda Distante/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('não mostra o nome da escolha anterior enquanto o da nova não chega', async () => {
+    // Nome errado é pior que nome nenhum: o campo diria "Fazenda Boa Vista" com os Plantios
+    // do Sítio do Meio embaixo.
+    servirCadastro(BASE, {
+      ...rotaDosPlantios([]),
+      // A escolha leva o Produtor para o endereço, e a busca seguinte passa a ser a dele.
+      'GET /api/produtores/:id': ({ url }) => ({
+        corpo: { ...ANA, propriedades: paginar(BASE.propriedades, url) },
+      }),
+      'GET /api/propriedades': ({ url }) =>
+        url.searchParams.getAll('ids').includes(SITIO_DO_MEIO.id)
+          ? new Promise(() => undefined)
+          : { corpo: paginar(recortarPedidas(url), url) },
+    });
+
+    renderizarNoCadastro(<PlantiosSecao />);
+    await procurarEEscolher('Propriedade', 'boa vista', 'Fazenda Boa Vista · Ana Lima');
+    await screen.findByRole('heading', { name: /Plantios de Fazenda Boa Vista/ });
+
+    // O campo mostra o nome do que está escolhido, então trocar de escolha é apagá-lo antes.
+    await userEvent.clear(screen.getByRole('combobox', { name: 'Propriedade' }));
+    // Dentro do recorte de um Produtor a opção não repete de quem é a Propriedade.
+    await procurarEEscolher('Propriedade', 'sitio', 'Sítio do Meio');
+
+    expect(await screen.findByRole('combobox', { name: 'Propriedade' })).toHaveValue('');
+    expect(
+      await screen.findByRole('heading', { name: 'Plantios da Propriedade', level: 2 }),
     ).toBeInTheDocument();
   });
 
