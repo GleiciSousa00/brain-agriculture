@@ -177,6 +177,11 @@ describe('A aplicação contra um Postgres de verdade', () => {
     expect(segunda.body.codigo).toBe('produtor-duplicado');
   });
 
+  /**
+   * As duas cascatas do Plantio num caso só: a que apaga junto, do Produtor para baixo, e
+   * a que trava, do catálogo para cima. As duas são da chave estrangeira, e só o banco as
+   * prova — o substituto em memória as imita, e imitação não é prova de esquema.
+   */
   it('o Plantio recusa a ligação repetida e some com a Propriedade quando o Produtor é apagado', async () => {
     const { produtorId, propriedadeId } = await propriedadeDeTeste();
     const [{ id: culturaId }] = (await request(app.getHttpServer()).get('/culturas').expect(200))
@@ -201,6 +206,15 @@ describe('A aplicação contra um Postgres de verdade', () => {
     expect(semSafra.status).toBe(404);
     expect(semSafra.body.codigo).toBe('safra-do-plantio-nao-encontrada');
 
+    // A Cultura e a Safra desse Plantio não saem do catálogo enquanto ele existir.
+    const culturaPlantada = await request(app.getHttpServer()).delete(`/culturas/${culturaId}`);
+    const safraPlantada = await request(app.getHttpServer()).delete(`/safras/${safraId}`);
+
+    expect(culturaPlantada.status).toBe(409);
+    expect(culturaPlantada.body.codigo).toBe('cultura-em-uso');
+    expect(safraPlantada.status).toBe(409);
+    expect(safraPlantada.body.codigo).toBe('safra-em-uso');
+
     await request(app.getHttpServer()).delete(`/produtores/${produtorId}`).expect(204);
 
     const propriedadesRestantes = await app
@@ -211,6 +225,13 @@ describe('A aplicação contra um Postgres de verdade', () => {
       .query(`SELECT id FROM plantios WHERE id = $1`, [primeiro.body.id]);
     expect(propriedadesRestantes).toEqual([]);
     expect(plantiosRestantes).toEqual([]);
+
+    // Sem o Plantio, a Safra sai; e o identificador que já saiu vira 404, não 204.
+    await request(app.getHttpServer()).delete(`/safras/${safraId}`).expect(204);
+    const jaExcluida = await request(app.getHttpServer()).delete(`/safras/${safraId}`);
+
+    expect(jaExcluida.status).toBe(404);
+    expect(jaExcluida.body.codigo).toBe('safra-nao-encontrada');
   });
 
   it('o painel agrega no banco e confere com o conjunto de exemplo', async () => {

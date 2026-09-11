@@ -15,3 +15,31 @@ export class CulturaDuplicada extends DomainError {
     super(`O catálogo já tem a Cultura ${nome}.`);
   }
 }
+
+/** O catálogo não tem Cultura com esse identificador. */
+export class CulturaNaoEncontrada extends DomainError {
+  readonly codigo = 'cultura-nao-encontrada';
+  readonly natureza: NaturezaDaFalha = 'nao-encontrado';
+
+  constructor(id: string) {
+    super(`Não existe Cultura com o identificador ${id}.`);
+  }
+}
+
+/**
+ * A Cultura está plantada em algum lugar, e por isso não sai do catálogo.
+ *
+ * Apagá-la levaria junto o Plantio que aponta para ela, e o Plantio é registro do que
+ * aconteceu na terra: ele não some porque alguém arrumou o catálogo.
+ */
+export class CulturaEmUso extends DomainError {
+  readonly codigo = 'cultura-em-uso';
+  readonly natureza: NaturezaDaFalha = 'conflito';
+
+  constructor() {
+    super(
+      'Essa Cultura está registrada em pelo menos um Plantio. ' +
+        'Exclua os Plantios dela antes de tirá-la do catálogo.',
+    );
+  }
+}

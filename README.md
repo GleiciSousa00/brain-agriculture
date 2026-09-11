@@ -262,6 +262,11 @@ que impede "Café", "cafe" e "CAFÉ" de virarem três linhas do catálogo.
 A Safra é identificada por um ano e é compartilhada por todas as Propriedades. Ela não
 guarda referência a Propriedade nem a Produtor: quem liga os três é o Plantio.
 
+Os dois saem do cadastro por exclusão, e não por edição: é assim que se conserta um nome
+ou um ano digitado errado. A linha que já está em algum Plantio é recusada com 409, pela
+chave estrangeira `ON DELETE RESTRICT` — o Plantio é registro do que aconteceu na terra, e
+não some porque alguém arrumou o catálogo.
+
 ## Bordas transversais
 
 **Log.** Toda requisição sai em JSON com um identificador de correlação. Se a requisição

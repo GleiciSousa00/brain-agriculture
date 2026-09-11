@@ -114,6 +114,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/safras/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Tira uma Safra do cadastro.
+         * @description A Safra com Plantio registrado nela é recusada: o Plantio é registro do que aconteceu na terra, e não some porque alguém arrumou a lista de Safras.
+         */
+        delete: operations["SafrasController_excluir"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/culturas": {
         parameters: {
             query?: never;
@@ -127,6 +147,26 @@ export interface paths {
         /** Acrescenta uma espécie ao catálogo. */
         post: operations["CulturasController_acrescentar"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/culturas/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Tira uma espécie do catálogo.
+         * @description A Cultura registrada em algum Plantio é recusada: o Plantio é registro do que aconteceu na terra, e não some porque alguém arrumou o catálogo.
+         */
+        delete: operations["CulturasController_excluir"];
         options?: never;
         head?: never;
         patch?: never;
@@ -297,11 +337,11 @@ export interface components {
             cidade: string;
             /** @description A sigla da unidade federativa. */
             estado: string;
-            /** @description Em hectares, com até duas casas decimais. */
+            /** @description Em hectares, com até quatro casas decimais, que é o metro quadrado. Uma medida mais fina que isso é arredondada, não recusada. */
             areaTotal: number;
-            /** @description Em hectares, com até duas casas decimais. */
+            /** @description Em hectares, com até quatro casas decimais, que é o metro quadrado. Uma medida mais fina que isso é arredondada, não recusada. */
             areaAgricultavel: number;
-            /** @description Em hectares, com até duas casas decimais. */
+            /** @description Em hectares, com até quatro casas decimais, que é o metro quadrado. Uma medida mais fina que isso é arredondada, não recusada. */
             areaDeVegetacao: number;
         };
         PropriedadeDto: {
@@ -348,11 +388,11 @@ export interface components {
             cidade: string;
             /** @description A sigla da unidade federativa. */
             estado: string;
-            /** @description Em hectares, com até duas casas decimais. */
+            /** @description Em hectares, com até quatro casas decimais, que é o metro quadrado. Uma medida mais fina que isso é arredondada, não recusada. */
             areaTotal: number;
-            /** @description Em hectares, com até duas casas decimais. */
+            /** @description Em hectares, com até quatro casas decimais, que é o metro quadrado. Uma medida mais fina que isso é arredondada, não recusada. */
             areaAgricultavel: number;
-            /** @description Em hectares, com até duas casas decimais. */
+            /** @description Em hectares, com até quatro casas decimais, que é o metro quadrado. Uma medida mais fina que isso é arredondada, não recusada. */
             areaDeVegetacao: number;
         };
         CriarSafraDto: {
@@ -1107,6 +1147,62 @@ export interface operations {
             };
         };
     };
+    SafrasController_excluir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A Safra saiu do cadastro. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description Não existe Safra com esse identificador. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description Essa Safra tem pelo menos um Plantio registrado nela. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+        };
+    };
     CulturasController_listar: {
         parameters: {
             query?: never;
@@ -1166,6 +1262,62 @@ export interface operations {
                 };
             };
             /** @description O catálogo já tem essa espécie, ainda que escrita de outro jeito. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+        };
+    };
+    CulturasController_excluir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A Cultura saiu do catálogo. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description Não existe Cultura com esse identificador. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetailsDto"];
+                };
+            };
+            /** @description Essa Cultura está registrada em pelo menos um Plantio. */
             409: {
                 headers: {
                     [name: string]: unknown;
