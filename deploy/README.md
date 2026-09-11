@@ -1,9 +1,10 @@
 # Deploy
 
-O cadastro roda numa VPS x86 barata, com Ubuntu LTS, e o deploy é manual: entrar por SSH,
-puxar o repositório e subir a composição desta pasta. Tudo o que a operação precisa saber
-está neste arquivo. Não há registro de decisão sobre infraestrutura, de propósito: ela não
-é o que está sendo avaliado.
+O cadastro roda numa VPS x86 barata, com Ubuntu LTS. Cada push na `main` põe no ar o que
+foi publicado, sem ninguém entrar na máquina. O caminho manual continua valendo e está
+descrito aqui, porque é dele que se precisa quando o automático falha. Tudo o que a
+operação precisa saber está neste arquivo. Não há registro de decisão sobre
+infraestrutura, de propósito: ela não é o que está sendo avaliado.
 
 ## O que sobe
 
@@ -64,15 +65,44 @@ API, por sua vez, recusa arrancar com as chaves públicas de desenvolvimento.
 
 ## Atualizar
 
+Sozinho, a cada push na `main`. Depois de `fast`, `integration` e `publish` passarem, o
+trabalho `deploy` abre uma sessão SSH na VPS e roda [`atualizar.sh`](atualizar.sh), que
+traz a `main`, puxa as imagens e sobe. As migrações rodam no arranque da API, então não há
+passo de banco.
+
+À mão, quando for preciso, é o mesmo script:
+
 ```bash
-cd /opt/cadastro-rural/deploy
-git pull
-docker compose pull
-docker compose up -d
+/opt/cadastro-rural/deploy/atualizar.sh
 ```
 
-As migrações rodam no arranque da API, então não há passo de banco. O `git pull` existe
-porque o `Caddyfile` e a composição vivem no repositório.
+O script traz a `main` com `merge --ff-only`. Se alguém tiver mexido à mão na árvore de
+`/opt/cadastro-rural`, ele para com erro em vez de desfazer o que a pessoa fez. Nesse caso
+a saída é entrar na máquina, decidir o que fica, e rodar de novo.
+
+### Como a pipeline entra na VPS
+
+Uma chave só para isso, que não abre um shell. A entrada dela no `authorized_keys` do
+`root` tem comando forçado, então a sessão roda `atualizar.sh` e mais nada, seja qual for
+o comando pedido do outro lado:
+
+```
+command="/opt/cadastro-rural/deploy/atualizar.sh",no-agent-forwarding,no-port-forwarding,no-pty,no-user-rc,no-X11-forwarding ssh-ed25519 AAAA... ci-deploy-cadastro-rural
+```
+
+Do lado do GitHub são quatro segredos do repositório:
+
+| Segredo | O que guarda |
+|---|---|
+| `DEPLOY_SSH_KEY` | a chave privada do par, sem frase secreta |
+| `DEPLOY_HOST` | o IP da VPS |
+| `DEPLOY_USER` | `root` |
+| `DEPLOY_KNOWN_HOSTS` | a linha de `ssh-keyscan` do IP, para a pipeline não aceitar host desconhecido |
+
+**Trocar a chave.** Gere um par novo com `ssh-keygen -t ed25519 -N '' -f ci_deploy`,
+troque a linha no `authorized_keys` da VPS mantendo o `command=`, e ponha a privada em
+`DEPLOY_SSH_KEY` com `gh secret set`. A chave velha deixa de valer assim que sai do
+`authorized_keys`.
 
 ## Voltar versão
 
@@ -104,7 +134,8 @@ avaliado.
 - Observabilidade: sem coleta de logs, métricas ou alertas. O log fica no `json-file` do
   Docker, limitado a 30 MB por contêiner.
 - Backup do Postgres. Os dados vivem num volume nomeado, e só.
-- Deploy automático, por SSH a partir da pipeline ou por Watchtower.
+- Ambiente de homologação. O deploy automático vai direto para produção, e quem segura o
+  que não presta são os portões que rodam antes dele.
 - Imagens para outras arquiteturas: só amd64.
 - Autenticação de verdade. A senha do Caddy cobre o site, e a decisão de não ter login na
   aplicação está em [`docs/adr/0006`](../docs/adr/0006-autenticacao-fora-do-escopo.md).
