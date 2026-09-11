@@ -75,9 +75,6 @@ export class PlantioRepositoryEmMemoria implements PlantioRepository {
     deslocamento,
     limite,
   }: RecorteDePlantios): Promise<Recortados<Plantio>> {
-    // A mesma ordem que o repositório de verdade promete, que é a de registro. Aqui ela sai
-    // de graça, porque o mapa preserva a ordem de inserção. Um substituto que ordena
-    // diferente faz o teste de paginação passar por acidente.
     const daPropriedade = [...this.plantios.values()].filter(
       (plantio) => plantio.propriedadeId === propriedadeId,
     );

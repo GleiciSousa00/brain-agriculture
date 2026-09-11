@@ -123,8 +123,6 @@ async function buscarCatalogos(): Promise<Catalogos> {
     propriedades: propriedades.itens,
     culturas,
     safras,
-    // Os dois totais dizem quanto existe, não quanto veio. Passando do teto, o que não
-    // veio não tem como ser alcançado, e a tela precisa dizê-lo.
     cortado:
       produtores.total > TAMANHO_DO_CATALOGO || propriedades.total > TAMANHO_DO_CATALOGO,
   };

@@ -78,7 +78,6 @@ export function PlantiosDaPropriedade({ propriedadeId, nome, abrindo }: Props) {
       {aberto && (
         <form
           className="cartao formulario"
-          // Sem a conferência do navegador: a recusa tem de vir do corpo da API.
           noValidate
           onSubmit={(evento) => {
             evento.preventDefault();

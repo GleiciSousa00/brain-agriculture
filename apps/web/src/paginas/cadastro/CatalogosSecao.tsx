@@ -45,7 +45,6 @@ export function CatalogosSecao() {
   }
 
   async function enviarSafra(): Promise<void> {
-    // O campo devolve texto; a API espera o ano como número.
     if (await tentativaDaSafra.tentar(() => criarSafra({ ano: comoNumero(anoDaSafra) }))) {
       fechar();
     }
@@ -186,7 +185,6 @@ function FormularioCurto({
   return (
     <form
       className="formulario-embutido"
-      // Sem a conferência do navegador: a recusa tem de vir do corpo da API.
       noValidate
       onSubmit={(evento) => {
         evento.preventDefault();

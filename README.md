@@ -31,6 +31,37 @@ A rota de saúde responde sem tocar em nenhuma tabela do cadastro: ela manda um 
 no banco e mais nada. As migrações rodam no arranque da API, então o banco sobe pronto,
 com o catálogo de Culturas já semeado.
 
+## Encher o painel com dados de exemplo
+
+O banco sobe vazio, então o painel abre zerado. Um comando enche o cadastro com um
+conjunto pequeno e escolhido a dedo, para que as três distribuições digam algo:
+
+```bash
+docker compose exec api pnpm carga:exemplo
+```
+
+São 3 Produtores, 5 Propriedades em quatro estados, 10 Plantios de quatro Culturas e 3
+Safras. É o mesmo conjunto que o teste de integração do painel confere à mão, então o que
+a tela mostra é o que o teste prova.
+
+A carga entra pela API, e não por SQL, de propósito: assim ela percorre a validação do
+Documento, a regra da soma das áreas e a cifra em repouso. Um conjunto que só entrasse por
+SQL poderia ser um conjunto que a aplicação recusaria, e ninguém descobriria.
+
+Rodar duas vezes não duplica nada: a carga desiste assim que encontra um Produtor
+cadastrado, e não sobrescreve o que existe. Para começar do zero, derrube com
+`docker compose down --volumes` e suba de novo.
+
+O comando acima usa o `pnpm` da imagem, que o Corepack baixa na primeira execução. Sem
+saída para a internet, chame o `ts-node` direto, que já vem na imagem:
+
+```bash
+docker compose exec api node_modules/.bin/ts-node --project tsconfig.json scripts/carga-de-exemplo.ts
+```
+
+Sem Docker, o comando é `pnpm carga:exemplo` na raiz do repositório, com o Postgres de pé
+e as dependências instaladas. Ver [Desenvolver sem Docker](#desenvolver-sem-docker).
+
 ## As duas telas
 
 O painel fica em `/painel` e mostra o total de Propriedades cadastradas, a soma da Área
@@ -49,7 +80,7 @@ As três primeiras se encadeiam pela hierarquia do domínio, e o recorte viaja n
 Produtores se desce para as Propriedades de cada um, e dali para os Plantios de cada uma.
 
 O navegador nunca chama a porta da API direto. A interface fala com ela pela própria
-origem, sob `/api`, e quem repassa é o servidor que entrega a tela: o nginx no Docker e o
+origem, sob `/api`, e quem repassa é o servidor que entrega a tela: o Caddy no Docker e o
 Vite em desenvolvimento. Nas duas pontas o prefixo é cortado, então `/api/painel` chega na
 API como `/painel`. As duas telas estão nos registros
 [`0009`](docs/adr/0009-interface-web-roteador-grafico-e-mesma-origem.md),
@@ -226,7 +257,11 @@ mesmo de o campo existir.
 **Erro.** Toda falha sai no formato Problem Details da
 [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457), aplicado por filtro global, com o
 tipo de conteúdo `application/problem+json` e o identificador de correlação no corpo.
-Erro não previsto vira 500 com detalhe genérico: o rastro fica no log, não na resposta.
+Erro não previsto vira 500 com detalhe genérico: o rastro fica no log, não na resposta. A
+recusa de esquema publica em `erros` o campo recusado e o motivo, um por um, para a
+interface apontar o campo no formulário. Recusa é logada em `warn`, e não em `error`:
+identificador digitado errado é uso normal, e o nível de erro fica para o que a aplicação
+não previu.
 
 ## A especificação OpenAPI
 
@@ -264,6 +299,13 @@ variáveis de `POSTGRES_*` para outro banco.
 
 `pnpm dev` compila o pacote de contratos antes de subir a API e a interface, porque a
 interface o importa pelo `dist`. Sem essa compilação a tela sobe em branco.
+
+## Colocar no ar
+
+O sistema sobe numa VPS com os mesmos três containers da composição de desenvolvimento,
+puxando as imagens que o CI publica a cada push na `main`. O Caddy que entrega a interface
+é o único proxy: termina o TLS, protege tudo com basic auth e repassa `/api`. O runbook, o
+que ficou de fora e por quê estão em [`deploy/README.md`](deploy/README.md).
 
 ## Como rodar os testes
 
@@ -353,9 +395,10 @@ Os mesmos comandos que a pipeline roda, e o requisito a que cada um responde:
 | Auditoria, relatório | `pnpm audit:report` | lista o que é moderado, e nunca reprova: é relatório, não portão |
 | Build | `pnpm build` | os três pacotes compilam |
 | Imagem da API | `docker build` | o Dockerfile de produção continua construindo |
-| Imagem da interface web | `docker build` e `nginx -t` | o único portão que o `nginx.conf` tem: nenhum teste de unidade o alcança |
+| Imagem da interface web | `docker build` e `caddy validate` | o portão sintático dos dois Caddyfiles, o da imagem e o de `deploy/`: nenhum teste de unidade os alcança |
+| Composição de produção | `docker compose config` | toda variável que `deploy/docker-compose.yml` exige está no `.env.example` |
 | Integração | `pnpm test:integration` | o esquema, a cifra, a unicidade, a cascata e o painel contra um Postgres de verdade |
-| Composição | `docker compose up` e a rota de saúde | um clone recém-feito sobe com um comando |
+| Composição | `docker compose up` e a rota de saúde pela web | um clone recém-feito sobe com um comando, e o Caddy corta `/api` e devolve o index para rota de tela |
 | Medição do painel | `pnpm medir:painel` | o recorte por Safra continua usando o índice do registro `0004` |
 
 O portão de cobertura vale só em `domain` e em `application`, dos módulos e de `shared`,

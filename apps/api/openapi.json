@@ -80,10 +80,20 @@
               }
             }
           },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
           "503": {
             "description": "The Health Check is not successful",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
                   "type": "object",
                   "properties": {
@@ -197,7 +207,7 @@
           "400": {
             "description": "O Documento ou o nome informado não é válido.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -207,7 +217,17 @@
           "409": {
             "description": "Já existe um Produtor com esse Documento.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -262,7 +282,17 @@
           "400": {
             "description": "A página ou o tamanho pedido não é válido.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -324,10 +354,30 @@
               }
             }
           },
+          "400": {
+            "description": "A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Não existe Produtor com esse identificador.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -376,7 +426,7 @@
           "400": {
             "description": "O nome informado não é válido.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -386,7 +436,17 @@
           "404": {
             "description": "Não existe Produtor com esse identificador.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -416,10 +476,30 @@
           "204": {
             "description": "O Produtor foi excluído."
           },
+          "400": {
+            "description": "A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Não existe Produtor com esse identificador.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -461,7 +541,7 @@
           "400": {
             "description": "A entrada não é válida, ou a soma da Área Agricultável com a Área de Vegetação passa da Área Total.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -471,7 +551,17 @@
           "404": {
             "description": "Não existe Produtor com esse identificador.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -522,6 +612,26 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
           }
         },
         "summary": "Lista as Propriedades por nome, em páginas.",
@@ -567,7 +677,7 @@
           "400": {
             "description": "A entrada não é válida, ou a soma da Área Agricultável com a Área de Vegetação passa da Área Total.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -577,7 +687,17 @@
           "404": {
             "description": "Não existe Propriedade com esse identificador.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -606,10 +726,30 @@
           "204": {
             "description": "A Propriedade foi excluída."
           },
+          "400": {
+            "description": "A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Não existe Propriedade com esse identificador.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -651,7 +791,7 @@
           "400": {
             "description": "O ano informado não serve.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -661,7 +801,17 @@
           "409": {
             "description": "Já existe Safra para esse ano.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -684,6 +834,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SafrasDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
               }
             }
@@ -723,7 +883,7 @@
           "400": {
             "description": "O nome informado não serve.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -733,7 +893,17 @@
           "409": {
             "description": "O catálogo já tem essa espécie, ainda que escrita de outro jeito.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -756,6 +926,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CulturasDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
               }
             }
@@ -795,7 +975,7 @@
           "400": {
             "description": "A entrada não é válida.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -805,7 +985,7 @@
           "404": {
             "description": "A Cultura, a Propriedade ou a Safra informada não existe.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -815,7 +995,17 @@
           "409": {
             "description": "Essa Propriedade já tem essa Cultura registrada nessa Safra.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -846,10 +1036,30 @@
           "204": {
             "description": "O Plantio foi excluído."
           },
+          "400": {
+            "description": "A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Não existe Plantio com esse identificador.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -911,10 +1121,30 @@
               }
             }
           },
+          "400": {
+            "description": "A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Não existe Propriedade com esse identificador.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -958,7 +1188,17 @@
           "400": {
             "description": "O filtro não é válido.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A requisição não pôde ser concluída. O rastro fica no log, pelo `correlationId`.",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
@@ -1063,6 +1303,26 @@
           "codigo": {
             "description": "Código do erro de regra de negócio, quando a falha veio do domínio.",
             "type": "string"
+          },
+          "erros": {
+            "description": "Os campos recusados pelo esquema de entrada. Só existe na recusa de esquema.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "campo": {
+                  "type": "string",
+                  "description": "O caminho do campo recusado, como `areaTotal`."
+                },
+                "mensagem": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "campo",
+                "mensagem"
+              ]
+            }
           }
         },
         "required": [

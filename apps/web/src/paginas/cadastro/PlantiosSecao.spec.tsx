@@ -85,8 +85,6 @@ describe('a seção de Plantios', () => {
 
     const linha = await screen.findByRole('row', { name: /Soja/ });
     expect(within(linha).getByText('2025')).toBeInTheDocument();
-    // O Plantio da outra Propriedade não entra na tabela desta. O nome ainda aparece na
-    // lista de escolha, então quem se afirma é a linha, e não o texto solto.
     expect(screen.queryByRole('row', { name: /Milho/ })).toBeNull();
   });
 

@@ -88,8 +88,6 @@ export function PlantiosSecao() {
       </div>
 
       {temEscolha ? (
-        // A chave refaz a lista ao trocar de Propriedade, e com ela a página em que se
-        // estava: a terceira página de uma Propriedade não diz nada sobre a outra.
         <PlantiosDaPropriedade
           key={propriedadeId}
           propriedadeId={propriedadeId}

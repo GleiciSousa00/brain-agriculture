@@ -45,8 +45,6 @@ export class CriaPropriedades1789070000000 implements MigrationInterface {
       `CREATE INDEX "ix_propriedades_produtor" ON "propriedades" ("produtor_id")`,
     );
     await queryRunner.query(`CREATE INDEX "ix_propriedades_estado" ON "propriedades" ("estado")`);
-    // A listagem ordena por cidade, com o identificador desempatando. Sem índice a ordem
-    // custa uma ordenação da tabela inteira a cada página.
     await queryRunner.query(
       `CREATE INDEX "ix_propriedades_cidade" ON "propriedades" ("cidade", "id")`,
     );

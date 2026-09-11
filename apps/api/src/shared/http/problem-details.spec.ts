@@ -1,4 +1,5 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { ZodValidationException } from 'nestjs-zod';
 import { DomainError, type NaturezaDaFalha } from '../domain/domain-error';
 import { PROBLEM_DETAILS_CONTENT_TYPE, toProblemDetails } from './problem-details';
 
@@ -114,5 +115,78 @@ describe('toProblemDetails com erro de domínio', () => {
     const problem = toProblemDetails({ error: new NotFoundException(), ...context });
 
     expect(problem.codigo).toBeUndefined();
+  });
+});
+
+describe('toProblemDetails com recusa vinda de fora da aplicação', () => {
+  it('respeita o status do erro que não é exceção do Nest, como o do corpo grande demais', () => {
+    const grandeDemais = Object.assign(new Error('request entity too large'), {
+      type: 'entity.too.large',
+      status: 413,
+    });
+
+    const problem = toProblemDetails({ error: grandeDemais, ...context });
+
+    expect(problem.status).toBe(413);
+    expect(problem.title).toBe('Payload Too Large');
+  });
+
+  it('não repete a mensagem em inglês da biblioteca no detalhe', () => {
+    const grandeDemais = Object.assign(new Error('request entity too large'), { status: 413 });
+
+    const problem = toProblemDetails({ error: grandeDemais, ...context });
+
+    expect(problem.detail).not.toContain('request entity too large');
+  });
+
+  it('ignora status fora da faixa de erro, que não diria nada sobre a falha', () => {
+    const problem = toProblemDetails({
+      error: Object.assign(new Error('falhou'), { status: 200 }),
+      ...context,
+    });
+
+    expect(problem.status).toBe(500);
+  });
+});
+
+describe('toProblemDetails com recusa de esquema', () => {
+  const recusaDe = (issues: unknown[]) =>
+    toProblemDetails({ error: new ZodValidationException({ issues }), ...context });
+
+  it('diz qual campo foi recusado, e não só que a validação falhou', () => {
+    const problem = recusaDe([{ path: ['nome'], message: 'Required' }]);
+
+    expect(problem.erros).toEqual([{ campo: 'nome', mensagem: 'Required' }]);
+    expect(problem.detail).toBe('nome: Required');
+  });
+
+  it('publica um por um os campos recusados', () => {
+    const problem = recusaDe([
+      { path: ['nome'], message: 'Required' },
+      { path: ['areaTotal'], message: 'Deve ser maior que zero' },
+    ]);
+
+    expect(problem.erros).toHaveLength(2);
+    expect(problem.detail).toBe('nome: Required; areaTotal: Deve ser maior que zero');
+  });
+
+  it('junta o caminho de um campo aninhado', () => {
+    const problem = recusaDe([{ path: ['endereco', 'estado'], message: 'Duas letras' }]);
+
+    expect(problem.erros).toEqual([{ campo: 'endereco.estado', mensagem: 'Duas letras' }]);
+  });
+
+  it('chama de corpo o que foi recusado sem campo nenhum apontado', () => {
+    const problem = recusaDe([{ path: [], message: 'Objeto esperado' }]);
+
+    expect(problem.erros).toEqual([{ campo: 'corpo', mensagem: 'Objeto esperado' }]);
+  });
+
+  it('recai na mensagem da exceção quando a recusa não trouxe problema nenhum', () => {
+    const problem = toProblemDetails({ error: new ZodValidationException({}), ...context });
+
+    expect(problem.status).toBe(400);
+    expect(problem.detail).toBe('Validation failed');
+    expect(problem.erros).toBeUndefined();
   });
 });

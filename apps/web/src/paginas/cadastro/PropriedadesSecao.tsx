@@ -174,8 +174,6 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
     await tentativaDaExclusao.tentar(() => excluirPropriedade(id));
   }
 
-  // Sem Produtor no cadastro não há em nome de quem registrar, e um formulário que só
-  // pode ser recusado é pior do que um formulário que não aparece.
   const podeRegistrar = emEdicao !== undefined || produtores.length > 0;
   const recortado = produtorId !== '';
   // Quem é o recorte só se sabe com o catálogo em mãos, e nem sempre se sabe: passando do
@@ -191,8 +189,6 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
         (podeRegistrar ? (
           <form
             className="cartao formulario"
-            // Sem a conferência do navegador: a recusa tem de vir do corpo da API, e um
-            // valor fora do passo faria o navegador barrar o envio com texto dele.
             noValidate
             onSubmit={(evento) => {
               evento.preventDefault();
@@ -212,7 +208,6 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
                 }))}
               />
             ) : (
-              // Mudar a Propriedade de Produtor não é uma operação que a API ofereça.
               <p className="campo">
                 <span className="rotulo-fixo">Produtor</span>
                 <span className="valor-fixo">{nomeDoProdutor(emEdicao.produtorId)}</span>
@@ -280,7 +275,6 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
           </div>
         ))}
 
-      {/* A recusa de uma exclusão fica junto da lista, que é onde ela foi pedida. */}
       {tentativaDaExclusao.recusa !== undefined && (
         <p role="alert">{tentativaDaExclusao.recusa}</p>
       )}

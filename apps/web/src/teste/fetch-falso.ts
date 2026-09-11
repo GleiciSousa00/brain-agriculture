@@ -52,8 +52,6 @@ function respostaDe(resposta: RespostaFalsa): Response {
     return respostaDeProblema(resposta.problema);
   }
 
-  // O 204 de uma exclusão. `Response` recusa corpo com esse status, e é justamente o que
-  // a interface encontra: quem trata a resposta não pode esperar JSON.
   return 'semConteudo' in resposta ? new Response(null, { status: 204 }) : respostaDeSucesso(resposta.corpo);
 }
 
@@ -182,8 +180,6 @@ export function servirRotas(rotas: Record<string, RotaFalsa>): void {
       );
     }
 
-    // A rota pode devolver uma promessa, e é assim que um teste segura a resposta no ar
-    // para afirmar o que a tela mostra enquanto ela não chega.
     return desmontar(pedido, casada.parametros)
       .then(casada.rota)
       .then(respostaDe);

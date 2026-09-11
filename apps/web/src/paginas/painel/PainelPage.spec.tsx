@@ -97,7 +97,6 @@ describe('a tela do painel', () => {
     await screen.findByRole('region', { name: 'Uso do solo' });
 
     expect(chamadasPara('/api/painel')).toBe(1);
-    // A outra é o catálogo de Safras, que alimenta o controle e não sai do painel.
     expect(totalDeChamadas()).toBe(2);
   });
 
@@ -113,8 +112,6 @@ describe('a tela do painel', () => {
   });
 
   it('trocar a Safra mexe só no gráfico de Cultura', async () => {
-    // O recorte devolve totais e distribuições diferentes de propósito, o que a API não
-    // faz: é assim que se prova que a tela aproveita apenas a fatia da Cultura.
     servirRotas({
       'GET /api/painel': ({ url }) =>
         url.searchParams.get('safraId') === SAFRA_DE_2025.id

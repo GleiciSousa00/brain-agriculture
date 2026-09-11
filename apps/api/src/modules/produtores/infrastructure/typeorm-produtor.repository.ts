@@ -18,8 +18,6 @@ export class TypeormProdutorRepository implements ProdutorRepository {
     try {
       await this.linhas.insert(this.mapper.paraLinha(produtor));
     } catch (erro) {
-      // A rede de baixo: duas requisições simultâneas passam pela conferência do caso de
-      // uso e só a restrição do banco separa as duas.
       if (violouUnicidade(erro)) {
         throw new ProdutorDuplicado();
       }
@@ -51,7 +49,6 @@ export class TypeormProdutorRepository implements ProdutorRepository {
   }
 
   async findByDocumento(documento: Documento): Promise<Produtor | null> {
-    // Só igualdade exata: o valor cifrado muda a cada gravação e não serve para busca.
     const linha = await this.linhas.findOneBy({
       documentoImpressao: this.mapper.impressaoDe(documento),
     });
@@ -60,8 +57,6 @@ export class TypeormProdutorRepository implements ProdutorRepository {
   }
 
   async list({ deslocamento, limite }: Recorte): Promise<Recortados<Produtor>> {
-    // O identificador desempata homônimos: sem critério estável, duas páginas seguidas
-    // poderiam trazer o mesmo Produtor e esconder outro.
     const [linhas, total] = await this.linhas.findAndCount({
       order: { nome: 'ASC', id: 'ASC' },
       skip: deslocamento,

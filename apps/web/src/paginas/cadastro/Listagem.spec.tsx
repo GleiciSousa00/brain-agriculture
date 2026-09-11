@@ -114,7 +114,6 @@ describe('a listagem paginada do cadastro', () => {
 
     expect(await screen.findByText('Item 00')).toBeInTheDocument();
     expect(screen.getByText('Item 09')).toBeInTheDocument();
-    // Dez por página é o tamanho que a Listagem aplica: o chamador não o conhece.
     expect(screen.queryByText('Item 10')).toBeNull();
     expect(screen.getByText('página 1 de 3')).toBeInTheDocument();
   });
@@ -145,10 +144,8 @@ describe('a listagem paginada do cadastro', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Próxima' }));
 
-    // O texto é o da API, copiado sem reescrita.
     expect(await screen.findByRole('alert')).toHaveTextContent('O banco caiu.');
     expect(screen.queryByRole('table')).toBeNull();
-    // E nem por isso a tela diz que não há nada, que seria a outra mentira.
     expect(screen.queryByText(VAZIO)).toBeNull();
   });
 
@@ -166,7 +163,6 @@ describe('a listagem paginada do cadastro', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Escrever' }));
 
     expect(await screen.findByText('Item 00')).toBeInTheDocument();
-    // Nem tabela vazia sob "página 2 de 1", nem o aviso de base vazia.
     expect(screen.queryByText(VAZIO)).toBeNull();
     expect(screen.queryByText(/página/)).toBeNull();
   });
@@ -204,7 +200,6 @@ describe('a listagem paginada do cadastro', () => {
             Renderizar de novo
           </button>
           <p>renderizações: {vezes}</p>
-          {/* Função nova a cada renderização, que é como os chamadores a passam. */}
           <Listagem
             titulo={TITULO}
             listar={(pagina, tamanho) => {

@@ -85,7 +85,6 @@ describe('BuscarProdutorUseCase', () => {
 
     const encontrado = await useCase.execute(produtor.id, { pagina: 2, tamanho: 2 });
 
-    // Em ordem de nome, a segunda página de duas em duas traz só a Santa Rita.
     expect(encontrado.propriedades.itens.map((propriedade) => propriedade.nome)).toEqual([
       'Fazenda Santa Rita',
     ]);

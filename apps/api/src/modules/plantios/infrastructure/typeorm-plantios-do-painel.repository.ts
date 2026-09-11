@@ -26,14 +26,10 @@ export class TypeormPlantiosDoPainelRepository implements PlantiosDoPainelReposi
       .select('plantio.culturaId', 'culturaId')
       .addSelect('COUNT(*)', 'plantios')
       .groupBy('plantio.culturaId')
-      // A maior fatia primeiro, com o identificador desempatando, para a ordem não depender
-      // de como o Postgres devolveu os grupos.
       .orderBy('COUNT(*)', 'DESC')
       .addOrderBy('plantio.culturaId', 'ASC');
 
     if (safraId !== undefined) {
-      // Filtrar e agrupar são servidos por `ix_plantios_safra_cultura`, que começa pela
-      // coluna do filtro. Sem a Safra, quem serve o agrupamento é `ix_plantios_cultura`.
       consulta.where('plantio.safraId = :safraId', { safraId });
     }
 

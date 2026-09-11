@@ -58,7 +58,6 @@ describe('a tela de cadastro', () => {
     await userEvent.click(screen.getByRole('link', { name: 'Culturas e Safras' }));
     await screen.findByRole('heading', { name: 'Culturas', level: 2 });
 
-    // O provedor fica de pé por cima das quatro seções, então trocar de seção não o remonta.
     expect(screen.getByText('Soja')).toBeInTheDocument();
   });
 
@@ -131,8 +130,6 @@ describe('a tela de cadastro', () => {
       id: `produtor-${String(indice)}`,
     }));
     servirRotas({
-      // A API entrega cem e diz que existem cento e vinte: o que ficou de fora não tem
-      // como ser alcançado, porque a listagem não tem busca por texto.
       'GET /api/produtores': () => ({ corpo: { itens: muitos, total: 120, pagina: 1, tamanho: 100 } }),
       'GET /api/propriedades': () => ({ corpo: { itens: [], total: 0, pagina: 1, tamanho: 100 } }),
       'GET /api/culturas': () => ({ corpo: [] }),
