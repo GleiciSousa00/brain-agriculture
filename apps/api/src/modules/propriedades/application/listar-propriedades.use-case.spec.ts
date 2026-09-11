@@ -85,6 +85,38 @@ describe('ListarPropriedadesUseCase', () => {
     expect(pagina.itens.map((propriedade) => propriedade.id)).toEqual([uma.id, outra.id].sort());
   });
 
+  it('recorta pelo pedaço do nome procurado, e o total passa a ser o do recorte', async () => {
+    const { repository, useCase } = await cenarioCom(0);
+    await repository.save(propriedadeChamada('Fazenda Boa Vista'));
+    await repository.save(propriedadeChamada('Sítio Boa Esperança'));
+    await repository.save(propriedadeChamada('Fazenda Cana Brava'));
+
+    const pagina = await useCase.execute({ pagina: 1, tamanho: 10, busca: 'boa' });
+
+    expect(pagina.itens.map((propriedade) => propriedade.nome)).toEqual([
+      'Fazenda Boa Vista',
+      'Sítio Boa Esperança',
+    ]);
+    expect(pagina.total).toBe(2);
+  });
+
+  it('ignora caixa e acento, porque quem procura digita sem eles', async () => {
+    const { repository, useCase } = await cenarioCom(0);
+    await repository.save(propriedadeChamada('Fazenda São José'));
+
+    const pagina = await useCase.execute({ pagina: 1, tamanho: 10, busca: 'sao jose' });
+
+    expect(pagina.itens.map((propriedade) => propriedade.nome)).toEqual(['Fazenda São José']);
+  });
+
+  it('sem busca, lista o cadastro inteiro', async () => {
+    const { useCase } = await cenarioCom(5);
+
+    const pagina = await useCase.execute({ pagina: 1, tamanho: 10 });
+
+    expect(pagina.total).toBe(5);
+  });
+
   it('a página além do fim vem vazia, e não em erro', async () => {
     const { useCase } = await cenarioCom(5);
 

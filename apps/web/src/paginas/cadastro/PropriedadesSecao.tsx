@@ -1,10 +1,13 @@
 import type { Propriedade } from '@cadastro-rural/contracts';
 import { useState } from 'react';
 import { Link } from 'react-router';
+import { PRIMEIRA_PAGINA, TAMANHO_DA_BUSCA } from '../../api/pagina';
+import { listarProdutores } from '../../api/produtores';
 import { listarPropriedades, listarPropriedadesDoProdutor } from '../../api/propriedades';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { Campo } from '../../componentes/Campo';
-import { Escolha } from '../../componentes/Escolha';
+import { Escolha, type Opcao } from '../../componentes/Escolha';
+import { EscolhaComBusca } from '../../componentes/EscolhaComBusca';
 import { comoNumero, formatarArea, formatarHectares } from '../../formato';
 import { FORA_DO_CATALOGO, useCadastro } from './CadastroContexto';
 import {
@@ -27,6 +30,8 @@ const AJUDA_DAS_AREAS =
 /** O que o formulário guarda enquanto se digita: texto, como o campo devolve. */
 interface Rascunho {
   produtorId: string;
+  /** O nome de quem se escolheu, para o campo mostrar o Produtor e não o identificador. */
+  produtorNome: string;
   nome: string;
   cidade: string;
   estado: string;
@@ -37,6 +42,7 @@ interface Rascunho {
 
 const RASCUNHO_LIMPO: Rascunho = {
   produtorId: '',
+  produtorNome: '',
   nome: '',
   cidade: '',
   estado: '',
@@ -48,6 +54,7 @@ const RASCUNHO_LIMPO: Rascunho = {
 function rascunhoDe(propriedade: Propriedade): Rascunho {
   return {
     produtorId: propriedade.produtorId,
+    produtorNome: '',
     nome: propriedade.nome,
     cidade: propriedade.cidade,
     estado: propriedade.estado,
@@ -131,9 +138,33 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
   const tentativaDoFormulario = useTentativa();
   const tentativaDaExclusao = useTentativa();
 
+  /**
+   * Quem a busca oferece: os Produtores cujo nome casa com o que se digitou.
+   *
+   * A lista curta vem da API a cada busca, e não do catálogo em memória: é justamente o
+   * Produtor que não coube no catálogo que o campo antes não alcançava.
+   */
+  async function procurarProdutor(busca: string): Promise<Opcao[]> {
+    const encontrados = await listarProdutores(PRIMEIRA_PAGINA, TAMANHO_DA_BUSCA, busca);
+
+    return encontrados.itens.map((produtor) => ({ valor: produtor.id, rotulo: produtor.nome }));
+  }
+
   const campo = (chave: keyof Rascunho) => (valor: string) => {
     setRascunho((anterior) => ({ ...anterior, [chave]: valor }));
   };
+
+  /** O nome que o catálogo tem para o identificador, ou nada, quando ele não o alcança. */
+  function nomeDeQuemEstaNoCatalogo(id: string): string {
+    const nome = id === '' ? '' : nomeDoProdutor(id);
+
+    return nome === FORA_DO_CATALOGO ? '' : nome;
+  }
+
+  /** O Produtor escolhido no campo de busca é o dono da Propriedade que se vai registrar. */
+  function escolherProdutor({ valor, rotulo }: Opcao): void {
+    setRascunho((anterior) => ({ ...anterior, produtorId: valor, produtorNome: rotulo }));
+  }
 
   function fechar(): void {
     setAberto(false);
@@ -174,7 +205,11 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
     await tentativaDaExclusao.tentar(() => excluirPropriedade(id));
   }
 
-  const podeRegistrar = emEdicao !== undefined || produtores.length > 0;
+  // O nome de quem está escolhido: o que a busca trouxe, ou o do recorte, que chega como
+  // identificador no endereço e só ganha nome quando o catálogo responde.
+  const nomeDoEscolhido = rascunho.produtorNome || nomeDeQuemEstaNoCatalogo(rascunho.produtorId);
+
+    const podeRegistrar = emEdicao !== undefined || produtores.length > 0;
   const recortado = produtorId !== '';
   // Quem é o recorte só se sabe com o catálogo em mãos, e nem sempre se sabe: passando do
   // centésimo Produtor, o dono da lista pode ser um dos que não vieram. Nos dois casos a
@@ -197,15 +232,13 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
           >
             <h3>{emEdicao === undefined ? 'Nova Propriedade' : `Editar ${emEdicao.nome}`}</h3>
             {emEdicao === undefined ? (
-              <Escolha
+              <EscolhaComBusca
                 rotulo="Produtor"
                 valor={rascunho.produtorId}
-                aoMudar={campo('produtorId')}
-                vazia="Escolha um Produtor"
-                opcoes={produtores.map((produtor) => ({
-                  valor: produtor.id,
-                  rotulo: produtor.nome,
-                }))}
+                nomeDoValor={nomeDoEscolhido || undefined}
+                aoMudar={escolherProdutor}
+                vazia="Procure um Produtor pelo nome"
+                procurar={procurarProdutor}
               />
             ) : (
               <p className="campo">

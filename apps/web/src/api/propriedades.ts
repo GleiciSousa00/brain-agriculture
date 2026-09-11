@@ -7,25 +7,27 @@ import type { Pagina } from './pagina';
 export async function listarPropriedades(
   pagina: number,
   tamanho: number,
+  busca?: string,
 ): Promise<Pagina<Propriedade>> {
-  return colher(() => api.GET('/propriedades', { params: { query: { pagina, tamanho } } }));
+  return colher(() => api.GET('/propriedades', { params: { query: { pagina, tamanho, busca } } }));
 }
 
 /**
  * Uma fatia das Propriedades de um Produtor.
  *
- * Quem recorta é a rota do Produtor: a listagem geral não aceita filtro, e recortar do
- * lado de cá só recortaria a página que já veio. O `produtorId` volta para as linhas
- * porque a rota, sendo a dele, não repete de quem cada Propriedade é.
+ * Quem recorta é a rota do Produtor, e a busca por nome vai junto: recortar do lado de cá
+ * só recortaria a página que já veio. O `produtorId` volta para as linhas porque a rota,
+ * sendo a dele, não repete de quem cada Propriedade é.
  */
 export async function listarPropriedadesDoProdutor(
   produtorId: string,
   pagina: number,
   tamanho: number,
+  busca?: string,
 ): Promise<Pagina<Propriedade>> {
   const produtor = await colher(() =>
     api.GET('/produtores/{id}', {
-      params: { path: { id: produtorId }, query: { pagina, tamanho } },
+      params: { path: { id: produtorId }, query: { pagina, tamanho, busca } },
     }),
   );
 

@@ -7,6 +7,7 @@ import {
   PROPRIEDADES_MIGRACOES,
 } from '../modules/propriedades/propriedades.module';
 import { SAFRAS_ENTIDADES, SAFRAS_MIGRACOES } from '../modules/safras/safras.module';
+import { PreparaBuscaPorTexto1789110000000 } from '../shared/infrastructure/migrations/1789110000000-prepara-busca-por-texto';
 
 /**
  * O catálogo do ORM, montado na raiz de composição.
@@ -25,6 +26,9 @@ import { SAFRAS_ENTIDADES, SAFRAS_MIGRACOES } from '../modules/safras/safras.mod
  * ordem do catálogo de entidades, para ser lido. O módulo de Produtor tem duas migrações
  * com carimbos que cercam os dos outros módulos, e por isso agrupar e executar em ordem
  * de carimbo não são a mesma coisa.
+ *
+ * A primeira não é de módulo nenhum: ela prepara a busca por texto, de que os índices de
+ * Produtor e de Propriedade dependem, e por isso não pertence a um dos dois.
  */
 export const ORM_ENTITIES = [
   ...PRODUTORES_ENTIDADES,
@@ -35,6 +39,7 @@ export const ORM_ENTITIES = [
 ];
 
 export const ORM_MIGRATIONS = [
+  PreparaBuscaPorTexto1789110000000,
   ...PRODUTORES_MIGRACOES,
   ...PROPRIEDADES_MIGRACOES,
   ...SAFRAS_MIGRACOES,

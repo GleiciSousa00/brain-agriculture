@@ -266,6 +266,16 @@
               "default": 20,
               "type": "integer"
             }
+          },
+          {
+            "name": "busca",
+            "required": false,
+            "in": "query",
+            "description": "Pedaço do nome procurado. Ignora caixa e acento.",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -300,7 +310,7 @@
             }
           }
         },
-        "summary": "Lista Produtores por nome, em páginas, com o Documento mascarado.",
+        "summary": "Lista Produtores por nome, em páginas, com o Documento mascarado. Recorta pela busca, quando houver.",
         "tags": [
           "Produtores"
         ]
@@ -340,6 +350,16 @@
               "maximum": 100,
               "default": 20,
               "type": "integer"
+            }
+          },
+          {
+            "name": "busca",
+            "required": false,
+            "in": "query",
+            "description": "Pedaço do nome procurado. Ignora caixa e acento.",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
             }
           }
         ],
@@ -600,6 +620,16 @@
               "default": 20,
               "type": "integer"
             }
+          },
+          {
+            "name": "busca",
+            "required": false,
+            "in": "query",
+            "description": "Pedaço do nome procurado. Ignora caixa e acento.",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -634,7 +664,7 @@
             }
           }
         },
-        "summary": "Lista as Propriedades por nome, em páginas.",
+        "summary": "Lista as Propriedades por nome, em páginas. Recorta pela busca, quando houver.",
         "tags": [
           "Propriedades"
         ]

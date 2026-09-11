@@ -21,7 +21,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ZodSerializerDto } from 'nestjs-zod';
-import { ParametrosDePaginaDto } from '../../../shared/http/dto/pagina.dto';
+import { ParametrosDeBuscaDto } from '../../../shared/http/dto/pagina.dto';
 import { ProblemDetailsDto } from '../../../shared/http/dto/problem-details.dto';
 import { CriarPropriedadeUseCase } from '../application/criar-propriedade.use-case';
 import { EditarPropriedadeUseCase } from '../application/editar-propriedade.use-case';
@@ -65,9 +65,11 @@ export class PropriedadesController {
 
   @Get()
   @ZodSerializerDto(PropriedadesPaginaDto)
-  @ApiOperation({ summary: 'Lista as Propriedades por nome, em páginas.' })
+  @ApiOperation({
+    summary: 'Lista as Propriedades por nome, em páginas. Recorta pela busca, quando houver.',
+  })
   @ApiOkResponse({ type: PropriedadesPaginaDto })
-  async listar(@Query() pagina: ParametrosDePaginaDto): Promise<PropriedadesPaginaResposta> {
+  async listar(@Query() pagina: ParametrosDeBuscaDto): Promise<PropriedadesPaginaResposta> {
     return paraPagina(await this.listarPropriedades.execute(pagina));
   }
 

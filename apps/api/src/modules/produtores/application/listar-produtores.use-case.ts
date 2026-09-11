@@ -1,4 +1,4 @@
-import { paginar, type Pagina, type PedidoDePagina } from '../../../shared/application/pagina';
+import { paginarBusca, type Pagina, type PedidoDeBusca } from '../../../shared/application/pagina';
 import type { Produtor } from '../domain/produtor';
 import type { ProdutorRepository } from '../domain/produtor.repository';
 
@@ -12,7 +12,7 @@ import type { ProdutorRepository } from '../domain/produtor.repository';
 export class ListarProdutoresUseCase {
   constructor(private readonly produtores: ProdutorRepository) {}
 
-  execute(pedido: PedidoDePagina): Promise<Pagina<Produtor>> {
-    return paginar(pedido, (recorte) => this.produtores.list(recorte));
+  execute(pedido: PedidoDeBusca): Promise<Pagina<Produtor>> {
+    return paginarBusca(pedido, (recorte) => this.produtores.list(recorte));
   }
 }

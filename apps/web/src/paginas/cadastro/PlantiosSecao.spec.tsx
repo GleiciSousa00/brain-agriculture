@@ -2,6 +2,7 @@ import type { Plantio } from '@cadastro-rural/contracts';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { procurarEEscolher } from '../../teste/busca-falsa';
 import { paginar, plantioDe, renderizarNoCadastro, servirCadastro } from '../../teste/cadastro-falso';
 import {
   ANA,
@@ -53,20 +54,29 @@ describe('a seção de Plantios', () => {
     expect(await screen.findByText(/Escolha uma Propriedade acima/)).toBeInTheDocument();
   });
 
-  it('escolhe a Propriedade pelo nome, que é o que distingue duas na mesma cidade', async () => {
+  it('oferece só as Propriedades que casam com o nome procurado', async () => {
     servirCadastro(BASE, rotaDosPlantios([]));
 
     renderizarNoCadastro(<PlantiosSecao />);
 
-    const campo = await screen.findByLabelText('Propriedade');
-    // O nome do Produtor vem junto: fora do recorte de um deles, o campo oferece o
+    await userEvent.type(await screen.findByRole('combobox', { name: 'Propriedade' }), 'sitio');
+
+    // O nome do Produtor vem junto: fora do recorte de um deles, o campo procura no
     // cadastro inteiro, e duas Propriedades podem ter nomes parecidos.
     expect(
-      within(campo).getByRole('option', { name: 'Fazenda Boa Vista · Ana Lima' }),
+      await screen.findByRole('option', { name: 'Sítio do Meio · Ana Lima' }),
     ).toBeInTheDocument();
-    expect(
-      within(campo).getByRole('option', { name: 'Sítio do Meio · Ana Lima' }),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /Fazenda Boa Vista/ })).toBeNull();
+  });
+
+  it('alcança a Propriedade que o catálogo dos cem primeiros não traz', async () => {
+    const distante = { ...SITIO_DO_MEIO, id: 'p-901', nome: 'Fazenda Distante' };
+    servirCadastro({ ...BASE, propriedades: [distante] }, rotaDosPlantios([]));
+
+    renderizarNoCadastro(<PlantiosSecao />);
+    await procurarEEscolher('Propriedade', 'distante', 'Fazenda Distante · Ana Lima');
+
+    expect(await screen.findByRole('heading', { name: /Plantios de Fazenda Distante/ })).toBeInTheDocument();
   });
 
   it('mostra os Plantios da Propriedade escolhida, com Cultura e Safra por nome', async () => {
@@ -81,7 +91,7 @@ describe('a seção de Plantios', () => {
     renderizarNoCadastro(<PlantiosSecao />);
     await screen.findByLabelText('Propriedade');
 
-    await escolher('Propriedade', BOA_VISTA.id);
+    await procurarEEscolher('Propriedade', 'boa vista', 'Fazenda Boa Vista · Ana Lima');
 
     const linha = await screen.findByRole('row', { name: /Soja/ });
     expect(within(linha).getByText('2025')).toBeInTheDocument();
@@ -93,7 +103,7 @@ describe('a seção de Plantios', () => {
 
     renderizarNoCadastro(<PlantiosSecao />);
     await screen.findByLabelText('Propriedade');
-    await escolher('Propriedade', BOA_VISTA.id);
+    await procurarEEscolher('Propriedade', 'boa vista', 'Fazenda Boa Vista · Ana Lima');
     await abrirONovo();
 
     const cultura = screen.getByLabelText('Cultura');
@@ -117,7 +127,7 @@ describe('a seção de Plantios', () => {
 
     renderizarNoCadastro(<PlantiosSecao />);
     await screen.findByLabelText('Propriedade');
-    await escolher('Propriedade', BOA_VISTA.id);
+    await procurarEEscolher('Propriedade', 'boa vista', 'Fazenda Boa Vista · Ana Lima');
     await abrirONovo();
 
     await escolher('Cultura', SOJA.id);
@@ -147,7 +157,7 @@ describe('a seção de Plantios', () => {
 
     renderizarNoCadastro(<PlantiosSecao />);
     await screen.findByLabelText('Propriedade');
-    await escolher('Propriedade', BOA_VISTA.id);
+    await procurarEEscolher('Propriedade', 'boa vista', 'Fazenda Boa Vista · Ana Lima');
     await abrirONovo();
 
     await escolher('Cultura', SOJA.id);
@@ -172,7 +182,7 @@ describe('a seção de Plantios', () => {
 
     renderizarNoCadastro(<PlantiosSecao />);
     await screen.findByLabelText('Propriedade');
-    await escolher('Propriedade', BOA_VISTA.id);
+    await procurarEEscolher('Propriedade', 'boa vista', 'Fazenda Boa Vista · Ana Lima');
     await screen.findByRole('row', { name: /Soja/ });
 
     await userEvent.click(screen.getByRole('button', { name: 'Excluir Soja em 2025' }));

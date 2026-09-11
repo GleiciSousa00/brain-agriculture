@@ -21,3 +21,11 @@ export const TAMANHO_DO_CATALOGO = 100;
 export function quantasPaginas({ total, tamanho }: Pick<Pagina<unknown>, 'total' | 'tamanho'>): number {
   return Math.max(1, Math.ceil(total / tamanho));
 }
+
+/**
+ * Quantos registros o campo de busca oferece por vez.
+ *
+ * Uma lista curta é o que se lê de relance, e quem não achou aqui digita mais uma letra
+ * em vez de rolar. O teto do catálogo continua valendo para quem não digitou nada.
+ */
+export const TAMANHO_DA_BUSCA = 20;

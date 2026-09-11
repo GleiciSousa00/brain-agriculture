@@ -986,3 +986,44 @@ button.ligacao:hover {
     width: 100%;
   }
 }
+
+/* O campo de escolha que procura: a lista nasce presa ao campo, e some quando fecha. */
+.escolha-com-busca {
+  position: relative;
+}
+
+.escolha-com-busca .opcoes {
+  position: absolute;
+  z-index: 2;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 14rem;
+  overflow-y: auto;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem;
+  list-style: none;
+  border: 1px solid var(--borda-do-campo);
+  border-radius: var(--curva-miuda);
+  background: var(--cartao);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+}
+
+.escolha-com-busca .opcoes.escondida {
+  display: none;
+}
+
+.escolha-com-busca .opcoes li {
+  padding: 0.5rem 0.625rem;
+  border-radius: var(--curva-miuda);
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.escolha-com-busca .opcoes li.destacada {
+  background: var(--verde-fraco);
+}
+
+.escolha-com-busca .recusa {
+  color: var(--alerta-tinta);
+}
