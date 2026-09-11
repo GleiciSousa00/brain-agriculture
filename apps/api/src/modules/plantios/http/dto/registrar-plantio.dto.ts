@@ -8,9 +8,9 @@ import { z } from 'zod';
  * existem, quem responde é a chave estrangeira, na gravação. Ver o registro 0007.
  */
 export const registrarPlantioSchema = z.object({
-  propriedadeId: z.uuid().describe('A Propriedade onde se plantou.'),
-  culturaId: z.uuid().describe('A Cultura do catálogo que foi plantada.'),
-  safraId: z.uuid().describe('A Safra em que se plantou.'),
+  propriedadeId: z.uuid('Escolha a Propriedade onde se plantou.').describe('A Propriedade onde se plantou.'),
+  culturaId: z.uuid('Escolha a Cultura plantada.').describe('A Cultura do catálogo que foi plantada.'),
+  safraId: z.uuid('Escolha a Safra em que se plantou.').describe('A Safra em que se plantou.'),
 });
 
 export class RegistrarPlantioDto extends createZodDto(registrarPlantioSchema) {}

@@ -9,7 +9,12 @@ import { NOME_TAMANHO_MAXIMO } from '../../domain/produtor';
  * trocá-lo seria cadastrar outro em vez de corrigir este. Ver o registro 0007.
  */
 export const editarProdutorSchema = z.object({
-  nome: z.string().trim().min(1).max(NOME_TAMANHO_MAXIMO).describe('Nome do Produtor.'),
+  nome: z
+    .string()
+    .trim()
+    .min(1, 'Informe o nome do Produtor.')
+    .max(NOME_TAMANHO_MAXIMO, `O nome do Produtor não passa de ${String(NOME_TAMANHO_MAXIMO)} caracteres.`)
+    .describe('Nome do Produtor.'),
 });
 
 export class EditarProdutorDto extends createZodDto(editarProdutorSchema) {}
