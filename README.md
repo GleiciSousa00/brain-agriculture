@@ -78,6 +78,34 @@ docker compose exec api node_modules/.bin/ts-node --project tsconfig.json script
 Sem Docker, o comando é `pnpm carga:exemplo` na raiz do repositório, com o Postgres de pé
 e as dependências instaladas. Ver [Desenvolver sem Docker](#desenvolver-sem-docker).
 
+## Encher o painel com volume
+
+O conjunto de exemplo cabe numa tela. Para ver o cadastro no tamanho em que ele precisa
+responder, e para a [medição do painel](#medição-de-volume-com-o-plano-de-execução) valer
+alguma coisa, há uma segunda carga:
+
+```bash
+docker compose exec api pnpm carga:volume
+```
+
+São 50 Produtores, cerca de 3.000 Propriedades e 100.000 Plantios. A ordem importa: a
+carga de exemplo primeiro, a de volume depois. A de exemplo desiste se já houver Produtor
+cadastrado, e a de volume desiste se o volume já estiver lá.
+
+Os Produtores entram pela API, como os do exemplo, então o Documento deles é válido e
+cifrado em repouso. As Propriedades e os Plantios entram por SQL: cem mil requisições
+levariam dezenas de minutos e provariam a validação, que já é provada em outro lugar.
+
+Os dados são sintéticos e assumidos como tais, mas a distribuição não é plana, senão o
+painel não mostraria nada. As Propriedades se repartem em escada entre os Produtores, de
+três a cem cada um. A cidade e o estado saem de uma lista de localidades reais, com peso
+maior onde há mais produção. E cada Propriedade planta um recorte do catálogo, da Cultura
+mais comum para a menos comum e da Safra mais recente para a mais antiga, que é o que faz
+o gráfico por Cultura ter fatias diferentes e o recorte por Safra mudar o desenho.
+
+Nada aqui sorteia. A mesma carga produz o mesmo cadastro, senão duas medições do painel
+não seriam comparáveis.
+
 ## As duas telas
 
 O painel fica em `/painel` e mostra o total de Propriedades cadastradas, a soma da Área
@@ -379,9 +407,11 @@ explicar cada consulta. O relatório completo, com as cinco, está em
 mão: a pipeline o regera a cada execução e o publica como artefato, e a cópia versionada só
 muda por commit.
 
-Medição de 2026-09-10, contra PostgreSQL 17.11, sobre **100.010 Plantios**, **1.005
-Propriedades**, 10 Culturas e 10 Safras. As cinco consultas do painel responderam entre
-0,015 ms e 12,2 ms.
+A medição transcrita abaixo é de 2026-09-10, contra PostgreSQL 17.11, sobre **100.010
+Plantios**, **1.005 Propriedades**, 10 Culturas e 10 Safras, que é o que as duas cargas
+produziam naquela data. As cinco consultas do painel responderam entre 0,015 ms e 12,2 ms.
+A carga de volume mudou de formato depois disso, e a contagem que vale é sempre a do
+relatório gerado, e não a desta linha.
 
 Quatro das cinco consultas agregam sem filtro e leem a base inteira por definição. **O
 recorte por Safra é a única em que o índice também descarta linha**, e por isso é a única
