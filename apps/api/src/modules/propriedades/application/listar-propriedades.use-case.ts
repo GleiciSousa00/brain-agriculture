@@ -3,6 +3,11 @@ import { paginarBusca } from '../../../shared/application/pagina';
 import type { Propriedade } from '../domain/propriedade';
 import type { PropriedadeRepository } from '../domain/propriedade.repository';
 
+/** O pedido de página da listagem, mais o punhado de identificadores que a recorta. */
+export interface PedidoDePropriedades extends PedidoDeBusca {
+  ids?: string[];
+}
+
 /**
  * Lista as Propriedades em fatias, para a listagem continuar utilizável quando houver
  * muitas.
@@ -13,7 +18,9 @@ import type { PropriedadeRepository } from '../domain/propriedade.repository';
 export class ListarPropriedadesUseCase {
   constructor(private readonly propriedades: PropriedadeRepository) {}
 
-  execute(pedido: PedidoDeBusca): Promise<Pagina<Propriedade>> {
-    return paginarBusca(pedido, (recorte) => this.propriedades.list(recorte));
+  execute(pedido: PedidoDePropriedades): Promise<Pagina<Propriedade>> {
+    return paginarBusca(pedido, (recorte) =>
+      this.propriedades.list({ ...recorte, ids: pedido.ids }),
+    );
   }
 }

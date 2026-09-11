@@ -5,7 +5,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
 import {
@@ -19,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { ProblemDetailsDto } from '../../../shared/http/dto/problem-details.dto';
+import { IdentificadorPipe } from '../../../shared/http/identificador.pipe';
 import { ExcluirPlantioUseCase } from '../application/excluir-plantio.use-case';
 import { RegistrarPlantioUseCase } from '../application/registrar-plantio.use-case';
 import { PlantioDto, type PlantioResposta } from './dto/plantio.dto';
@@ -59,7 +59,7 @@ export class PlantiosController {
     description: 'Não existe Plantio com esse identificador.',
     type: ProblemDetailsDto,
   })
-  async excluir(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  async excluir(@Param('id', IdentificadorPipe) id: string): Promise<void> {
     await this.excluirPlantio.execute(id);
   }
 }

@@ -15,10 +15,11 @@ const FALTA_CATALOGO = 'Falta Cultura ou Safra no catálogo.';
 interface Props {
   propriedadeId: string;
   /**
-   * O nome dela, quando o catálogo o alcança.
+   * O nome dela, quando já veio.
    *
-   * Passando do centésimo registro o catálogo não traz a Propriedade, e ainda assim os
-   * Plantios dela são listáveis: a rota que os busca pede o identificador, não o nome.
+   * A resposta que nomeia a Propriedade escolhida chega depois da primeira pintura, e ainda
+   * assim os Plantios dela são listáveis: a rota que os busca pede o identificador, não o
+   * nome.
    */
   nome?: string;
   /** Chegou-se aqui pedindo para registrar, e não só para ver. */

@@ -1,7 +1,7 @@
 import type { CriarPropriedade, EditarPropriedade, Propriedade } from '@cadastro-rural/contracts';
 import { colher, colherVazio } from './chamada';
 import { api } from './cliente';
-import type { Pagina } from './pagina';
+import { PRIMEIRA_PAGINA, type Pagina } from './pagina';
 import { buscarProdutoresPorId } from './produtores';
 
 /**
@@ -21,6 +21,27 @@ export async function listarPropriedades(
   busca?: string,
 ): Promise<Pagina<Propriedade>> {
   return colher(() => api.GET('/propriedades', { params: { query: { pagina, tamanho, busca } } }));
+}
+
+/**
+ * As Propriedades de identificador conhecido, todas numa chamada só.
+ *
+ * O tamanho pedido é o da própria lista, e não o padrão da rota: pedir cem identificadores
+ * numa página de vinte devolveria vinte. Lista vazia é pedido de nenhuma, e a chamada nem
+ * sai. Ver o registro 0013.
+ */
+export async function buscarPropriedadesPorId(ids: string[]): Promise<Propriedade[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const encontradas = await colher(() =>
+    api.GET('/propriedades', {
+      params: { query: { pagina: PRIMEIRA_PAGINA, tamanho: ids.length, ids } },
+    }),
+  );
+
+  return encontradas.itens;
 }
 
 /**

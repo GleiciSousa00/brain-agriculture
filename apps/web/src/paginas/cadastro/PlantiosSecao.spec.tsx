@@ -69,14 +69,56 @@ describe('a seção de Plantios', () => {
     expect(screen.queryByRole('option', { name: /Fazenda Boa Vista/ })).toBeNull();
   });
 
-  it('alcança a Propriedade que o catálogo dos cem primeiros não traz', async () => {
+  it('nomeia no campo a Propriedade escolhida, por mais fundo que ela esteja no cadastro', async () => {
+    // Ela é a última de cento e cinquenta: nenhuma lista carregada de antemão a alcança. O
+    // campo mostrava um texto fixo no lugar do nome, e o nome é o que diz o que se escolheu.
     const distante = { ...SITIO_DO_MEIO, id: 'p-901', nome: 'Fazenda Distante' };
-    servirCadastro({ ...BASE, propriedades: [distante] }, rotaDosPlantios([]));
+    const enfileiradas = Array.from({ length: 150 }, (_, indice) => ({
+      ...BOA_VISTA,
+      id: `propriedade-${String(indice)}`,
+      nome: `Fazenda ${String(indice)}`,
+    }));
+    servirCadastro({ ...BASE, propriedades: [...enfileiradas, distante] }, rotaDosPlantios([]));
 
     renderizarNoCadastro(<PlantiosSecao />);
     await procurarEEscolher('Propriedade', 'distante', 'Fazenda Distante · Ana Lima');
 
-    expect(await screen.findByRole('heading', { name: /Plantios de Fazenda Distante/ })).toBeInTheDocument();
+    expect(await screen.findByRole('combobox', { name: 'Propriedade' })).toHaveValue(
+      'Fazenda Distante',
+    );
+    expect(screen.queryByText('Propriedade fora do catálogo')).toBeNull();
+    expect(
+      await screen.findByRole('heading', { name: /Plantios de Fazenda Distante/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('mostra a cidade e a área da Propriedade escolhida, e não só o nome dela', async () => {
+    const distante = { ...SITIO_DO_MEIO, id: 'p-901', nome: 'Fazenda Distante' };
+    servirCadastro({ ...BASE, propriedades: [distante] }, rotaDosPlantios([]));
+
+    renderizarNoCadastro(<PlantiosSecao />, `/cadastro/plantios?propriedade=${distante.id}`);
+
+    expect(await screen.findByText(/Uberaba\/MG/)).toBeInTheDocument();
+  });
+
+  it('com identificador inválido no endereço, diz o que a API recusou e nada mais', async () => {
+    // A recusa do identificador malformado é uma só, e é a da API. A busca que nomearia a
+    // Propriedade também é recusada, e ficar calada é o que evita dois avisos dizendo o mesmo.
+    servirCadastro(BASE, {
+      'GET /api/propriedades/:propriedadeId/plantios': () => ({
+        problema: {
+          status: 400,
+          title: 'Bad Request',
+          detail: 'O identificador informado não é um UUID.',
+        },
+      }),
+    });
+
+    renderizarNoCadastro(<PlantiosSecao />, '/cadastro/plantios?propriedade=nao-e-uuid');
+
+    const avisos = await screen.findAllByRole('alert');
+    expect(avisos).toHaveLength(1);
+    expect(avisos[0]).toHaveTextContent('O identificador informado não é um UUID.');
   });
 
   it('mostra os Plantios da Propriedade escolhida, com Cultura e Safra por nome', async () => {
@@ -193,8 +235,8 @@ describe('a seção de Plantios', () => {
     ).toBeInTheDocument();
   });
 
-  it('lista os Plantios de uma Propriedade que o catálogo não alcança', async () => {
-    // Passando do centésimo registro a Propriedade fica fora do catálogo, mas a coluna
+  it('lista os Plantios de uma Propriedade que a busca por identificador não achou', async () => {
+    // A Propriedade sumiu entre a chamada dos Plantios e a que a nomearia, e a coluna
     // Plantios da lista dela aponta para cá: o link não pode dar em tela sem saída.
     const deFora = { ...SITIO_DO_MEIO, id: 'propriedade-101' };
     servirCadastro(
@@ -209,8 +251,8 @@ describe('a seção de Plantios', () => {
     expect(screen.queryByText(/Escolha uma Propriedade acima/)).toBeNull();
   });
 
-  it('não acusa cadastro vazio enquanto o catálogo não chega', async () => {
-    // Entrando direto no endereço de uma Propriedade, o catálogo ainda está em voo. Dizer
+  it('não acusa cadastro vazio enquanto a contagem não chega', async () => {
+    // Entrando direto no endereço de uma Propriedade, a contagem ainda está em voo. Dizer
     // "registre uma Propriedade antes" aí seria negar a que o próprio endereço aponta.
     servirRotas({
       'GET /api/produtores': () => new Promise(() => undefined),
@@ -222,8 +264,8 @@ describe('a seção de Plantios', () => {
 
     renderizarNoCadastro(<PlantiosSecao />, `/cadastro/plantios?propriedade=${BOA_VISTA.id}`);
 
-    // A lista é buscada pelo identificador, então ela vem; o nome, que mora no catálogo,
-    // é que ainda não veio.
+    // A lista é buscada pelo identificador, então ela vem; o nome, que vem de outra
+    // chamada, é que ainda não veio.
     expect(
       await screen.findByRole('heading', { name: 'Plantios da Propriedade', level: 2 }),
     ).toBeInTheDocument();

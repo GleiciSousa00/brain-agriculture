@@ -49,37 +49,48 @@ export function paginar<T>(itens: T[], url: URL) {
 }
 
 /**
+ * Recorta pelos identificadores pedidos, como as duas listagens que aceitam `ids` fazem.
+ *
+ * Sem `ids` lista todo mundo, e com `ids` lista só quem foi pedido — inclusive ninguém, que
+ * é o que a API responde a uma lista vazia de identificadores.
+ */
+function recortarPorId<T extends { id: string }>(itens: T[], url: URL): T[] {
+  if (!url.searchParams.has('ids')) {
+    return itens;
+  }
+
+  const ids = url.searchParams.getAll('ids');
+
+  return itens.filter((item) => ids.includes(item.id));
+}
+
+/**
  * As quatro listagens que o cadastro busca, servidas como a API as serve.
  *
  * As listas são lidas a cada pedido, e não copiadas: um teste que empurra um registro
  * dentro do vetor vê a tela se refazer com ele, que é como a escrita de verdade aparece.
  *
- * A listagem de Produtores conta as Propriedades de cada um e honra o recorte por
- * identificador, que é como a tela resolve o nome dos donos de uma página de Propriedades.
- * Contar aqui, e não no teste, é o que deixa a contagem e a base contadas pela mesma fonte.
+ * As duas listagens recortam por identificador, que é como a tela resolve o nome dos donos
+ * de uma página de Propriedades e o da Propriedade que o endereço aponta. A de Produtores
+ * conta as Propriedades de cada um: contar aqui, e não no teste, é o que deixa a contagem e
+ * a base contadas pela mesma fonte.
  */
 export function rotasDosCatalogos(base: Partial<BaseFalsa> = {}): Record<string, RotaFalsa> {
   const { produtores = [], propriedades = [], culturas = [], safras = [] } = base;
 
   return {
-    'GET /api/produtores': ({ url }) => {
-      // Sem `ids` lista todo mundo, e com `ids` lista só quem foi pedido — inclusive
-      // ninguém, que é o que a API responde a uma lista vazia de identificadores.
-      const recortado = url.searchParams.has('ids');
-      const ids = url.searchParams.getAll('ids');
-      const pedidos = recortado ? produtores.filter((um) => ids.includes(um.id)) : produtores;
-
-      return {
-        corpo: paginar(
-          pedidos.map((produtor) => ({
-            ...produtor,
-            propriedades: propriedades.filter((uma) => uma.produtorId === produtor.id).length,
-          })),
-          url,
-        ),
-      };
-    },
-    'GET /api/propriedades': ({ url }) => ({ corpo: paginar(propriedades, url) }),
+    'GET /api/produtores': ({ url }) => ({
+      corpo: paginar(
+        recortarPorId(produtores, url).map((produtor) => ({
+          ...produtor,
+          propriedades: propriedades.filter((uma) => uma.produtorId === produtor.id).length,
+        })),
+        url,
+      ),
+    }),
+    'GET /api/propriedades': ({ url }) => ({
+      corpo: paginar(recortarPorId(propriedades, url), url),
+    }),
     'GET /api/culturas': () => ({ corpo: culturas }),
     'GET /api/safras': () => ({ corpo: safras }),
   };

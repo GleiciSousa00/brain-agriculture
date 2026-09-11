@@ -6,7 +6,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
 import {
@@ -21,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { ProblemDetailsDto } from '../../../shared/http/dto/problem-details.dto';
+import { IdentificadorPipe } from '../../../shared/http/identificador.pipe';
 import { AcrescentarCulturaUseCase } from '../application/acrescentar-cultura.use-case';
 import { ExcluirCulturaUseCase } from '../application/excluir-cultura.use-case';
 import { ListarCulturasUseCase } from '../application/listar-culturas.use-case';
@@ -76,7 +76,7 @@ export class CulturasController {
     description: 'Essa Cultura está registrada em pelo menos um Plantio.',
     type: ProblemDetailsDto,
   })
-  async excluir(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  async excluir(@Param('id', IdentificadorPipe) id: string): Promise<void> {
     await this.excluirCultura.execute(id);
   }
 }

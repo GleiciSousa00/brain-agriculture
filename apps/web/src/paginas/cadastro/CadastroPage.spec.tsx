@@ -124,6 +124,35 @@ describe('a tela de cadastro', () => {
     expect(screen.getByRole('heading', { name: 'Propriedades', level: 2 })).toBeInTheDocument();
   });
 
+  it('nomeia a Propriedade no rastro mesmo quando ela está além do teto da listagem', async () => {
+    // O rastro parava no Produtor e não dizia em qual Propriedade se estava, porque o nome
+    // dela saía de uma lista de cem carregada de antemão.
+    const distante = { ...BOA_VISTA, id: 'propriedade-901', nome: 'Chácara Céu Azul 19' };
+    const enfileiradas = Array.from({ length: 150 }, (_, indice) => ({
+      ...BOA_VISTA,
+      id: `propriedade-${String(indice)}`,
+      nome: `Fazenda ${String(indice)}`,
+    }));
+    servirCadastro(
+      { ...BASE, propriedades: [...enfileiradas, distante] },
+      {
+        'GET /api/painel': () => ({ corpo: PAINEL_VAZIO }),
+        'GET /api/propriedades/:propriedadeId/plantios': () => ({
+          corpo: { itens: [], total: 0, pagina: 1, tamanho: 10 },
+        }),
+      },
+    );
+
+    abrirEm(`/cadastro/plantios?produtor=${ANA.id}&propriedade=${distante.id}`);
+
+    const rastro = within(await screen.findByRole('navigation', { name: 'Contexto' }));
+    expect(await rastro.findByText('Chácara Céu Azul 19')).toHaveAttribute(
+      'aria-current',
+      'location',
+    );
+    expect(rastro.getByRole('link', { name: 'Ana Lima' })).toBeInTheDocument();
+  });
+
   it('nomeia o recorte mesmo quando o Produtor está além do teto da listagem', async () => {
     // O dono do recorte é o último de cento e cinquenta. A listagem não o alcança, e é por
     // perguntar por ele pelo identificador que o rastro consegue nomeá-lo.

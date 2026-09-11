@@ -67,7 +67,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lista as Propriedades por nome, em páginas. Recorta pela busca, quando houver. */
+        /** Lista as Propriedades por nome, em páginas. Recorta pela busca e pelos identificadores, quando houver. */
         get: operations["PropriedadesController_listar"];
         put?: never;
         /** Registra uma Propriedade em nome de um Produtor. */
@@ -889,6 +889,8 @@ export interface operations {
                 tamanho?: number;
                 /** @description Pedaço do nome procurado. Ignora caixa e acento. */
                 busca?: string;
+                /** @description Recorta a listagem a estas Propriedades. Ausente, lista todas. */
+                ids?: string[];
             };
             header?: never;
             path?: never;
@@ -904,7 +906,7 @@ export interface operations {
                     "application/json": components["schemas"]["PropriedadesPaginaDto"];
                 };
             };
-            /** @description A entrada não passou pelo esquema: o campo recusado e o motivo vêm em `erros`. */
+            /** @description A página, o tamanho ou algum identificador pedido não é válido. */
             400: {
                 headers: {
                     [name: string]: unknown;

@@ -6,7 +6,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
   Post,
   Put,
   Query,
@@ -21,13 +20,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ZodSerializerDto } from 'nestjs-zod';
-import { ParametrosDeBuscaDto } from '../../../shared/http/dto/pagina.dto';
 import { ProblemDetailsDto } from '../../../shared/http/dto/problem-details.dto';
+import { IdentificadorPipe } from '../../../shared/http/identificador.pipe';
 import { CriarPropriedadeUseCase } from '../application/criar-propriedade.use-case';
 import { EditarPropriedadeUseCase } from '../application/editar-propriedade.use-case';
 import { ExcluirPropriedadeUseCase } from '../application/excluir-propriedade.use-case';
 import { ListarPropriedadesUseCase } from '../application/listar-propriedades.use-case';
 import { CriarPropriedadeDto, EditarPropriedadeDto } from './dto/criar-propriedade.dto';
+import { ParametrosDePropriedadesDto } from './dto/listar-propriedades.dto';
 import {
   PropriedadeDto,
   PropriedadesPaginaDto,
@@ -66,11 +66,18 @@ export class PropriedadesController {
   @Get()
   @ZodSerializerDto(PropriedadesPaginaDto)
   @ApiOperation({
-    summary: 'Lista as Propriedades por nome, em páginas. Recorta pela busca, quando houver.',
+    summary:
+      'Lista as Propriedades por nome, em páginas. Recorta pela busca e pelos identificadores, quando houver.',
   })
   @ApiOkResponse({ type: PropriedadesPaginaDto })
-  async listar(@Query() pagina: ParametrosDeBuscaDto): Promise<PropriedadesPaginaResposta> {
-    return paraPagina(await this.listarPropriedades.execute(pagina));
+  @ApiBadRequestResponse({
+    description: 'A página, o tamanho ou algum identificador pedido não é válido.',
+    type: ProblemDetailsDto,
+  })
+  async listar(
+    @Query() parametros: ParametrosDePropriedadesDto,
+  ): Promise<PropriedadesPaginaResposta> {
+    return paraPagina(await this.listarPropriedades.execute(parametros));
   }
 
   @Put(':id')
@@ -83,7 +90,7 @@ export class PropriedadesController {
     type: ProblemDetailsDto,
   })
   async editar(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', IdentificadorPipe) id: string,
     @Body() corpo: EditarPropriedadeDto,
   ): Promise<PropriedadeResposta> {
     return paraResposta(await this.editarPropriedade.execute(id, corpo));
@@ -97,7 +104,7 @@ export class PropriedadesController {
     description: 'Não existe Propriedade com esse identificador.',
     type: ProblemDetailsDto,
   })
-  async excluir(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  async excluir(@Param('id', IdentificadorPipe) id: string): Promise<void> {
     await this.excluirPropriedade.execute(id);
   }
 }

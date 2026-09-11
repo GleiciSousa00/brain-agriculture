@@ -1,8 +1,9 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { ParametrosDePaginaDto } from '../../../shared/http/dto/pagina.dto';
 import { ProblemDetailsDto } from '../../../shared/http/dto/problem-details.dto';
+import { IdentificadorPipe } from '../../../shared/http/identificador.pipe';
 import { ListarPlantiosDaPropriedadeUseCase } from '../application/listar-plantios-da-propriedade.use-case';
 import { PlantiosPaginaDto, type PlantiosPaginaResposta } from './dto/plantio.dto';
 import { paraPagina } from './plantio.presenter';
@@ -29,7 +30,7 @@ export class PlantiosDaPropriedadeController {
     type: ProblemDetailsDto,
   })
   async listar(
-    @Param('propriedadeId', ParseUUIDPipe) propriedadeId: string,
+    @Param('propriedadeId', IdentificadorPipe) propriedadeId: string,
     @Query() pagina: ParametrosDePaginaDto,
   ): Promise<PlantiosPaginaResposta> {
     return paraPagina(await this.listarPlantios.execute(propriedadeId, pagina));

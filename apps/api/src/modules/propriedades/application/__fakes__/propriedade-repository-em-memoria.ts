@@ -1,7 +1,10 @@
-import type { RecorteComBusca, Recortados } from '../../../../shared/domain/recorte';
+import type { Recortados } from '../../../../shared/domain/recorte';
 import { nomeCasaComBusca } from '../../../../shared/domain/texto-para-busca';
 import type { Propriedade } from '../../domain/propriedade';
-import type { PropriedadeRepository } from '../../domain/propriedade.repository';
+import type {
+  PropriedadeRepository,
+  RecorteDePropriedades,
+} from '../../domain/propriedade.repository';
 
 /**
  * Repositório substituto, usado pelos testes de caso de uso. `__fakes__` fica fora do
@@ -22,8 +25,14 @@ export class PropriedadeRepositoryEmMemoria implements PropriedadeRepository {
     this.propriedades.delete(id);
   }
 
-  async list({ deslocamento, limite, busca }: RecorteComBusca): Promise<Recortados<Propriedade>> {
+  async list({
+    deslocamento,
+    limite,
+    busca,
+    ids,
+  }: RecorteDePropriedades): Promise<Recortados<Propriedade>> {
     const ordenadas = [...this.propriedades.values()]
+      .filter((propriedade) => ids === undefined || ids.includes(propriedade.id))
       .filter((propriedade) => nomeCasaComBusca(propriedade.nome, busca))
       .sort((uma, outra) => uma.nome.localeCompare(outra.nome) || uma.id.localeCompare(outra.id));
 

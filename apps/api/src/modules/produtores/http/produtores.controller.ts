@@ -6,7 +6,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -24,6 +23,7 @@ import {
 import { ZodSerializerDto } from 'nestjs-zod';
 import { ParametrosDeBuscaDto } from '../../../shared/http/dto/pagina.dto';
 import { ProblemDetailsDto } from '../../../shared/http/dto/problem-details.dto';
+import { IdentificadorPipe } from '../../../shared/http/identificador.pipe';
 import { BuscarProdutorUseCase } from '../application/buscar-produtor.use-case';
 import { CriarProdutorUseCase } from '../application/criar-produtor.use-case';
 import { EditarProdutorUseCase } from '../application/editar-produtor.use-case';
@@ -95,7 +95,7 @@ export class ProdutoresController {
   @ApiOkResponse({ type: ProdutorDetalhadoDto })
   @ApiNotFoundResponse({ description: NAO_ENCONTRADO, type: ProblemDetailsDto })
   async buscar(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', IdentificadorPipe) id: string,
     @Query() parametros: ParametrosDeBuscaDto,
   ): Promise<ProdutorDetalhadoResposta> {
     return paraRespostaDetalhada(await this.buscarProdutor.execute(id, parametros));
@@ -108,7 +108,7 @@ export class ProdutoresController {
   @ApiBadRequestResponse({ description: 'O nome informado não é válido.', type: ProblemDetailsDto })
   @ApiNotFoundResponse({ description: NAO_ENCONTRADO, type: ProblemDetailsDto })
   async editar(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', IdentificadorPipe) id: string,
     @Body() corpo: EditarProdutorDto,
   ): Promise<ProdutorResposta> {
     return paraResposta(await this.editarProdutor.execute({ id, nome: corpo.nome }));
@@ -123,7 +123,7 @@ export class ProdutoresController {
   })
   @ApiNoContentResponse({ description: 'O Produtor foi excluído.' })
   @ApiNotFoundResponse({ description: NAO_ENCONTRADO, type: ProblemDetailsDto })
-  async excluir(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  async excluir(@Param('id', IdentificadorPipe) id: string): Promise<void> {
     await this.excluirProdutor.execute(id);
   }
 }

@@ -6,8 +6,10 @@ import {
   respondaCom,
   respondaComProblema,
   respondaSemConteudo,
+  totalDeChamadas,
 } from '../teste/fetch-falso';
 import {
+  buscarPropriedadesPorId,
   criarPropriedade,
   editarPropriedade,
   excluirPropriedade,
@@ -33,6 +35,23 @@ describe('listarPropriedades', () => {
 
     expect(enderecoDaChamada().pathname).toBe('/api/propriedades');
     expect(enderecoDaChamada().searchParams.get('tamanho')).toBe('10');
+  });
+});
+
+describe('buscarPropriedadesPorId', () => {
+  it('pede os identificadores numa chamada só, com a página do tamanho da lista', async () => {
+    respondaCom({ itens: [BOA_VISTA], total: 1, pagina: 1, tamanho: 2 });
+
+    await buscarPropriedadesPorId(['f1', 'f2']);
+
+    expect(enderecoDaChamada().pathname).toBe('/api/propriedades');
+    expect(enderecoDaChamada().searchParams.getAll('ids')).toEqual(['f1', 'f2']);
+    expect(enderecoDaChamada().searchParams.get('tamanho')).toBe('2');
+  });
+
+  it('não chama a API para pedido de nenhuma', async () => {
+    await expect(buscarPropriedadesPorId([])).resolves.toEqual([]);
+    expect(totalDeChamadas()).toBe(0);
   });
 });
 

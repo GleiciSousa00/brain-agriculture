@@ -10,7 +10,6 @@ import { SEM_RECORTE, plantiosDe, propriedadesDe, useHierarquia } from './hierar
 import { PlantiosDaPropriedade } from './PlantiosDaPropriedade';
 
 const SEM_PROPRIEDADE = 'Registre uma Propriedade antes: todo Plantio acontece em uma.';
-const FORA_DO_CATALOGO = 'Propriedade fora do catálogo';
 
 /**
  * Os Plantios de uma Propriedade de cada vez.
@@ -21,15 +20,15 @@ const FORA_DO_CATALOGO = 'Propriedade fora do catálogo';
  */
 export function PlantiosSecao() {
   const { produtorId, propriedadeId, abrindo } = useHierarquia();
-  const { propriedades, nomeDoDono, carregando, erro } = useCadastro();
+  const { propriedadeEscolhida: escolhida, temPropriedade, nomeDoDono, carregando, erro } =
+    useCadastro();
   const navegar = useNavigate();
   // De quem é cada Propriedade que a busca ofereceu. Escolher é navegar, e navegar pede o
-  // Produtor: a Propriedade achada pela busca pode ser uma que o catálogo não alcança.
+  // Produtor, e a resposta que nomeia a escolhida ainda não chegou no instante do clique.
   const donaDe = useRef(new Map<string, string>());
-  const escolhida = propriedades.find((propriedade) => propriedade.id === propriedadeId);
-  // A escolha vale mesmo quando o catálogo não a alcança: os Plantios se buscam pelo
-  // identificador, e quem chegou pela coluna Plantios de uma Propriedade da centésima
-  // primeira página em diante não pode cair numa tela que diz não haver escolha nenhuma.
+  // A escolha vale antes de a Propriedade ser nomeada: os Plantios se buscam pelo
+  // identificador, e quem chegou pela coluna Plantios de uma Propriedade não pode cair
+  // numa tela que diz não haver escolha nenhuma enquanto o nome está em voo.
   const temEscolha = propriedadeId !== SEM_RECORTE;
 
   /**
@@ -63,9 +62,9 @@ export function PlantiosSecao() {
     navegar(plantiosDe(valor, donaDe.current.get(valor) ?? produtorId));
   }
 
-  // Dizer que não há Propriedade nenhuma exige saber que não há: com o catálogo em voo,
-  // ou depois de ele falhar, a lista vazia é ausência de resposta e não de registro.
-  if (!temEscolha && !carregando && erro === undefined && propriedades.length === 0) {
+  // Dizer que não há Propriedade nenhuma exige saber que não há: com a contagem em voo,
+  // ou depois de ela falhar, o vazio é ausência de resposta e não de registro.
+  if (!temEscolha && !carregando && erro === undefined && !temPropriedade) {
     return (
       <div className="convite">
         <p>{SEM_PROPRIEDADE}</p>
@@ -80,7 +79,7 @@ export function PlantiosSecao() {
         <EscolhaComBusca
           rotulo="Propriedade"
           valor={propriedadeId}
-          nomeDoValor={temEscolha ? (escolhida?.nome ?? FORA_DO_CATALOGO) : undefined}
+          nomeDoValor={escolhida?.nome}
           aoMudar={escolherPropriedade}
           vazia={
             produtorId === ''

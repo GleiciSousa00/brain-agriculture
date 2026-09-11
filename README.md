@@ -129,8 +129,9 @@ Vite em desenvolvimento. Nas duas pontas o prefixo é cortado, então `/api/pain
 API como `/painel`. As duas telas estão nos registros
 [`0009`](docs/adr/0009-interface-web-roteador-grafico-e-mesma-origem.md),
 [`0010`](docs/adr/0010-cadastro-em-sub-rotas-com-um-contexto-so.md),
-[`0011`](docs/adr/0011-cadastro-navegado-pela-hierarquia.md) e
-[`0012`](docs/adr/0012-nome-e-contagem-vem-da-api-e-nao-do-catalogo.md).
+[`0011`](docs/adr/0011-cadastro-navegado-pela-hierarquia.md),
+[`0012`](docs/adr/0012-nome-e-contagem-vem-da-api-e-nao-do-catalogo.md) e
+[`0013`](docs/adr/0013-propriedade-escolhida-vem-da-api.md).
 
 Nenhum campo é conferido na interface. O Documento inválido, a soma de áreas que não fecha
 e o Plantio repetido são recusados pela API, e a tela mostra o texto que ela devolveu, sem
@@ -309,7 +310,10 @@ mesmo de o campo existir.
 tipo de conteúdo `application/problem+json` e o identificador de correlação no corpo.
 Erro não previsto vira 500 com detalhe genérico: o rastro fica no log, não na resposta. A
 recusa de esquema publica em `erros` o campo recusado e o motivo, um por um, para a
-interface apontar o campo no formulário. Recusa é logada em `warn`, e não em `error`:
+interface apontar o campo no formulário. Toda recusa fala português, inclusive a do
+identificador malformado no caminho da rota: a interface mostra o `detail` que a API mandou,
+sem reescrita, e texto cru de biblioteca chegaria inteiro à tela. Recusa é logada em `warn`,
+e não em `error`:
 identificador digitado errado é uso normal, e o nível de erro fica para o que a aplicação
 não previu.
 
@@ -372,15 +376,15 @@ São três tipos, e **só um deles precisa de Docker**.
 | Integração, borda HTTP | `pnpm --filter @cadastro-rural/api test:integration test/http-edge.int-spec.ts` | não |
 | Integração, contra um Postgres de verdade | `pnpm test:integration` | **sim** |
 
-**Unidade.** São 303 testes na API e 141 na interface web. Os da API rodam sem banco, sem
+**Unidade.** São 312 testes na API e 146 na interface web. Os da API rodam sem banco, sem
 Nest e sem subir aplicação, que é o que torna o laço de TDD rápido. Os da interface usam
 Vitest com Testing Library e afirmam o comportamento da tela, incluindo a legenda em texto
 que fica ao lado de cada gráfico.
 
 **Integração, sem Docker.**
 [`apps/api/test/http-edge.int-spec.ts`](apps/api/test/http-edge.int-spec.ts) sobe a
-aplicação Nest em memória, sem banco, e são 4 testes sobre o formato de erro e o
-identificador de correlação.
+aplicação Nest em memória, sem banco, e são 11 testes sobre o formato de erro, o
+identificador de correlação e a recusa do que chega malformado.
 
 **Integração, com Docker.**
 [`apps/api/test/banco.int-spec.ts`](apps/api/test/banco.int-spec.ts) levanta um Postgres
@@ -489,5 +493,6 @@ rejeitado no caminho.
 | [`0008`](docs/adr/0008-validacao-de-documento-segue-a-norma-da-receita.md) | Por que a validação de CPF e CNPJ diverge das bibliotecas de npm em dois pontos |
 | [`0009`](docs/adr/0009-interface-web-roteador-grafico-e-mesma-origem.md) | Roteador, gráfico e o motivo de o navegador nunca chamar a porta da API direto |
 | [`0010`](docs/adr/0010-cadastro-em-sub-rotas-com-um-contexto-so.md) | Por que o cadastro se reparte em sub-rotas, com um contexto só e listas paginadas na API |
-| [`0011`](docs/adr/0011-cadastro-navegado-pela-hierarquia.md) | Por que o recorte da hierarquia mora no endereço e por que o Recharts saiu. A contagem saía do catálogo, e o registro `0012` reabriu isso |
+| [`0011`](docs/adr/0011-cadastro-navegado-pela-hierarquia.md) | Por que o recorte da hierarquia mora no endereço e por que o Recharts saiu. A contagem e o nome saíam do catálogo, e os registros `0012` e `0013` reabriram isso |
 | [`0012`](docs/adr/0012-nome-e-contagem-vem-da-api-e-nao-do-catalogo.md) | Por que o nome do Produtor e a contagem de Propriedades passaram a vir da API, e não de uma lista carregada de antemão |
+| [`0013`](docs/adr/0013-propriedade-escolhida-vem-da-api.md) | Por que a Propriedade escolhida é resolvida pelo identificador do endereço, e por que Propriedade deixou de ser catálogo |

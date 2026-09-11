@@ -5,6 +5,7 @@ import {
   Get,
   INestApplication,
   NotFoundException,
+  Param,
   Post,
 } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_PIPE, DiscoveryModule } from '@nestjs/core';
@@ -15,6 +16,7 @@ import request from 'supertest';
 import { z } from 'zod';
 import { CORRELATION_ID_HEADER } from '../src/shared/logging/correlation-id';
 import { PROBLEM_DETAILS_CONTENT_TYPE } from '../src/shared/http/problem-details';
+import { IdentificadorPipe } from '../src/shared/http/identificador.pipe';
 import { ProblemDetailsFilter } from '../src/shared/http/problem-details.filter';
 import { RotasDaApi } from '../src/shared/http/rotas-da-api';
 import { TipoDeConteudoGuard } from '../src/shared/http/tipo-de-conteudo.guard';
@@ -44,6 +46,11 @@ class ScaffoldController {
 
   @Delete('cadastro/:id')
   excluir(): void {}
+
+  @Get('registro/:id')
+  porIdentificador(@Param('id', IdentificadorPipe) id: string): { id: string } {
+    return { id };
+  }
 }
 
 describe('borda HTTP', () => {
@@ -147,6 +154,13 @@ describe('borda HTTP', () => {
         expect.objectContaining({ campo: 'area' }),
       ]),
     );
+  });
+
+  it('recusa em português o identificador que não é UUID, sem repassar o texto do Nest', async () => {
+    const response = await request(app.getHttpServer()).get('/scaffold/registro/nao-e-uuid');
+
+    expect(response.status).toBe(400);
+    expect(response.body.detail).toBe('O identificador informado não é um UUID.');
   });
 
   it('responde 405 com o cabeçalho Allow quando o caminho existe e o método não', async () => {
