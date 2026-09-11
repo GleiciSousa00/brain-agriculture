@@ -69,8 +69,11 @@ import { IndexaBuscaDeProdutor1789111000000 } from './infrastructure/migrations/
     },
     {
       provide: ListarProdutoresUseCase,
-      inject: [PRODUTOR_REPOSITORY],
-      useFactory: (produtores: ProdutorRepository) => new ListarProdutoresUseCase(produtores),
+      inject: [PRODUTOR_REPOSITORY, PROPRIEDADES_DO_PRODUTOR_REPOSITORY],
+      useFactory: (
+        produtores: ProdutorRepository,
+        propriedades: PropriedadesDoProdutorRepository,
+      ) => new ListarProdutoresUseCase(produtores, propriedades),
     },
     {
       provide: EditarProdutorUseCase,

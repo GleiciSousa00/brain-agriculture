@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { PRIMEIRA_PAGINA, TAMANHO_DA_BUSCA } from '../../api/pagina';
 import { listarProdutores } from '../../api/produtores';
-import { listarPropriedades, listarPropriedadesDoProdutor } from '../../api/propriedades';
+import type { PropriedadeComDono } from '../../api/propriedades';
+import { listarPropriedadesComDono, listarPropriedadesDoProdutor } from '../../api/propriedades';
 import { BotaoDeExclusao } from '../../componentes/BotaoDeExclusao';
 import { Campo } from '../../componentes/Campo';
 import { Escolha, type Opcao } from '../../componentes/Escolha';
@@ -12,6 +13,7 @@ import { comoNumero, formatarArea, formatarHectares } from '../../formato';
 import { FORA_DO_CATALOGO, useCadastro } from './CadastroContexto';
 import {
   PRODUTORES,
+  SEM_RECORTE,
   plantiosDe,
   propriedadesDe,
   useEsquecerAbertura,
@@ -126,18 +128,12 @@ interface PropsDoRecorte {
 }
 
 function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
-  const {
-    produtores,
-    carregando,
-    nomeDoProdutor,
-    criarPropriedade,
-    editarPropriedade,
-    excluirPropriedade,
-  } = useCadastro();
+  const { temProdutor, nomeDoDono, criarPropriedade, editarPropriedade, excluirPropriedade } =
+    useCadastro();
 
   const esquecerAbertura = useEsquecerAbertura();
   const [aberto, setAberto] = useState(abrindo);
-  const [emEdicao, setEmEdicao] = useState<Propriedade>();
+  const [emEdicao, setEmEdicao] = useState<PropriedadeComDono>();
   const [rascunho, setRascunho] = useState<Rascunho>({
     ...RASCUNHO_LIMPO,
     // Chegando pelo recorte de um Produtor, é em nome dele que se registra.
@@ -162,13 +158,6 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
     setRascunho((anterior) => ({ ...anterior, [chave]: valor }));
   };
 
-  /** O nome que o catálogo tem para o identificador, ou nada, quando ele não o alcança. */
-  function nomeDeQuemEstaNoCatalogo(id: string): string {
-    const nome = id === '' ? '' : nomeDoProdutor(id);
-
-    return nome === FORA_DO_CATALOGO ? '' : nome;
-  }
-
   /** O Produtor escolhido no campo de busca é o dono da Propriedade que se vai registrar. */
   function escolherProdutor({ valor, rotulo }: Opcao): void {
     setRascunho((anterior) => ({ ...anterior, produtorId: valor, produtorNome: rotulo }));
@@ -192,7 +181,7 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
     setAberto(true);
   }
 
-  function abrirParaEditar(propriedade: Propriedade): void {
+  function abrirParaEditar(propriedade: PropriedadeComDono): void {
     setAberto(true);
     setEmEdicao(propriedade);
     setRascunho(rascunhoDe(propriedade));
@@ -221,7 +210,7 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
     }
   }
 
-  async function excluir(propriedade: Propriedade): Promise<void> {
+  async function excluir(propriedade: PropriedadeComDono): Promise<void> {
     await tentativaDaExclusao.tentar(
       () => excluirPropriedade(propriedade.id),
       `Propriedade ${propriedade.nome} excluída.`,
@@ -229,17 +218,13 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
   }
 
   // O nome de quem está escolhido: o que a busca trouxe, ou o do recorte, que chega como
-  // identificador no endereço e só ganha nome quando o catálogo responde.
-  const nomeDoEscolhido = rascunho.produtorNome || nomeDeQuemEstaNoCatalogo(rascunho.produtorId);
+  // identificador no endereço e só ganha nome quando a API responde.
+  const nomeDoEscolhido =
+    rascunho.produtorNome || (rascunho.produtorId === produtorId ? nomeDoDono : '');
 
-    const podeRegistrar = emEdicao !== undefined || produtores.length > 0;
-  const recortado = produtorId !== '';
-  // Quem é o recorte só se sabe com o catálogo em mãos, e nem sempre se sabe: passando do
-  // centésimo Produtor, o dono da lista pode ser um dos que não vieram. Nos dois casos a
-  // lista já é a dele, mas ainda não tem nome, e escrever "Propriedades de —" seria pior
-  // do que não nomear o recorte.
-  const nome = recortado && !carregando ? nomeDoProdutor(produtorId) : FORA_DO_CATALOGO;
-  const dono = nome === FORA_DO_CATALOGO ? '' : nome;
+
+  const podeRegistrar = emEdicao !== undefined || temProdutor;
+  const recortado = produtorId !== SEM_RECORTE;
 
   return (
     <div className="secao">
@@ -266,7 +251,7 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
             ) : (
               <p className="campo">
                 <span className="rotulo-fixo">Produtor</span>
-                <span className="valor-fixo">{nomeDoProdutor(emEdicao.produtorId)}</span>
+                <span className="valor-fixo">{emEdicao.produtorNome}</span>
                 <span className="ajuda">Uma Propriedade não muda de Produtor.</span>
               </p>
             )}
@@ -361,7 +346,9 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
       )}
 
       <Listagem
-        titulo={dono === '' ? 'Propriedades' : `Propriedades de ${dono}`}
+        // A lista já é a do recorte antes de o nome dele chegar, e "Propriedades de —" seria
+        // pior do que não nomear o recorte: até lá o título é o da lista inteira.
+        titulo={nomeDoDono === '' ? 'Propriedades' : `Propriedades de ${nomeDoDono}`}
         acoes={
           <>
             {recortado && (
@@ -379,11 +366,13 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
         listar={(pagina, tamanho) =>
           recortado
             ? listarPropriedadesDoProdutor(produtorId, pagina, tamanho)
-            : listarPropriedades(pagina, tamanho)
+            : listarPropriedadesComDono(pagina, tamanho)
         }
         carregando={CARREGANDO}
         vazio={
-          dono === '' ? VAZIO : `${dono} ainda não tem Propriedade. Registre a primeira acima.`
+          nomeDoDono === ''
+            ? VAZIO
+            : `${nomeDoDono} ainda não tem Propriedade. Registre a primeira acima.`
         }
       >
         {(propriedades) => (
@@ -407,7 +396,7 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
                   className={emEdicao?.id === propriedade.id ? 'em-edicao' : ''}
                 >
                   <td>{propriedade.nome}</td>
-                  <td>{nomeDoProdutor(propriedade.produtorId)}</td>
+                  <td>{propriedade.produtorNome || FORA_DO_CATALOGO}</td>
                   <td className="apagado">
                     {propriedade.cidade}/{propriedade.estado}
                   </td>

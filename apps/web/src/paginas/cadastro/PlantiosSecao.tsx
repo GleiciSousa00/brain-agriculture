@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { PRIMEIRA_PAGINA, TAMANHO_DA_BUSCA } from '../../api/pagina';
-import { listarPropriedades, listarPropriedadesDoProdutor } from '../../api/propriedades';
+import { listarPropriedadesComDono, listarPropriedadesDoProdutor } from '../../api/propriedades';
 import type { Opcao } from '../../componentes/Escolha';
 import { EscolhaComBusca } from '../../componentes/EscolhaComBusca';
 import { formatarHectares } from '../../formato';
@@ -21,7 +21,7 @@ const FORA_DO_CATALOGO = 'Propriedade fora do catálogo';
  */
 export function PlantiosSecao() {
   const { produtorId, propriedadeId, abrindo } = useHierarquia();
-  const { propriedades, nomeDoProdutor, carregando, erro } = useCadastro();
+  const { propriedades, nomeDoDono, carregando, erro } = useCadastro();
   const navegar = useNavigate();
   // De quem é cada Propriedade que a busca ofereceu. Escolher é navegar, e navegar pede o
   // Produtor: a Propriedade achada pela busca pode ser uma que o catálogo não alcança.
@@ -42,7 +42,7 @@ export function PlantiosSecao() {
   async function procurarPropriedade(busca: string): Promise<Opcao[]> {
     const encontradas =
       produtorId === ''
-        ? await listarPropriedades(PRIMEIRA_PAGINA, TAMANHO_DA_BUSCA, busca)
+        ? await listarPropriedadesComDono(PRIMEIRA_PAGINA, TAMANHO_DA_BUSCA, busca)
         : await listarPropriedadesDoProdutor(produtorId, PRIMEIRA_PAGINA, TAMANHO_DA_BUSCA, busca);
 
     return encontradas.itens.map((propriedade) => {
@@ -52,7 +52,7 @@ export function PlantiosSecao() {
         valor: propriedade.id,
         rotulo:
           produtorId === ''
-            ? `${propriedade.nome} · ${nomeDoProdutor(propriedade.produtorId)}`
+            ? `${propriedade.nome} · ${propriedade.produtorNome}`
             : propriedade.nome,
       };
     });
@@ -85,7 +85,7 @@ export function PlantiosSecao() {
           vazia={
             produtorId === ''
               ? 'Procure uma Propriedade pelo nome'
-              : `Procure uma Propriedade de ${nomeDoProdutor(produtorId)}`
+              : `Procure uma Propriedade de ${nomeDoDono}`
           }
           procurar={procurarPropriedade}
         />

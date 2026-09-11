@@ -3,9 +3,9 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { procurarEEscolher } from '../../teste/busca-falsa';
-import { renderizarNoCadastro, servirCadastro } from '../../teste/cadastro-falso';
+import { paginar, renderizarNoCadastro, servirCadastro } from '../../teste/cadastro-falso';
 import { AGRO_BETO, ANA, BOA_VISTA, SITIO_DO_MEIO } from '../../teste/exemplos';
-import { corpoEnviadoPara } from '../../teste/fetch-falso';
+import { corpoEnviadoPara, servirRotas } from '../../teste/fetch-falso';
 import { PropriedadesSecao } from './PropriedadesSecao';
 
 async function preencher(rotulo: string, texto: string): Promise<void> {
@@ -46,17 +46,40 @@ describe('a seção de Propriedades', () => {
     expect(screen.getByRole('row', { name: /Sítio do Meio/ })).toBeInTheDocument();
   });
 
-  it('mostra um travessão quando o Produtor da Propriedade ficou fora do catálogo', async () => {
-    servirCadastro({
-      produtores: [AGRO_BETO],
-      propriedades: [BOA_VISTA],
+  it('nomeia o dono da Propriedade mesmo quando ele está além do teto da listagem', async () => {
+    // O dono é o último de cento e cinquenta: uma listagem só não o alcança, e o nome sai
+    // de perguntar pelos donos da página, pelos identificadores que ela trouxe.
+    const enfileirados = Array.from({ length: 150 }, (_, indice) => ({
+      ...AGRO_BETO,
+      id: `produtor-${String(indice)}`,
+      nome: `Agro ${String(indice)}`,
+    }));
+    servirCadastro({ produtores: [...enfileirados, ANA], propriedades: [BOA_VISTA] });
+
+    renderizarNoCadastro(<PropriedadesSecao />);
+
+    const linha = await screen.findByRole('row', { name: /Fazenda Boa Vista/ });
+    expect(within(linha).getByText('Ana Lima')).toBeInTheDocument();
+  });
+
+  it('põe um travessão quando o dono da Propriedade não pôde ser nomeado', async () => {
+    // A fatia e os nomes vêm de duas chamadas. Quem some entre elas leva as Propriedades
+    // junto, pela cascata do registro 0003, mas a linha que já veio precisa dizer alguma
+    // coisa na coluna.
+    servirRotas({
+      'GET /api/produtores': ({ url }) =>
+        url.searchParams.has('ids')
+          ? { corpo: { itens: [], total: 0, pagina: 1, tamanho: 1 } }
+          : { corpo: paginar([ANA], url) },
+      'GET /api/propriedades': ({ url }) => ({ corpo: paginar([BOA_VISTA], url) }),
+      'GET /api/culturas': () => ({ corpo: [] }),
+      'GET /api/safras': () => ({ corpo: [] }),
     });
 
     renderizarNoCadastro(<PropriedadesSecao />);
 
     const linha = await screen.findByRole('row', { name: /Fazenda Boa Vista/ });
     expect(within(linha).getByText('—')).toBeInTheDocument();
-    expect(within(linha).queryByText('Ana Lima')).toBeNull();
   });
 
   it('procura o Produtor pelo nome e oferece só quem casa', async () => {

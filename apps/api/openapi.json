@@ -276,6 +276,21 @@
               "maxLength": 120,
               "type": "string"
             }
+          },
+          {
+            "name": "ids",
+            "required": false,
+            "in": "query",
+            "description": "Recorta a listagem a estes Produtores. Ausente, lista todos.",
+            "schema": {
+              "maxItems": 100,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              }
+            }
           }
         ],
         "responses": {
@@ -310,7 +325,7 @@
             }
           }
         },
-        "summary": "Lista Produtores por nome, em páginas, com o Documento mascarado. Recorta pela busca, quando houver.",
+        "summary": "Lista Produtores por nome, em páginas, com o Documento mascarado e quantas Propriedades cada um tem. Recorta pela busca e pelos identificadores, quando houver.",
         "tags": [
           "Produtores"
         ]
@@ -1517,13 +1532,20 @@
                     "CPF",
                     "CNPJ"
                   ]
+                },
+                "propriedades": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Quantas Propriedades estão em nome dele."
                 }
               },
               "required": [
                 "id",
                 "nome",
                 "documento",
-                "tipoDeDocumento"
+                "tipoDeDocumento",
+                "propriedades"
               ]
             }
           },

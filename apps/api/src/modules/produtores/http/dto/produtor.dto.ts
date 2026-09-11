@@ -51,8 +51,20 @@ export type ProdutorDetalhadoResposta = z.infer<typeof produtorDetalhadoSchema>;
 
 export class ProdutorDetalhadoDto extends createZodDto(produtorDetalhadoSchema) {}
 
+/**
+ * O Produtor como a listagem o mostra: ele, mais quantas Propriedades estão em nome dele.
+ *
+ * A contagem não entra no esquema base porque as rotas de escrita respondem o Produtor que
+ * acabou de ser gravado, e não o cadastro dele. Quem lista é quem mostra a coluna.
+ */
+export const produtorListadoSchema = produtorSchema.extend({
+  propriedades: z.number().int().describe('Quantas Propriedades estão em nome dele.'),
+});
+
+export type ProdutorListadoResposta = z.infer<typeof produtorListadoSchema>;
+
 /** Uma fatia da listagem de Produtores, no mesmo formato de fatia de toda a API. */
-export const produtoresPaginaSchema = paginaSchema(produtorSchema);
+export const produtoresPaginaSchema = paginaSchema(produtorListadoSchema);
 
 export type ProdutoresPaginaResposta = z.infer<typeof produtoresPaginaSchema>;
 
