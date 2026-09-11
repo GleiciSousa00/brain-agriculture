@@ -1,7 +1,7 @@
 import { Area } from '../../propriedades/domain/area';
 import { Propriedade } from '../../propriedades/domain/propriedade';
 import { ListarProdutoresUseCase } from './listar-produtores.use-case';
-import type { ProdutorListado } from './listar-produtores.use-case';
+import type { ProdutorContado } from './listar-produtores.use-case';
 import { Documento } from '../domain/documento';
 import { Produtor } from '../domain/produtor';
 import { ProdutorRepositoryEmMemoria } from './__fakes__/produtor-repository-em-memoria';
@@ -51,7 +51,7 @@ function propriedadeDe(produtorId: string, nome: string): Propriedade {
   });
 }
 
-function nomes(itens: ProdutorListado[]): string[] {
+function nomes(itens: ProdutorContado[]): string[] {
   return itens.map(({ produtor }) => produtor.nome);
 }
 

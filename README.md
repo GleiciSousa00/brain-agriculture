@@ -489,5 +489,5 @@ rejeitado no caminho.
 | [`0008`](docs/adr/0008-validacao-de-documento-segue-a-norma-da-receita.md) | Por que a validação de CPF e CNPJ diverge das bibliotecas de npm em dois pontos |
 | [`0009`](docs/adr/0009-interface-web-roteador-grafico-e-mesma-origem.md) | Roteador, gráfico e o motivo de o navegador nunca chamar a porta da API direto |
 | [`0010`](docs/adr/0010-cadastro-em-sub-rotas-com-um-contexto-so.md) | Por que o cadastro se reparte em sub-rotas, com um contexto só e listas paginadas na API |
-| [`0011`](docs/adr/0011-cadastro-navegado-pela-hierarquia.md) | Por que o recorte da hierarquia mora no endereço, por que a contagem sai do catálogo e por que o Recharts saiu |
+| [`0011`](docs/adr/0011-cadastro-navegado-pela-hierarquia.md) | Por que o recorte da hierarquia mora no endereço e por que o Recharts saiu. A contagem saía do catálogo, e o registro `0012` reabriu isso |
 | [`0012`](docs/adr/0012-nome-e-contagem-vem-da-api-e-nao-do-catalogo.md) | Por que o nome do Produtor e a contagem de Propriedades passaram a vir da API, e não de uma lista carregada de antemão |

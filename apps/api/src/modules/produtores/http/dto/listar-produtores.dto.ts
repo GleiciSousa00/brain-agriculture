@@ -6,12 +6,11 @@ import { TAMANHO_MAXIMO, parametrosDeBuscaSchema } from '../../../../shared/http
  * Os parâmetros da listagem de Produtores: a página, a busca e um punhado de identificadores.
  *
  * O recorte por identificador serve a quem já tem os identificadores em mãos e precisa dos
- * nomes: a tela mostra as Propriedades de uma página e cada uma diz de quem é por
- * identificador. Sem isto o nome sairia de um catálogo carregado de antemão, que para no
- * teto da listagem e deixa sem nome quem vier depois dele.
+ * nomes, conforme o registro de decisão 0012.
  *
  * O teto de quantos identificadores cabem é o mesmo teto de tamanho de página: quem pede
- * nomes está resolvendo uma página, e uma página não passa disso.
+ * nomes está resolvendo uma página, e uma página não passa disso. Os dois andam juntos —
+ * pedir cem identificadores numa página de vinte devolve vinte.
  */
 export const parametrosDeProdutoresSchema = parametrosDeBuscaSchema.extend({
   ids: z

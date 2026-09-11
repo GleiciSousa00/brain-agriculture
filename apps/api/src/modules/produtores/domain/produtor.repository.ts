@@ -6,9 +6,8 @@ import type { Produtor } from './produtor';
  * O recorte da listagem de Produtores.
  *
  * Além do nome procurado, ela aceita um punhado de identificadores. É assim que a tela
- * resolve de uma vez o nome dos donos das Propriedades que está mostrando: sem isso o nome
- * sairia de um catálogo carregado de antemão, que para no teto da listagem e deixa sem nome
- * quem vier depois dele.
+ * resolve de uma vez o nome dos donos das Propriedades que está mostrando, conforme o
+ * registro de decisão 0012.
  */
 export interface RecorteDeProdutores extends RecorteComBusca {
   /** Os identificadores pedidos. Ausente, lista todo mundo; vazio, não lista ninguém. */

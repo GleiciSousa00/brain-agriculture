@@ -10,9 +10,10 @@ import { Campo } from '../../componentes/Campo';
 import { Escolha, type Opcao } from '../../componentes/Escolha';
 import { EscolhaComBusca } from '../../componentes/EscolhaComBusca';
 import { comoNumero, formatarArea, formatarHectares } from '../../formato';
-import { useCadastro } from './CadastroContexto';
+import { FORA_DO_CATALOGO, useCadastro } from './CadastroContexto';
 import {
   PRODUTORES,
+  SEM_RECORTE,
   plantiosDe,
   propriedadesDe,
   useEsquecerAbertura,
@@ -221,11 +222,9 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
   const nomeDoEscolhido =
     rascunho.produtorNome || (rascunho.produtorId === produtorId ? nomeDoDono : '');
 
+
   const podeRegistrar = emEdicao !== undefined || temProdutor;
-  const recortado = produtorId !== '';
-  // A lista já é a do recorte antes de o nome dele chegar, e escrever "Propriedades de —"
-  // seria pior do que não nomear o recorte: até lá o título é o da lista inteira.
-  const dono = nomeDoDono;
+  const recortado = produtorId !== SEM_RECORTE;
 
   return (
     <div className="secao">
@@ -347,7 +346,9 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
       )}
 
       <Listagem
-        titulo={dono === '' ? 'Propriedades' : `Propriedades de ${dono}`}
+        // A lista já é a do recorte antes de o nome dele chegar, e "Propriedades de —" seria
+        // pior do que não nomear o recorte: até lá o título é o da lista inteira.
+        titulo={nomeDoDono === '' ? 'Propriedades' : `Propriedades de ${nomeDoDono}`}
         acoes={
           <>
             {recortado && (
@@ -369,7 +370,9 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
         }
         carregando={CARREGANDO}
         vazio={
-          dono === '' ? VAZIO : `${dono} ainda não tem Propriedade. Registre a primeira acima.`
+          nomeDoDono === ''
+            ? VAZIO
+            : `${nomeDoDono} ainda não tem Propriedade. Registre a primeira acima.`
         }
       >
         {(propriedades) => (
@@ -393,7 +396,7 @@ function Recorte({ produtorId, abrindo }: PropsDoRecorte) {
                   className={emEdicao?.id === propriedade.id ? 'em-edicao' : ''}
                 >
                   <td>{propriedade.nome}</td>
-                  <td>{propriedade.produtorNome}</td>
+                  <td>{propriedade.produtorNome || FORA_DO_CATALOGO}</td>
                   <td className="apagado">
                     {propriedade.cidade}/{propriedade.estado}
                   </td>

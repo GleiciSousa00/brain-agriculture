@@ -2,7 +2,7 @@ import type { Pagina } from '../../../shared/application/pagina';
 import { paginaPara } from '../../../shared/http/pagina.presenter';
 import type { Propriedade } from '../../propriedades/domain/propriedade';
 import type { ProdutorComPropriedades } from '../application/buscar-produtor.use-case';
-import type { ProdutorListado } from '../application/listar-produtores.use-case';
+import type { ProdutorContado } from '../application/listar-produtores.use-case';
 import type { Produtor } from '../domain/produtor';
 import type {
   ProdutorDetalhadoResposta,
@@ -42,10 +42,10 @@ function paraPropriedade(propriedade: Propriedade) {
 }
 
 /** Monta a fatia da listagem. O Documento sai mascarado aqui como sai em qualquer rota. */
-export function paraPagina(pagina: Pagina<ProdutorListado>): ProdutoresPaginaResposta {
+export function paraPagina(pagina: Pagina<ProdutorContado>): ProdutoresPaginaResposta {
   return paginaPara(pagina, paraRespostaListada);
 }
 
-function paraRespostaListada({ produtor, propriedades }: ProdutorListado): ProdutorListadoResposta {
+function paraRespostaListada({ produtor, propriedades }: ProdutorContado): ProdutorListadoResposta {
   return { ...paraResposta(produtor), propriedades };
 }

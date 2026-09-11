@@ -63,8 +63,11 @@ export function rotasDosCatalogos(base: Partial<BaseFalsa> = {}): Record<string,
 
   return {
     'GET /api/produtores': ({ url }) => {
+      // Sem `ids` lista todo mundo, e com `ids` lista só quem foi pedido — inclusive
+      // ninguém, que é o que a API responde a uma lista vazia de identificadores.
+      const recortado = url.searchParams.has('ids');
       const ids = url.searchParams.getAll('ids');
-      const pedidos = ids.length === 0 ? produtores : produtores.filter((um) => ids.includes(um.id));
+      const pedidos = recortado ? produtores.filter((um) => ids.includes(um.id)) : produtores;
 
       return {
         corpo: paginar(

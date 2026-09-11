@@ -40,7 +40,6 @@ export class TypeormPropriedadesDoProdutorRepository implements PropriedadesDoPr
     return { itens: linhas.map(propriedadeParaDominio), total };
   }
 
-  /** A contagem volta do banco como texto, e vira número aqui. */
   async contarPorProdutor(ids: string[]): Promise<Map<string, number>> {
     if (ids.length === 0) {
       return new Map();

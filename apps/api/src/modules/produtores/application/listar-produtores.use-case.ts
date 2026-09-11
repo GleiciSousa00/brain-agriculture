@@ -8,8 +8,12 @@ export interface PedidoDeProdutores extends PedidoDeBusca {
   ids?: string[];
 }
 
-/** O Produtor e quantas Propriedades estão em nome dele, que é o que a listagem mostra. */
-export interface ProdutorListado {
+/**
+ * O Produtor e quantas Propriedades estão em nome dele, que é o que a listagem mostra.
+ *
+ * Não é a resposta: quem a monta é o apresentador, e o esquema dela mora em `http`.
+ */
+export interface ProdutorContado {
   produtor: Produtor;
   propriedades: number;
 }
@@ -31,7 +35,7 @@ export class ListarProdutoresUseCase {
     private readonly propriedades: PropriedadesDoProdutorRepository,
   ) {}
 
-  async execute(pedido: PedidoDeProdutores): Promise<Pagina<ProdutorListado>> {
+  async execute(pedido: PedidoDeProdutores): Promise<Pagina<ProdutorContado>> {
     const pagina = await paginarBusca(pedido, (recorte) =>
       this.produtores.list({ ...recorte, ids: pedido.ids }),
     );

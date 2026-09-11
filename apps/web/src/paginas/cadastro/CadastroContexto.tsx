@@ -23,7 +23,13 @@ import {
 } from '../../api/catalogo';
 import { PRIMEIRA_PAGINA, TAMANHO_MAXIMO } from '../../api/pagina';
 import { excluirPlantio, registrarPlantio } from '../../api/plantios';
-import { criarProdutor, editarProdutor, excluirProdutor, listarProdutores } from '../../api/produtores';
+import {
+  buscarProdutoresPorId,
+  criarProdutor,
+  editarProdutor,
+  excluirProdutor,
+  listarProdutores,
+} from '../../api/produtores';
 import {
   criarPropriedade,
   editarPropriedade,
@@ -39,9 +45,8 @@ import { SEM_RECORTE, useHierarquia } from './hierarquia';
  * Plantio oferece inteiras. As Propriedades vêm junto porque a seção de Plantios mostra os
  * dados da que está escolhida.
  *
- * Produtor não está aqui de propósito. Quem precisa de um Produtor o pede à API por nome ou
- * por identificador: uma lista carregada de antemão pararia no teto da listagem, e quem
- * viesse depois dele ficaria sem nome na tela.
+ * Produtor não está aqui de propósito: quem precisa de um o pede à API por nome ou por
+ * identificador. Ver o registro 0012.
  */
 export interface Catalogos {
   propriedades: Propriedade[];
@@ -54,8 +59,9 @@ export interface Catalogos {
 /**
  * O que a tela põe no lugar do nome que não pôde ser resolvido.
  *
- * Vale para a Cultura e para a Safra de um Plantio que apontam para fora do catálogo, o que
- * é sintoma de dado inconsistente e não de lista cortada.
+ * Vale para a Cultura e para a Safra de um Plantio que apontam para fora do catálogo, e para
+ * o dono de uma Propriedade que não pôde ser nomeado. Nos três casos é sintoma de dado
+ * inconsistente, e não de lista cortada.
  */
 export const FORA_DO_CATALOGO = '—';
 
@@ -190,10 +196,10 @@ export function CadastroProvider({ children }: Props) {
 
     let cancelado = false;
 
-    listarProdutores(PRIMEIRA_PAGINA, 1, undefined, [produtorId])
+    buscarProdutoresPorId([produtorId])
       .then((encontrados) => {
         if (!cancelado) {
-          setNomeDoDono(encontrados.itens.at(0)?.nome ?? '');
+          setNomeDoDono(encontrados.at(0)?.nome ?? '');
         }
       })
       .catch(() => {

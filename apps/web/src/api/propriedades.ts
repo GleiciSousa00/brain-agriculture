@@ -1,16 +1,14 @@
 import type { CriarPropriedade, EditarPropriedade, Propriedade } from '@cadastro-rural/contracts';
 import { colher, colherVazio } from './chamada';
 import { api } from './cliente';
-import { PRIMEIRA_PAGINA, TAMANHO_MAXIMO, type Pagina } from './pagina';
-import { listarProdutores } from './produtores';
+import type { Pagina } from './pagina';
+import { buscarProdutoresPorId } from './produtores';
 
 /**
  * A Propriedade e o nome de quem é dono dela.
  *
  * A API entrega a Propriedade apontando para o Produtor por identificador, e o nome é
- * resolvido aqui, pelos identificadores que a página trouxe. Resolver aqui, e não na tela, é
- * o que dispensa o catálogo que a tela carregava de antemão: ele parava no teto da listagem
- * e deixava sem nome o dono que viesse depois dele.
+ * resolvido aqui, pelos identificadores que a página trouxe. Ver o registro 0012.
  */
 export interface PropriedadeComDono extends Propriedade {
   produtorNome: string;
@@ -29,8 +27,7 @@ export async function listarPropriedades(
  * A mesma fatia, com o nome do dono de cada Propriedade.
  *
  * São duas chamadas, e não uma por linha: os donos da página são pedidos de uma vez, pelos
- * identificadores distintos que ela trouxe. Uma página não passa do teto da listagem, então
- * a lista de identificadores também não.
+ * identificadores distintos que ela trouxe.
  */
 export async function listarPropriedadesComDono(
   pagina: number,
@@ -38,16 +35,18 @@ export async function listarPropriedadesComDono(
   busca?: string,
 ): Promise<Pagina<PropriedadeComDono>> {
   const fatia = await listarPropriedades(pagina, tamanho, busca);
-  const ids = [...new Set(fatia.itens.map((propriedade) => propriedade.produtorId))];
-  const donos = await listarProdutores(PRIMEIRA_PAGINA, TAMANHO_MAXIMO, undefined, ids);
-  const nomes = new Map(donos.itens.map((dono) => [dono.id, dono.nome]));
+  const donos = await buscarProdutoresPorId([
+    ...new Set(fatia.itens.map((propriedade) => propriedade.produtorId)),
+  ]);
+  const nomes = new Map(donos.map((dono) => [dono.id, dono.nome]));
 
   return {
     ...fatia,
     itens: fatia.itens.map((propriedade) => ({
       ...propriedade,
       // Vazio só na corrida entre as duas chamadas: quem some entre elas leva as
-      // Propriedades junto, pela cascata do registro 0003.
+      // Propriedades junto, pela cascata do registro 0003. Quem mostra decide o que pôr no
+      // lugar do nome que não veio.
       produtorNome: nomes.get(propriedade.produtorId) ?? '',
     })),
   };
@@ -58,8 +57,8 @@ export async function listarPropriedadesComDono(
  *
  * Quem recorta é a rota do Produtor, e a busca por nome vai junto: recortar do lado de cá
  * só recortaria a página que já veio. O Produtor volta para as linhas porque a rota, sendo a
- * dele, não repete de quem cada Propriedade é — e aqui o nome do dono não custa chamada
- * nenhuma, porque a resposta já é a dele.
+ * dele, não repete de quem cada Propriedade é — e aqui o nome do dono sai de graça, porque a
+ * resposta já é a dele.
  */
 export async function listarPropriedadesDoProdutor(
   produtorId: string,

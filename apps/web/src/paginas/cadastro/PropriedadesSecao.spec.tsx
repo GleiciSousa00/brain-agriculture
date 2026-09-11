@@ -3,9 +3,9 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { procurarEEscolher } from '../../teste/busca-falsa';
-import { renderizarNoCadastro, servirCadastro } from '../../teste/cadastro-falso';
+import { paginar, renderizarNoCadastro, servirCadastro } from '../../teste/cadastro-falso';
 import { AGRO_BETO, ANA, BOA_VISTA, SITIO_DO_MEIO } from '../../teste/exemplos';
-import { corpoEnviadoPara } from '../../teste/fetch-falso';
+import { corpoEnviadoPara, servirRotas } from '../../teste/fetch-falso';
 import { PropriedadesSecao } from './PropriedadesSecao';
 
 async function preencher(rotulo: string, texto: string): Promise<void> {
@@ -60,6 +60,26 @@ describe('a seção de Propriedades', () => {
 
     const linha = await screen.findByRole('row', { name: /Fazenda Boa Vista/ });
     expect(within(linha).getByText('Ana Lima')).toBeInTheDocument();
+  });
+
+  it('põe um travessão quando o dono da Propriedade não pôde ser nomeado', async () => {
+    // A fatia e os nomes vêm de duas chamadas. Quem some entre elas leva as Propriedades
+    // junto, pela cascata do registro 0003, mas a linha que já veio precisa dizer alguma
+    // coisa na coluna.
+    servirRotas({
+      'GET /api/produtores': ({ url }) =>
+        url.searchParams.has('ids')
+          ? { corpo: { itens: [], total: 0, pagina: 1, tamanho: 1 } }
+          : { corpo: paginar([ANA], url) },
+      'GET /api/propriedades': ({ url }) => ({ corpo: paginar([BOA_VISTA], url) }),
+      'GET /api/culturas': () => ({ corpo: [] }),
+      'GET /api/safras': () => ({ corpo: [] }),
+    });
+
+    renderizarNoCadastro(<PropriedadesSecao />);
+
+    const linha = await screen.findByRole('row', { name: /Fazenda Boa Vista/ });
+    expect(within(linha).getByText('—')).toBeInTheDocument();
   });
 
   it('procura o Produtor pelo nome e oferece só quem casa', async () => {
