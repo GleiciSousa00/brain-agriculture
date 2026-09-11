@@ -1,11 +1,11 @@
 import type { Repository } from 'typeorm';
-import type { RecorteComBusca, Recortados } from '../../../shared/domain/recorte';
+import type { Recortados } from '../../../shared/domain/recorte';
 import { recortarPorNome } from '../../../shared/infrastructure/busca-por-nome';
 import { violouUnicidade } from '../../../shared/infrastructure/postgres-errors';
 import type { Documento } from '../domain/documento';
 import type { Produtor } from '../domain/produtor';
 import { ProdutorDuplicado } from '../domain/produtor.errors';
-import type { ProdutorRepository } from '../domain/produtor.repository';
+import type { ProdutorRepository, RecorteDeProdutores } from '../domain/produtor.repository';
 import type { ProdutorMapper } from './produtor.mapper';
 import { ProdutorOrmEntity } from './produtor.orm-entity';
 
@@ -57,12 +57,24 @@ export class TypeormProdutorRepository implements ProdutorRepository {
     return linha === null ? null : this.mapper.paraDominio(linha);
   }
 
-  async list({ deslocamento, limite, busca }: RecorteComBusca): Promise<Recortados<Produtor>> {
-    const [linhas, total] = await recortarPorNome(
+  async list({ deslocamento, limite, busca, ids }: RecorteDeProdutores): Promise<Recortados<Produtor>> {
+    // Pedir nenhum identificador é pedir nenhum Produtor. A consulta nem sai: `IN ()` não
+    // é SQL válido, e o construtor de consulta o montaria assim mesmo.
+    if (ids !== undefined && ids.length === 0) {
+      return { itens: [], total: 0 };
+    }
+
+    const consulta = recortarPorNome(
       this.linhas.createQueryBuilder('produtor'),
       'produtor.nome',
       busca,
-    )
+    );
+
+    if (ids !== undefined) {
+      consulta.andWhere('produtor.id IN (:...ids)', { ids });
+    }
+
+    const [linhas, total] = await consulta
       .orderBy('produtor.nome', 'ASC')
       .addOrderBy('produtor.id', 'ASC')
       .skip(deslocamento)
@@ -71,5 +83,4 @@ export class TypeormProdutorRepository implements ProdutorRepository {
 
     return { itens: linhas.map((linha) => this.mapper.paraDominio(linha)), total };
   }
-
 }

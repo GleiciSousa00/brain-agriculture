@@ -21,6 +21,7 @@ export {
   type Plantio,
   type ProblemDetails,
   type Produtor,
+  type ProdutorListado,
   type Propriedade,
   type RegistrarPlantio,
   type Safra,

@@ -4,6 +4,14 @@ import type { components, paths } from './generated/api.js';
 /** O Produtor como a API o devolve, com o Documento mascarado. */
 export type Produtor = components['schemas']['ProdutorDto'];
 
+/**
+ * O Produtor como a listagem o devolve: ele, mais quantas Propriedades estão em nome dele.
+ *
+ * A contagem só existe na listagem, e por isso o tipo sai do item da fatia: as rotas de
+ * escrita respondem o Produtor que acabou de ser gravado, e não o cadastro dele.
+ */
+export type ProdutorListado = components['schemas']['ProdutoresPaginaDto']['itens'][number];
+
 /** O corpo aceito no registro de um Produtor. */
 export type CriarProdutor = components['schemas']['CriarProdutorDto'];
 

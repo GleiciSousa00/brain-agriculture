@@ -35,6 +35,18 @@ export class PropriedadesDoProdutorEmMemoria implements PropriedadesDoProdutorRe
       total: doProdutor.length,
     };
   }
+
+  async contarPorProdutor(ids: string[]): Promise<Map<string, number>> {
+    const quantas = new Map<string, number>();
+
+    for (const propriedade of this.propriedades) {
+      if (ids.includes(propriedade.produtorId)) {
+        quantas.set(propriedade.produtorId, (quantas.get(propriedade.produtorId) ?? 0) + 1);
+      }
+    }
+
+    return quantas;
+  }
 }
 
 function porNome(uma: Propriedade, outra: Propriedade): number {

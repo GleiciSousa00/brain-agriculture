@@ -39,4 +39,26 @@ export class TypeormPropriedadesDoProdutorRepository implements PropriedadesDoPr
 
     return { itens: linhas.map(propriedadeParaDominio), total };
   }
+
+  async contarPorProdutor(ids: string[]): Promise<Map<string, number>> {
+    if (ids.length === 0) {
+      return new Map();
+    }
+
+    const linhas = await this.linhas
+      .createQueryBuilder('propriedade')
+      .select('propriedade.produtorId', 'produtorId')
+      .addSelect('COUNT(*)', 'propriedades')
+      .where('propriedade.produtorId IN (:...ids)', { ids })
+      .groupBy('propriedade.produtorId')
+      .getRawMany<LinhaDaContagem>();
+
+    return new Map(linhas.map((linha) => [linha.produtorId, Number(linha.propriedades)]));
+  }
+}
+
+/** O que o banco devolve na contagem por Produtor. `COUNT` vem como texto. */
+interface LinhaDaContagem {
+  produtorId: string;
+  propriedades: string;
 }

@@ -93,7 +93,12 @@ describe('paraPagina', () => {
     nome: 'Maria da Silva',
   });
 
-  const pagina = { itens: [produtor], total: 37, pagina: 2, tamanho: 20 };
+  const pagina = {
+    itens: [{ produtor, propriedades: 3 }],
+    total: 37,
+    pagina: 2,
+    tamanho: 20,
+  };
 
   it('mascara o Documento também na listagem', () => {
     const resposta = paraPagina(pagina);
@@ -104,5 +109,9 @@ describe('paraPagina', () => {
 
   it('devolve o total do cadastro e repete a página pedida', () => {
     expect(paraPagina(pagina)).toMatchObject({ total: 37, pagina: 2, tamanho: 20 });
+  });
+
+  it('leva junto quantas Propriedades o Produtor tem', () => {
+    expect(paraPagina(pagina).itens.at(0)?.propriedades).toBe(3);
   });
 });

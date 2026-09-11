@@ -24,6 +24,15 @@ export interface PropriedadesDoProdutorRepository {
    * depender de um número que ninguém controla.
    */
   listByProdutor(recorte: RecorteDePropriedadesDoProdutor): Promise<Recortados<Propriedade>>;
+  /**
+   * Quantas Propriedades cada um dos Produtores pedidos tem.
+   *
+   * Numa consulta só, e não uma por Produtor: a listagem mostra a contagem de cada linha da
+   * página, e perguntar de linha em linha é o N+1 que a faz desandar quando o cadastro
+   * cresce. Quem não tem nenhuma fica de fora do mapa, porque zero é o que se conclui da
+   * ausência.
+   */
+  contarPorProdutor(ids: string[]): Promise<Map<string, number>>;
 }
 
 export const PROPRIEDADES_DO_PRODUTOR_REPOSITORY = Symbol('PropriedadesDoProdutorRepository');

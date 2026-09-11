@@ -1,4 +1,4 @@
-import type { Produtor } from '@cadastro-rural/contracts';
+import type { Produtor, ProdutorListado } from '@cadastro-rural/contracts';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { listarProdutores } from '../../api/produtores';
@@ -19,14 +19,7 @@ const NOME_TAMANHO_MAXIMO = 200;
 const DOCUMENTO_TAMANHO_MAXIMO = 18;
 
 export function ProdutoresSecao() {
-  const {
-    criarProdutor,
-    editarProdutor,
-    excluirProdutor,
-    quantasPropriedadesDe,
-    cortado,
-    carregando,
-  } = useCadastro();
+  const { criarProdutor, editarProdutor, excluirProdutor } = useCadastro();
 
   // Fechado, o formulário não ocupa a tela de quem só veio consultar. Aberto, ele é o de
   // registro ou o de edição, e é o Produtor em edição que diz qual dos dois.
@@ -186,14 +179,7 @@ export function ProdutoresSecao() {
                   <td>{produtor.nome}</td>
                   <td className="documento">{produtor.documento}</td>
                   <td>
-                    <PropriedadesDo
-                      produtor={produtor}
-                      // A tabela vem de uma chamada, o catálogo de outra, e a tabela
-                      // costuma chegar primeiro. Contar antes dele seria contar zero.
-                      quantas={
-                        cortado || carregando ? undefined : quantasPropriedadesDe(produtor.id)
-                      }
-                    />
+                    <PropriedadesDo produtor={produtor} />
                   </td>
                   <td className="acoes">
                     <button
@@ -224,9 +210,7 @@ export function ProdutoresSecao() {
 }
 
 interface PropsDaColuna {
-  produtor: Produtor;
-  /** Quantas Propriedades ele tem, ou nada quando o catálogo não permite afirmá-lo. */
-  quantas?: number;
+  produtor: ProdutorListado;
 }
 
 /**
@@ -236,24 +220,13 @@ interface PropsDaColuna {
  * o que se oferece é registrar a primeira, e o formulário abre do outro lado já em nome
  * dele: um link para uma lista vazia não é resposta a quem está começando o cadastro.
  *
- * A conta sai do catálogo, que para no centésimo. Passando dele, um zero pode ser só o
- * que não veio, e oferecer "registrar a primeira" a quem já tem Propriedade seria uma
- * mentira com botão: aí a coluna desce sem contar.
+ * A conta vem contada da API, na mesma linha do Produtor. Contá-la de uma lista carregada
+ * de antemão, como já se fez, tinha o teto da listagem por limite: passando dele, o zero
+ * podia ser só o que não veio, e oferecer "registrar a primeira" a quem já tem Propriedade
+ * é uma mentira com botão.
  */
-function PropriedadesDo({ produtor, quantas }: PropsDaColuna) {
-  if (quantas === undefined) {
-    return (
-      <Link
-        className="ligacao"
-        to={propriedadesDe(produtor.id)}
-        aria-label={`Ver as Propriedades de ${produtor.nome}`}
-      >
-        Ver Propriedades ›
-      </Link>
-    );
-  }
-
-  const semNenhuma = quantas === 0;
+function PropriedadesDo({ produtor }: PropsDaColuna) {
+  const semNenhuma = produtor.propriedades === 0;
 
   return (
     <Link
@@ -265,7 +238,9 @@ function PropriedadesDo({ produtor, quantas }: PropsDaColuna) {
           : `Ver as Propriedades de ${produtor.nome}`
       }
     >
-      {semNenhuma ? PRIMEIRA_PROPRIEDADE : formatarContagem(quantas, 'propriedade', 'propriedades')}{' '}
+      {semNenhuma
+        ? PRIMEIRA_PROPRIEDADE
+        : formatarContagem(produtor.propriedades, 'propriedade', 'propriedades')}{' '}
       ›
     </Link>
   );

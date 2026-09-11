@@ -27,7 +27,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lista Produtores por nome, em páginas, com o Documento mascarado. Recorta pela busca, quando houver. */
+        /** Lista Produtores por nome, em páginas, com o Documento mascarado e quantas Propriedades cada um tem. Recorta pela busca e pelos identificadores, quando houver. */
         get: operations["ProdutoresController_listar"];
         put?: never;
         /** Registra um Produtor. */
@@ -287,6 +287,8 @@ export interface components {
                 documento: string;
                 /** @enum {string} */
                 tipoDeDocumento: "CPF" | "CNPJ";
+                /** @description Quantas Propriedades estão em nome dele. */
+                propriedades: number;
             }[];
             /** @description Quantos registros existem ao todo. */
             total: number;
@@ -637,6 +639,8 @@ export interface operations {
                 tamanho?: number;
                 /** @description Pedaço do nome procurado. Ignora caixa e acento. */
                 busca?: string;
+                /** @description Recorta a listagem a estes Produtores. Ausente, lista todos. */
+                ids?: string[];
             };
             header?: never;
             path?: never;
