@@ -3,8 +3,9 @@ import { FORA_DO_CATALOGO, CadastroProvider, useCadastro } from './CadastroConte
 import { CATALOGOS, PRODUTORES, plantiosDe, propriedadesDe, useHierarquia } from './hierarquia';
 
 const CORTADO =
-  'O cadastro passou de cem Produtores ou Propriedades. Os campos de escolha e a coluna de ' +
-  'Produtor mostram só os cem primeiros, porque a API lista até aí e não tem busca por texto.';
+  'O cadastro passou de cem Produtores ou Propriedades. A coluna de Produtor tem nome só ' +
+  'para os cem primeiros, porque a listagem vai até aí. Os campos de escolha alcançam o ' +
+  'cadastro inteiro: procure pelo nome.';
 
 /**
  * O que há a dizer sobre os catálogos.

@@ -1,5 +1,5 @@
-import type { Pagina, PedidoDePagina } from '../../../shared/application/pagina';
-import { paginar } from '../../../shared/application/pagina';
+import type { Pagina, PedidoDeBusca } from '../../../shared/application/pagina';
+import { paginarBusca } from '../../../shared/application/pagina';
 import type { Propriedade } from '../domain/propriedade';
 import type { PropriedadeRepository } from '../domain/propriedade.repository';
 
@@ -13,7 +13,7 @@ import type { PropriedadeRepository } from '../domain/propriedade.repository';
 export class ListarPropriedadesUseCase {
   constructor(private readonly propriedades: PropriedadeRepository) {}
 
-  execute(pedido: PedidoDePagina): Promise<Pagina<Propriedade>> {
-    return paginar(pedido, (recorte) => this.propriedades.list(recorte));
+  execute(pedido: PedidoDeBusca): Promise<Pagina<Propriedade>> {
+    return paginarBusca(pedido, (recorte) => this.propriedades.list(recorte));
   }
 }

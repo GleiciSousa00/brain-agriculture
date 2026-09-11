@@ -1,4 +1,4 @@
-import type { Recorte, Recortados } from '../../../shared/domain/recorte';
+import type { RecorteComBusca, Recortados } from '../../../shared/domain/recorte';
 import type { Documento } from './documento';
 import type { Produtor } from './produtor';
 
@@ -12,7 +12,7 @@ export interface ProdutorRepository {
   findById(id: string): Promise<Produtor | null>;
   findByDocumento(documento: Documento): Promise<Produtor | null>;
   /** Lista em ordem de nome, com o identificador desempatando homônimos. */
-  list(recorte: Recorte): Promise<Recortados<Produtor>>;
+  list(recorte: RecorteComBusca): Promise<Recortados<Produtor>>;
 }
 
 /**

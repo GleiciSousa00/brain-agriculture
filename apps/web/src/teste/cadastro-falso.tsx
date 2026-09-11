@@ -14,13 +14,38 @@ export interface BaseFalsa {
   safras: Safra[];
 }
 
-/** Fatia a lista como a API a fatiaria, honrando a página e o tamanho pedidos. */
+/** A mesma dobra que o banco aplica: quem procura "sao jose" acha "São José". */
+function dobrar(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase();
+}
+
+/** O nome pelo qual se procura. Nem toda listagem tem um: Plantio se lista pela Propriedade. */
+function nomeDe(item: unknown): string {
+  const { nome } = item as { nome?: unknown };
+
+  return typeof nome === 'string' ? nome : '';
+}
+
+/**
+ * Fatia a lista como a API a fatiaria, honrando a página, o tamanho e a busca pedidos.
+ *
+ * A busca é recortada aqui, e não por quem serve a rota, porque é assim que a API faz: o
+ * campo de escolha que procura precisa ver a lista encolher para provar que procurou.
+ */
 export function paginar<T>(itens: T[], url: URL) {
   const pagina = Number(url.searchParams.get('pagina') ?? '1');
   const tamanho = Number(url.searchParams.get('tamanho') ?? '10');
+  const busca = url.searchParams.get('busca');
   const inicio = (pagina - 1) * tamanho;
+  const casam =
+    busca === null
+      ? itens
+      : itens.filter((item) => dobrar(nomeDe(item)).includes(dobrar(busca)));
 
-  return { itens: itens.slice(inicio, inicio + tamanho), total: itens.length, pagina, tamanho };
+  return { itens: casam.slice(inicio, inicio + tamanho), total: casam.length, pagina, tamanho };
 }
 
 /**

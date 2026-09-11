@@ -1,4 +1,4 @@
-import type { Recorte, Recortados } from '../../../shared/domain/recorte';
+import type { RecorteComBusca, Recortados } from '../../../shared/domain/recorte';
 import type { Propriedade } from './propriedade';
 
 /** Porta de persistência da Propriedade. Quem a implementa mora em `infrastructure`. */
@@ -14,7 +14,7 @@ export interface PropriedadeRepository {
    */
   delete(id: string): Promise<void>;
   /** Lista em ordem de nome, com o identificador desempatando homônimas. */
-  list(recorte: Recorte): Promise<Recortados<Propriedade>>;
+  list(recorte: RecorteComBusca): Promise<Recortados<Propriedade>>;
 }
 
 export const PROPRIEDADE_REPOSITORY = Symbol('PropriedadeRepository');

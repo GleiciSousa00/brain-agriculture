@@ -2,6 +2,7 @@ import type { Propriedade } from '@cadastro-rural/contracts';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { procurarEEscolher } from '../../teste/busca-falsa';
 import { renderizarNoCadastro, servirCadastro } from '../../teste/cadastro-falso';
 import { AGRO_BETO, ANA, BOA_VISTA, SITIO_DO_MEIO } from '../../teste/exemplos';
 import { corpoEnviadoPara } from '../../teste/fetch-falso';
@@ -20,7 +21,7 @@ async function abrirANova(): Promise<void> {
 
 async function preencherAPropriedade(): Promise<void> {
   await abrirANova();
-  await userEvent.selectOptions(screen.getByLabelText('Produtor'), ANA.id);
+  await procurarEEscolher('Produtor', 'ana', 'Ana Lima');
   await preencher('Nome', 'Fazenda Boa Vista');
   await preencher('Cidade', 'Uberaba');
   await userEvent.selectOptions(screen.getByLabelText('Estado'), 'MG');
@@ -58,17 +59,29 @@ describe('a seção de Propriedades', () => {
     expect(within(linha).queryByText('Ana Lima')).toBeNull();
   });
 
-  it('escolhe o Produtor numa lista, e não em campo de texto livre', async () => {
+  it('procura o Produtor pelo nome e oferece só quem casa', async () => {
     servirCadastro({ produtores: [ANA, AGRO_BETO], propriedades: [] });
 
     renderizarNoCadastro(<PropriedadesSecao />);
     await screen.findByText('Nenhuma Propriedade cadastrada ainda.');
     await abrirANova();
 
-    const campo = screen.getByLabelText('Produtor');
-    expect(campo.tagName).toBe('SELECT');
-    expect(within(campo).getByRole('option', { name: 'Ana Lima' })).toBeInTheDocument();
-    expect(within(campo).getByRole('option', { name: 'Agro Beto' })).toBeInTheDocument();
+    await userEvent.type(screen.getByRole('combobox', { name: 'Produtor' }), 'beto');
+
+    expect(await screen.findByRole('option', { name: 'Agro Beto' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Ana Lima' })).toBeNull();
+  });
+
+  it('diz que não achou ninguém, em vez de oferecer lista vazia sem explicação', async () => {
+    servirCadastro({ produtores: [ANA], propriedades: [] });
+
+    renderizarNoCadastro(<PropriedadesSecao />);
+    await screen.findByText('Nenhuma Propriedade cadastrada ainda.');
+    await abrirANova();
+
+    await userEvent.type(screen.getByRole('combobox', { name: 'Produtor' }), 'zzz');
+
+    expect(await screen.findByText('Nada encontrado com esse nome.')).toBeInTheDocument();
   });
 
   it('registra a Propriedade com o Produtor, o nome, a cidade e as três áreas', async () => {
@@ -281,8 +294,9 @@ describe('a seção de Propriedades', () => {
 
       renderizarNoCadastro(<PropriedadesSecao />, `${RECORTE}&novo=1`);
 
-      // Chegou-se aqui pedindo para registrar, então o formulário já está aberto.
-      expect(await screen.findByLabelText('Produtor')).toHaveValue(ANA.id);
+      // Chegou-se aqui pedindo para registrar, então o formulário já está aberto, e o
+      // campo de busca nasce mostrando o Produtor do recorte em vez de pedir de novo.
+      expect(await screen.findByRole('combobox', { name: 'Produtor' })).toHaveValue('Ana Lima');
     });
   });
 

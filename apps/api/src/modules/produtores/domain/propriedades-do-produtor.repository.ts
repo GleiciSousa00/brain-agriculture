@@ -1,8 +1,8 @@
-import type { Recorte, Recortados } from '../../../shared/domain/recorte';
+import type { RecorteComBusca, Recortados } from '../../../shared/domain/recorte';
 import type { Propriedade } from '../../propriedades/domain/propriedade';
 
 /** O recorte comum, mais o Produtor: a lista é sempre a dele, nunca a do cadastro. */
-export interface RecorteDePropriedadesDoProdutor extends Recorte {
+export interface RecorteDePropriedadesDoProdutor extends RecorteComBusca {
   produtorId: string;
 }
 

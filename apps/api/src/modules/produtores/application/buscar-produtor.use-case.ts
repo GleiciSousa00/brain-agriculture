@@ -1,5 +1,5 @@
-import type { Pagina, PedidoDePagina } from '../../../shared/application/pagina';
-import { paginar } from '../../../shared/application/pagina';
+import type { Pagina, PedidoDeBusca } from '../../../shared/application/pagina';
+import { paginarBusca } from '../../../shared/application/pagina';
 import type { Propriedade } from '../../propriedades/domain/propriedade';
 import type { Produtor } from '../domain/produtor';
 import { ProdutorNaoEncontrado } from '../domain/produtor.errors';
@@ -27,7 +27,7 @@ export class BuscarProdutorUseCase {
     private readonly propriedades: PropriedadesDoProdutorRepository,
   ) {}
 
-  async execute(id: string, pedido: PedidoDePagina): Promise<ProdutorComPropriedades> {
+  async execute(id: string, pedido: PedidoDeBusca): Promise<ProdutorComPropriedades> {
     const produtor = await this.produtores.findById(id);
 
     if (produtor === null) {
@@ -36,7 +36,7 @@ export class BuscarProdutorUseCase {
 
     return {
       produtor,
-      propriedades: await paginar(pedido, (recorte) =>
+      propriedades: await paginarBusca(pedido, (recorte) =>
         this.propriedades.listByProdutor({ produtorId: id, ...recorte }),
       ),
     };

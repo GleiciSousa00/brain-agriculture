@@ -51,3 +51,25 @@ export function paginaSchema<T extends ZodType>(itemSchema: T) {
     tamanho: z.number().int(),
   });
 }
+
+/** Até onde vai o que se digita no campo de busca. Passando disso, é outra ferramenta. */
+export const BUSCA_TAMANHO_MAXIMO = 120;
+
+/**
+ * A página, mais o texto que a recorta.
+ *
+ * Só as listagens cujo campo de escolha precisa alcançar além da primeira página aceitam
+ * busca: a de Produtor e a de Propriedade. Um campo em branco não é busca nenhuma, e por
+ * isso o texto vazio some em vez de virar recorte que não casa com nada.
+ */
+export const parametrosDeBuscaSchema = parametrosDePaginaSchema.extend({
+  busca: z
+    .string()
+    .trim()
+    .max(BUSCA_TAMANHO_MAXIMO, `A busca não passa de ${String(BUSCA_TAMANHO_MAXIMO)} caracteres.`)
+    .optional()
+    .transform((texto) => (texto === '' ? undefined : texto))
+    .describe('Pedaço do nome procurado. Ignora caixa e acento.'),
+});
+
+export class ParametrosDeBuscaDto extends createZodDto(parametrosDeBuscaSchema) {}

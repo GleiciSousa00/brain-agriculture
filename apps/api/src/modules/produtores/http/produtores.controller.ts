@@ -22,7 +22,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ZodSerializerDto } from 'nestjs-zod';
-import { ParametrosDePaginaDto } from '../../../shared/http/dto/pagina.dto';
+import { ParametrosDeBuscaDto } from '../../../shared/http/dto/pagina.dto';
 import { ProblemDetailsDto } from '../../../shared/http/dto/problem-details.dto';
 import { BuscarProdutorUseCase } from '../application/buscar-produtor.use-case';
 import { CriarProdutorUseCase } from '../application/criar-produtor.use-case';
@@ -73,13 +73,16 @@ export class ProdutoresController {
 
   @Get()
   @ZodSerializerDto(ProdutoresPaginaDto)
-  @ApiOperation({ summary: 'Lista Produtores por nome, em páginas, com o Documento mascarado.' })
+  @ApiOperation({
+    summary:
+      'Lista Produtores por nome, em páginas, com o Documento mascarado. Recorta pela busca, quando houver.',
+  })
   @ApiOkResponse({ type: ProdutoresPaginaDto })
   @ApiBadRequestResponse({
     description: 'A página ou o tamanho pedido não é válido.',
     type: ProblemDetailsDto,
   })
-  async listar(@Query() parametros: ParametrosDePaginaDto): Promise<ProdutoresPaginaResposta> {
+  async listar(@Query() parametros: ParametrosDeBuscaDto): Promise<ProdutoresPaginaResposta> {
     return paraPagina(await this.listarProdutores.execute(parametros));
   }
 
@@ -92,7 +95,7 @@ export class ProdutoresController {
   @ApiNotFoundResponse({ description: NAO_ENCONTRADO, type: ProblemDetailsDto })
   async buscar(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query() parametros: ParametrosDePaginaDto,
+    @Query() parametros: ParametrosDeBuscaDto,
   ): Promise<ProdutorDetalhadoResposta> {
     return paraRespostaDetalhada(await this.buscarProdutor.execute(id, parametros));
   }

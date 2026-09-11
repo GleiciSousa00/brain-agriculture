@@ -14,6 +14,18 @@ export interface Recorte {
   limite: number;
 }
 
+/**
+ * O recorte de uma listagem que também se procura por nome.
+ *
+ * Nem toda listagem procura: Plantio se lista pela Propriedade, e não por texto. Por isso
+ * a busca é um recorte à parte, e não um campo opcional que todas as portas passariam a
+ * declarar sem usar.
+ */
+export interface RecorteComBusca extends Recorte {
+  /** Pedaço do nome procurado, sem caixa nem acento a respeitar. Ausente, lista tudo. */
+  busca?: string;
+}
+
 export interface Recortados<T> {
   itens: T[];
   /** Quantos registros existem ao todo, e não quantos vieram neste recorte. */
