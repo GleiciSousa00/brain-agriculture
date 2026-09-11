@@ -29,10 +29,24 @@ describe('a navegação', () => {
     expect(await screen.findByRole('heading', { name: 'Painel', level: 1 })).toBeInTheDocument();
   });
 
-  it('manda um endereço desconhecido para o painel, em vez de mostrar tela em branco', async () => {
+  it('diz que o endereço desconhecido não existe, em vez de mandar calado para o painel', async () => {
     abrirEm('/nao-existe');
 
-    expect(await screen.findByRole('heading', { name: 'Painel', level: 1 })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Esta página não existe.' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ir para o Painel' })).toBeInTheDocument();
+  });
+
+  it('nomeia a aba pela tela aberta', async () => {
+    abrirEm('/painel');
+    await screen.findByRole('heading', { name: 'Painel', level: 1 });
+
+    expect(document.title).toBe('Painel · Cadastro Rural');
+
+    await userEvent.click(screen.getByRole('link', { name: 'Cadastro' }));
+
+    expect(document.title).toBe('Produtores · Cadastro Rural');
   });
 
   it('leva do painel ao cadastro pelo menu', async () => {
