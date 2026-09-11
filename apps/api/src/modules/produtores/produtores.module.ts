@@ -21,6 +21,7 @@ import { TypeormProdutorRepository } from './infrastructure/typeorm-produtor.rep
 import { ProdutoresController } from './http/produtores.controller';
 import { CriaProdutores1789040000000 } from './infrastructure/migrations/1789040000000-cria-produtores';
 import { IndexaNomeDeProdutor1789065000000 } from './infrastructure/migrations/1789065000000-indexa-nome-de-produtor';
+import { IndexaBuscaDeProdutor1789111000000 } from './infrastructure/migrations/1789111000000-indexa-busca-de-produtor';
 
 /**
  * O único arquivo autorizado a enxergar as quatro camadas.
@@ -88,7 +89,11 @@ export class ProdutoresModule {}
 /** O que o módulo publica para a raiz de composição montar o catálogo do ORM. */
 export const PRODUTORES_ENTIDADES = [ProdutorOrmEntity];
 
-export const PRODUTORES_MIGRACOES = [CriaProdutores1789040000000, IndexaNomeDeProdutor1789065000000];
+export const PRODUTORES_MIGRACOES = [
+  CriaProdutores1789040000000,
+  IndexaNomeDeProdutor1789065000000,
+  IndexaBuscaDeProdutor1789111000000,
+];
 
 /** A chave e o segredo chegam em base64 e não têm valor padrão: perder um é perder dado. */
 function segredo(config: ConfigService, variavel: string): Buffer {

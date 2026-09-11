@@ -1,4 +1,5 @@
-import type { Recorte, Recortados } from '../../../../shared/domain/recorte';
+import type { RecorteComBusca, Recortados } from '../../../../shared/domain/recorte';
+import { nomeCasaComBusca } from '../../../../shared/domain/texto-para-busca';
 import type { Propriedade } from '../../domain/propriedade';
 import type { PropriedadeRepository } from '../../domain/propriedade.repository';
 
@@ -21,10 +22,10 @@ export class PropriedadeRepositoryEmMemoria implements PropriedadeRepository {
     this.propriedades.delete(id);
   }
 
-  async list({ deslocamento, limite }: Recorte): Promise<Recortados<Propriedade>> {
-    const ordenadas = [...this.propriedades.values()].sort(
-      (uma, outra) => uma.nome.localeCompare(outra.nome) || uma.id.localeCompare(outra.id),
-    );
+  async list({ deslocamento, limite, busca }: RecorteComBusca): Promise<Recortados<Propriedade>> {
+    const ordenadas = [...this.propriedades.values()]
+      .filter((propriedade) => nomeCasaComBusca(propriedade.nome, busca))
+      .sort((uma, outra) => uma.nome.localeCompare(outra.nome) || uma.id.localeCompare(outra.id));
 
     return {
       itens: ordenadas.slice(deslocamento, deslocamento + limite),

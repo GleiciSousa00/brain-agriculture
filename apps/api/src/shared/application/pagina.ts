@@ -1,4 +1,4 @@
-import type { Recorte, Recortados } from '../domain/recorte';
+import type { Recorte, RecorteComBusca, Recortados } from '../domain/recorte';
 
 /**
  * A fatia de uma listagem, dita em vocabulário de caso de uso.
@@ -40,6 +40,30 @@ export async function paginar<T>(
   const { itens, total } = await recortar({
     deslocamento: deslocamentoDe(pedido),
     limite: pedido.tamanho,
+  });
+
+  return { itens, total, pagina: pedido.pagina, tamanho: pedido.tamanho };
+}
+
+/**
+ * O pedido de página de uma listagem que também se procura por nome.
+ *
+ * Mesmo desenho de `RecorteComBusca`, um degrau acima: quem lista sem procurar não passa
+ * a declarar um campo que nunca preenche.
+ */
+export interface PedidoDeBusca extends PedidoDePagina {
+  busca?: string;
+}
+
+/** Traduz o pedido com busca para o recorte que a porta entende, e devolve a fatia. */
+export async function paginarBusca<T>(
+  pedido: PedidoDeBusca,
+  recortar: (recorte: RecorteComBusca) => Promise<Recortados<T>>,
+): Promise<Pagina<T>> {
+  const { itens, total } = await recortar({
+    deslocamento: deslocamentoDe(pedido),
+    limite: pedido.tamanho,
+    busca: pedido.busca,
   });
 
   return { itens, total, pagina: pedido.pagina, tamanho: pedido.tamanho };

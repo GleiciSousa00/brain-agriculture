@@ -1,4 +1,5 @@
-import type { Recorte, Recortados } from '../../../../shared/domain/recorte';
+import type { RecorteComBusca, Recortados } from '../../../../shared/domain/recorte';
+import { nomeCasaComBusca } from '../../../../shared/domain/texto-para-busca';
 import type { Documento } from '../../domain/documento';
 import type { Produtor } from '../../domain/produtor';
 import type { ProdutorRepository } from '../../domain/produtor.repository';
@@ -40,10 +41,10 @@ export class ProdutorRepositoryEmMemoria implements ProdutorRepository {
   }
 
   /** A mesma ordem que o repositório de verdade promete: nome, e o identificador desempata. */
-  async list({ deslocamento, limite }: Recorte): Promise<Recortados<Produtor>> {
-    const ordenados = [...this.produtores.values()].sort(
-      (um, outro) => um.nome.localeCompare(outro.nome) || um.id.localeCompare(outro.id),
-    );
+  async list({ deslocamento, limite, busca }: RecorteComBusca): Promise<Recortados<Produtor>> {
+    const ordenados = [...this.produtores.values()]
+      .filter((produtor) => nomeCasaComBusca(produtor.nome, busca))
+      .sort((um, outro) => um.nome.localeCompare(outro.nome) || um.id.localeCompare(outro.id));
 
     return {
       itens: ordenados.slice(deslocamento, deslocamento + limite),

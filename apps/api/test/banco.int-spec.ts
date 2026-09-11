@@ -78,6 +78,9 @@ describe('A aplicação contra um Postgres de verdade', () => {
     const restricoes: { conname: string }[] = await dataSource.query(
       `SELECT conname FROM pg_constraint WHERE conrelid = 'plantios'::regclass ORDER BY conname`,
     );
+    const dobra: { procurado: string }[] = await dataSource.query(
+      `SELECT texto_para_busca('Fazenda São José') AS procurado`,
+    );
     const indices: { indexname: string }[] = await dataSource.query(
       `SELECT indexname FROM pg_indexes WHERE tablename IN ('plantios', 'propriedades')
          AND indexname LIKE 'ix_%' ORDER BY indexname`,
@@ -109,10 +112,13 @@ describe('A aplicação contra um Postgres de verdade', () => {
     expect(indices.map((indice) => indice.indexname)).toEqual([
       'ix_plantios_cultura',
       'ix_plantios_safra_cultura',
+      'ix_propriedades_busca',
       'ix_propriedades_estado',
       'ix_propriedades_nome',
       'ix_propriedades_produtor',
     ]);
+    // A dobra da busca é do banco, e é o banco quem prova que ela some com caixa e acento.
+    expect(dobra.map((linha) => linha.procurado)).toEqual(['fazenda sao jose']);
     expect(catalogo.map((cultura) => cultura.nome)).toEqual(
       [...CULTURAS_INICIAIS].sort((um, outro) => (chaveDe(um) < chaveDe(outro) ? -1 : 1)),
     );

@@ -1,5 +1,6 @@
 import type { Repository } from 'typeorm';
 import type { Recortados } from '../../../shared/domain/recorte';
+import { recortarPorNome } from '../../../shared/infrastructure/busca-por-nome';
 import type { Propriedade } from '../domain/propriedade';
 import type {
   PropriedadesDoProdutorRepository,
@@ -21,13 +22,20 @@ export class TypeormPropriedadesDoProdutorRepository implements PropriedadesDoPr
     produtorId,
     deslocamento,
     limite,
+    busca,
   }: RecorteDePropriedadesDoProdutor): Promise<Recortados<Propriedade>> {
-    const [linhas, total] = await this.linhas.findAndCount({
-      where: { produtorId },
-      order: { nome: 'ASC', id: 'ASC' },
-      skip: deslocamento,
-      take: limite,
-    });
+    const [linhas, total] = await recortarPorNome(
+      this.linhas
+        .createQueryBuilder('propriedade')
+        .where('propriedade.produtorId = :produtorId', { produtorId }),
+      'propriedade.nome',
+      busca,
+    )
+      .orderBy('propriedade.nome', 'ASC')
+      .addOrderBy('propriedade.id', 'ASC')
+      .skip(deslocamento)
+      .take(limite)
+      .getManyAndCount();
 
     return { itens: linhas.map(propriedadeParaDominio), total };
   }

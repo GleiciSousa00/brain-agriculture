@@ -1,4 +1,5 @@
 import type { Recortados } from '../../../../shared/domain/recorte';
+import { nomeCasaComBusca } from '../../../../shared/domain/texto-para-busca';
 import type { Propriedade } from '../../../propriedades/domain/propriedade';
 import type {
   PropriedadesDoProdutorRepository,
@@ -20,9 +21,13 @@ export class PropriedadesDoProdutorEmMemoria implements PropriedadesDoProdutorRe
     produtorId,
     deslocamento,
     limite,
+    busca,
   }: RecorteDePropriedadesDoProdutor): Promise<Recortados<Propriedade>> {
     const doProdutor = this.propriedades
-      .filter((propriedade) => propriedade.produtorId === produtorId)
+      .filter(
+        (propriedade) =>
+          propriedade.produtorId === produtorId && nomeCasaComBusca(propriedade.nome, busca),
+      )
       .sort(porNome);
 
     return {

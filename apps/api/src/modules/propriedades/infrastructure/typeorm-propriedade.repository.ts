@@ -2,7 +2,8 @@ import type { Repository } from 'typeorm';
 import { violouChaveEstrangeira } from '../../../shared/infrastructure/postgres-errors';
 import type { Propriedade } from '../domain/propriedade';
 import { ProdutorDaPropriedadeNaoEncontrado } from '../domain/propriedade.errors';
-import type { Recorte, Recortados } from '../../../shared/domain/recorte';
+import type { RecorteComBusca, Recortados } from '../../../shared/domain/recorte';
+import { recortarPorNome } from '../../../shared/infrastructure/busca-por-nome';
 import type { PropriedadeRepository } from '../domain/propriedade.repository';
 import { propriedadeParaDominio, propriedadeParaLinha } from './propriedade.mapper';
 import { PropriedadeOrmEntity } from './propriedade.orm-entity';
@@ -32,12 +33,17 @@ export class TypeormPropriedadeRepository implements PropriedadeRepository {
     await this.linhas.delete({ id });
   }
 
-  async list({ deslocamento, limite }: Recorte): Promise<Recortados<Propriedade>> {
-    const [linhas, total] = await this.linhas.findAndCount({
-      order: { nome: 'ASC', id: 'ASC' },
-      skip: deslocamento,
-      take: limite,
-    });
+  async list({ deslocamento, limite, busca }: RecorteComBusca): Promise<Recortados<Propriedade>> {
+    const [linhas, total] = await recortarPorNome(
+      this.linhas.createQueryBuilder('propriedade'),
+      'propriedade.nome',
+      busca,
+    )
+      .orderBy('propriedade.nome', 'ASC')
+      .addOrderBy('propriedade.id', 'ASC')
+      .skip(deslocamento)
+      .take(limite)
+      .getManyAndCount();
 
     return { itens: linhas.map(propriedadeParaDominio), total };
   }

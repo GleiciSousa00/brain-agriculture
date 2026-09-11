@@ -27,7 +27,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lista Produtores por nome, em páginas, com o Documento mascarado. */
+        /** Lista Produtores por nome, em páginas, com o Documento mascarado. Recorta pela busca, quando houver. */
         get: operations["ProdutoresController_listar"];
         put?: never;
         /** Registra um Produtor. */
@@ -67,7 +67,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lista as Propriedades por nome, em páginas. */
+        /** Lista as Propriedades por nome, em páginas. Recorta pela busca, quando houver. */
         get: operations["PropriedadesController_listar"];
         put?: never;
         /** Registra uma Propriedade em nome de um Produtor. */
@@ -595,6 +595,8 @@ export interface operations {
                 pagina?: number;
                 /** @description Quantos registros por página, no máximo 100. */
                 tamanho?: number;
+                /** @description Pedaço do nome procurado. Ignora caixa e acento. */
+                busca?: string;
             };
             header?: never;
             path?: never;
@@ -687,6 +689,8 @@ export interface operations {
                 pagina?: number;
                 /** @description Quantos registros por página, no máximo 100. */
                 tamanho?: number;
+                /** @description Pedaço do nome procurado. Ignora caixa e acento. */
+                busca?: string;
             };
             header?: never;
             path: {
@@ -839,6 +843,8 @@ export interface operations {
                 pagina?: number;
                 /** @description Quantos registros por página, no máximo 100. */
                 tamanho?: number;
+                /** @description Pedaço do nome procurado. Ignora caixa e acento. */
+                busca?: string;
             };
             header?: never;
             path?: never;

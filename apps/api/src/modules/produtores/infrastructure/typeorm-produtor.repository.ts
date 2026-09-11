@@ -1,5 +1,6 @@
 import type { Repository } from 'typeorm';
-import type { Recorte, Recortados } from '../../../shared/domain/recorte';
+import type { RecorteComBusca, Recortados } from '../../../shared/domain/recorte';
+import { recortarPorNome } from '../../../shared/infrastructure/busca-por-nome';
 import { violouUnicidade } from '../../../shared/infrastructure/postgres-errors';
 import type { Documento } from '../domain/documento';
 import type { Produtor } from '../domain/produtor';
@@ -56,13 +57,19 @@ export class TypeormProdutorRepository implements ProdutorRepository {
     return linha === null ? null : this.mapper.paraDominio(linha);
   }
 
-  async list({ deslocamento, limite }: Recorte): Promise<Recortados<Produtor>> {
-    const [linhas, total] = await this.linhas.findAndCount({
-      order: { nome: 'ASC', id: 'ASC' },
-      skip: deslocamento,
-      take: limite,
-    });
+  async list({ deslocamento, limite, busca }: RecorteComBusca): Promise<Recortados<Produtor>> {
+    const [linhas, total] = await recortarPorNome(
+      this.linhas.createQueryBuilder('produtor'),
+      'produtor.nome',
+      busca,
+    )
+      .orderBy('produtor.nome', 'ASC')
+      .addOrderBy('produtor.id', 'ASC')
+      .skip(deslocamento)
+      .take(limite)
+      .getManyAndCount();
 
     return { itens: linhas.map((linha) => this.mapper.paraDominio(linha)), total };
   }
+
 }
